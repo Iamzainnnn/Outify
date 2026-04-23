@@ -145,7 +145,7 @@ class Player @Inject constructor(
         val ps = stateHolder.state.value
         val track = ps.currentTrack ?: return State.Builder()
             .setPlaybackState(STATE_IDLE)
-            .setAvailableCommands(determineCommands(false))
+            .setAvailableCommands(determineCommands())
             .setPlayWhenReady(false, PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
             .setPlaylist(emptyList())
             .build()
@@ -189,7 +189,7 @@ class Player @Inject constructor(
 
         return State.Builder()
             .setPlaybackState(playbackState)
-            .setAvailableCommands(determineCommands(playlist.isNotEmpty()))
+            .setAvailableCommands(determineCommands())
             .setPlayWhenReady(ps.isPlaying, PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
             .setPlaybackParameters(PlaybackParameters(ps.playbackSpeed))
             .setCurrentMediaItemIndex(if (playlist.isNotEmpty()) 0 else C.INDEX_UNSET)
@@ -257,22 +257,17 @@ class Player @Inject constructor(
         return com.google.common.util.concurrent.Futures.immediateVoidFuture()
     }
 
-    private fun determineCommands(hasMedia: Boolean): Player.Commands {
+    private fun determineCommands(): Player.Commands {
         val builder = Player.Commands.Builder()
             .add(COMMAND_PLAY_PAUSE)
             .add(COMMAND_GET_CURRENT_MEDIA_ITEM)
             .add(COMMAND_GET_METADATA)
-
-        if (hasMedia) {
-            builder.addAll(
-                COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM,
-                COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
-                COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
-                COMMAND_SET_REPEAT_MODE,
-                COMMAND_SET_SHUFFLE_MODE,
-                COMMAND_STOP
-            )
-        }
+            .add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+            .add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+            .add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+            .add(COMMAND_SET_REPEAT_MODE)
+            .add(COMMAND_SET_SHUFFLE_MODE)
+            .add(COMMAND_STOP)
 
         return builder.build()
     }
