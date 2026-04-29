@@ -4,14 +4,20 @@ import android.app.NotificationChannel
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Intent
+import android.media.AudioAttributes.USAGE_MEDIA
+import android.media.AudioManager
 import android.os.Binder
 import android.util.Log
 import android.widget.Toast
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.common.Player.STATE_IDLE
+import androidx.media3.common.audio.AudioFocusManager
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
@@ -111,6 +117,14 @@ class PlaybackService : MediaLibraryService(),
     private var keepAlive: Boolean = true
     private val binder = MusicBinder()
 
+    private val attributes = AudioAttributes.Builder().apply {
+        setUsage(C.USAGE_MEDIA)
+        setContentType(AUDIO_CONTENT_TYPE_MUSIC)
+    }.build()
+
+    private lateinit var audioFocusManager: CustomAudioFocusManager
+    private var isMusicPausedByFocusLoss = false
+
     override fun onGetSession(controller: MediaSession.ControllerInfo): MediaLibrarySession? {
         return mediaLibrarySession
     }
@@ -169,6 +183,32 @@ class PlaybackService : MediaLibraryService(),
                 setSmallIcon(R.drawable.ic_launcher_foreground)
             }
         )
+
+        audioFocusManager = CustomAudioFocusManager(applicationContext) { state ->
+            when (state) {
+                AudioManager.AUDIOFOCUS_GAIN -> {
+                    if (isMusicPausedByFocusLoss) {
+                        player.play()
+                        isMusicPausedByFocusLoss = false
+                    }
+                }
+
+                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                    if (player.playWhenReady) {
+                        player.pause()
+                        isMusicPausedByFocusLoss = true
+                    }
+                }
+
+                AudioManager.AUDIOFOCUS_LOSS -> {
+                    if (player.playWhenReady) {
+                        player.pause()
+                        isMusicPausedByFocusLoss = true
+                    }
+                }
+            }
+        }
+        audioFocusManager.setupAudioFocusRequest()
     }
 
     fun toggleLike() {

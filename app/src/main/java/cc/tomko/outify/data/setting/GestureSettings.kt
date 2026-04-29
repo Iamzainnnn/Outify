@@ -26,6 +26,42 @@ import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.ui.components.rows.SwipeGesture
 import kotlinx.serialization.Serializable
 
+// --- User-friendly display helpers ---
+
+fun GestureAction.getDisplayName(): String = when (this) {
+    GestureAction.ADD_TO_QUEUE -> "Add to queue"
+    GestureAction.PLAY_NEXT -> "Play next"
+    GestureAction.START_RADIO -> "Start radio"
+    GestureAction.ADD_TO_PLAYLIST -> "Add to playlist"
+    GestureAction.ADD_TO_FAVORITE -> "Add to favorites"
+    GestureAction.SHOW_TRACK_INFO -> "Show track info"
+    GestureAction.NONE -> "None"
+}
+
+@Composable
+fun GestureAction.DisplayIcon(modifier: Modifier = Modifier) {
+    when (this) {
+        GestureAction.ADD_TO_QUEUE -> Icon(Icons.Default.Queue, contentDescription = null, modifier = modifier)
+        GestureAction.PLAY_NEXT -> Icon(Icons.Default.MoveUp, contentDescription = null, modifier = modifier)
+        GestureAction.START_RADIO -> Icon(Icons.Default.Radio, contentDescription = null, modifier = modifier)
+        GestureAction.ADD_TO_PLAYLIST -> Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = null, modifier = modifier)
+        GestureAction.ADD_TO_FAVORITE -> Icon(Icons.Default.Favorite, contentDescription = null, modifier = modifier)
+        GestureAction.SHOW_TRACK_INFO -> Icon(Icons.Default.Info, contentDescription = null, modifier = modifier)
+        GestureAction.NONE -> Icon(Icons.Default.Info, contentDescription = null, modifier = modifier)
+    }
+}
+
+fun GestureTrigger.getDisplayName(): String = when (this) {
+    GestureTrigger.SwipeStart -> "Threshold reached"
+    GestureTrigger.SwipeEnd -> "Swiped into"
+    GestureTrigger.LongPress -> "Long press"
+}
+
+fun Side.getDisplayName(): String = when (this) {
+    Side.Start -> "Right to left"
+    Side.End -> "Left to right"
+}
+
 @Serializable
 data class GestureSetting(
     val action: GestureAction,
