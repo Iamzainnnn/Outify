@@ -1,6 +1,11 @@
 package cc.tomko.outify.ui.screens
 
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,17 +20,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.NoAccounts
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,14 +42,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,12 +68,14 @@ import cc.tomko.outify.core.model.Artist
 import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.core.model.toSpotifyUri
+import cc.tomko.outify.ui.components.SkeletonTrackRow
 import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.components.SmartImage
 import cc.tomko.outify.ui.components.rows.SwipeableTrackRowConfigured
 import cc.tomko.outify.ui.viewmodel.HomeUiState
 import cc.tomko.outify.ui.viewmodel.HomeViewModel
 import cc.tomko.outify.ui.viewmodel.TopArtist
+import cc.tomko.outify.ui.viewmodel.TopItemsDuration
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -68,6 +87,8 @@ fun SharedTransitionScope.HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val username by viewModel.username.collectAsState(initial = "User")
     val userAvatarUrl by viewModel.userImageUrl.collectAsState(initial = null)
+    val selectedDuration by viewModel.selectedDuration.collectAsState(initial = TopItemsDuration.SHORT_TERM)
+    var durationExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.refreshPlaybackLoginState()
@@ -115,6 +136,8 @@ fun SharedTransitionScope.HomeScreen(
                         topArtists = state.topArtists,
                         topTracks = state.topTracks,
                         isPlaybackLoggedIn = isPlaybackLoggedIn,
+                        selectedDuration = selectedDuration,
+                        onDurationChange = { viewModel.setDuration(it) },
                         onSettingsClick = {
                             backStack.add(Route.SettingsScreen)
                         },
@@ -132,6 +155,8 @@ fun SharedTransitionScope.HomeScreen(
                         onTrackClick = {
                             viewModel.loadTrack(it)
                         },
+                        durationExpanded = durationExpanded,
+                        onDurationExpandedChange = { durationExpanded = it },
                     )
                 }
 
@@ -223,7 +248,7 @@ private fun NotAuthenticatedContent(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SharedTransitionScope.HomeContent(
     username: String?,
@@ -233,75 +258,51 @@ private fun SharedTransitionScope.HomeContent(
     isPlaybackLoggedIn: Boolean,
     topArtists: List<TopArtist>,
     topTracks: List<Track>,
+    selectedDuration: TopItemsDuration,
+    onDurationChange: (TopItemsDuration) -> Unit,
     onSettingsClick: () -> Unit,
     onAccountClick: () -> Unit,
     onArtistClick: (uri: String) -> Unit,
     onArtworkClick: (album: Album) -> Unit,
     onTrackClick: (track: Track) -> Unit,
+    durationExpanded: Boolean,
+    onDurationExpandedChange: (Boolean) -> Unit,
 ) {
+    val isLoading = topArtists.isEmpty() || topTracks.isEmpty()
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 24.dp)
     ) {
         item {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 24.dp, end = 8.dp, top = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Welcome back,\n${username ?: "User"}!",
-                    style = MaterialTheme.typography.headlineLargeEmphasized,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
-
-                Box {
-                    IconButton(onClick = onAccountClick) {
-                        SmartImage(
-                            url = userAvatarUrl
-                        )
-                    }
-
-                    if (!isPlaybackLoggedIn) {
-                        Icon(
-                            imageVector = Icons.Default.Warning,
-                            contentDescription = "Not logged in",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .size(16.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.surface,
-                                    shape = CircleShape
-                                )
-                                .padding(2.dp)
-                        )
-                    }
-                }
-
-                IconButton(onClick = onSettingsClick) {
-                    Icon(
-                        Icons.Default.Settings,
-                        contentDescription = "Settings"
-                    )
-                }
-            }
+            HeaderSection(
+                username = username,
+                userAvatarUrl = userAvatarUrl,
+                isPlaybackLoggedIn = isPlaybackLoggedIn,
+                selectedDuration = selectedDuration,
+                onDurationChange = onDurationChange,
+                onSettingsClick = onSettingsClick,
+                onAccountClick = onAccountClick,
+                durationExpanded = durationExpanded,
+                onDurationExpandedChange = { onDurationExpandedChange(it) }
+            )
         }
 
-        if (topArtists.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = "Top Artists",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
-            }
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "Top Artists",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+        }
 
+        if (isLoading) {
+            item {
+                SkeletonArtistRow()
+            }
+        } else if (topArtists.isNotEmpty()) {
             item {
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
@@ -318,17 +319,21 @@ private fun SharedTransitionScope.HomeContent(
             }
         }
 
-        if (topTracks.isNotEmpty()) {
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Top Tracks",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
-            }
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Top Tracks",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+        }
 
+        if (isLoading) {
+            items(10) {
+                SkeletonTrackRow()
+            }
+        } else if (topTracks.isNotEmpty()) {
             items(topTracks.take(10)) { track ->
                 SwipeableTrackRowConfigured(
                     track,
@@ -434,5 +439,164 @@ private fun ErrorContent(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.error,
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun HeaderSection(
+    username: String?,
+    userAvatarUrl: String?,
+    isPlaybackLoggedIn: Boolean,
+    selectedDuration: TopItemsDuration,
+    onDurationChange: (TopItemsDuration) -> Unit,
+    onSettingsClick: () -> Unit,
+    onAccountClick: () -> Unit,
+    durationExpanded: Boolean,
+    onDurationExpandedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, end = 24.dp, top = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Welcome back,\n${username ?: "User"}!",
+                style = MaterialTheme.typography.headlineLargeEmphasized,
+                fontWeight = FontWeight.Bold,
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            ExposedDropdownMenuBox(
+                expanded = durationExpanded,
+                onExpandedChange = onDurationExpandedChange
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .menuAnchor() // anchor whole row
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onDurationExpandedChange(!durationExpanded) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = selectedDuration.label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                            .size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                ExposedDropdownMenu(
+                    expanded = durationExpanded,
+                    onDismissRequest = { onDurationExpandedChange(false) },
+                    modifier = Modifier.wrapContentWidth()
+                ) {
+                    TopItemsDuration.entries.forEach { duration ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = duration.label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (duration == selectedDuration)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            },
+                            onClick = {
+                                onDurationChange(duration)
+                                onDurationExpandedChange(false)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        Row {
+            IconButton(onClick = onAccountClick) {
+                SmartImage(
+                    url = userAvatarUrl
+                )
+            }
+
+            if (!isPlaybackLoggedIn) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Not logged in",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = CircleShape
+                        )
+                        .padding(2.dp)
+                )
+            }
+
+            IconButton(onClick = onSettingsClick) {
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Settings"
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkeletonArtistRow() {
+    val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "skeletonAlpha"
+    )
+
+    LazyRow(
+        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(10) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(100.dp)
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = alpha),
+                ) {}
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(4.dp)),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = alpha),
+                ) {}
+            }
+        }
     }
 }

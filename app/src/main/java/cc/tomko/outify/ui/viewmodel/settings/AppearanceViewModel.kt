@@ -75,4 +75,10 @@ class AppearanceViewModel @Inject constructor(
             settingsRepository.setHighContrastCompat(enabled)
         }
     }
+
+    fun setFontScale(scale: Float) {
+        viewModelScope.launch {
+            settingsRepository.setFontScale(scale)
+        }
+    }
 }

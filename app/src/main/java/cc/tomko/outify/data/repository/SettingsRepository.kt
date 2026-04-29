@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import cc.tomko.outify.data.setting.GestureAction
 import cc.tomko.outify.data.setting.GestureSetting
@@ -55,6 +56,7 @@ class SettingsRepository @Inject constructor(
             val DYNAMIC_THEME = booleanPreferencesKey("dynamic_theme")
             val PURE_BLACK = booleanPreferencesKey("pure_black")
             val HIGH_CONTRAST_COMPAT = booleanPreferencesKey("high_contrast_compat")
+            val FONT_SCALE = floatPreferencesKey("font_scale")
 
             val MONOCHROME_IMAGES = booleanPreferencesKey("monochrome_images")
             val MONOCHROME_ALBUMS = booleanPreferencesKey("monochrome_albums")
@@ -94,6 +96,9 @@ class SettingsRepository @Inject constructor(
             dynamicTheme = prefs[Keys.Interface.DYNAMIC_THEME] ?: true,
             pureBlack = prefs[Keys.Interface.PURE_BLACK] ?: false,
             highContrastCompat = prefs[Keys.Interface.HIGH_CONTRAST_COMPAT] ?: false,
+
+            // Font scaling
+            fontScale = prefs[Keys.Interface.FONT_SCALE] ?: 1.0f,
 
             // Monochrome
             monochromeImages = monochrome,
@@ -239,6 +244,10 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.Interface.HIGH_CONTRAST_COMPAT] = enabled }
     }
 
+    suspend fun setFontScale(scale: Float) {
+        dataStore.edit { it[Keys.Interface.FONT_SCALE] = scale }
+    }
+
     suspend fun setMonochromeImages(enabled: Boolean) {
         dataStore.edit { it[Keys.Interface.MONOCHROME_IMAGES] = enabled }
     }
@@ -328,6 +337,9 @@ data class InterfaceSettings(
     val dynamicTheme: Boolean = true,
     val pureBlack: Boolean = false,
     val highContrastCompat: Boolean = false,
+
+    // Font scaling (1.0 = uniform/no system scaling)
+    val fontScale: Float = 1.0f,
 
     // Monochrome
     val monochromeImages: Boolean = false,

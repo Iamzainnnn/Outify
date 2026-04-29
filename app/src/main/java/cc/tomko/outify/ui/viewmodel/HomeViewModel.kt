@@ -45,7 +45,14 @@ data class TopArtist(
     val uri: String,
     val name: String,
     val imageUrl: String?,
+    val rank: Int = 0,
 )
+
+enum class TopItemsDuration(val value: String, val label: String) {
+    SHORT_TERM("short_term", "Last 4 weeks"),
+    MEDIUM_TERM("medium_term", "Last 6 months"),
+    LONG_TERM("long_term", "Last year"),
+}
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -61,6 +68,9 @@ class HomeViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState
+
+    private val _selectedDuration = MutableStateFlow(TopItemsDuration.SHORT_TERM)
+    val selectedDuration: StateFlow<TopItemsDuration> = _selectedDuration.asStateFlow()
 
     val userId: Flow<String?> = settingsRepository.userId
     val username: Flow<String?> = settingsRepository.username
@@ -99,6 +109,13 @@ class HomeViewModel @Inject constructor(
         _isPlaybackLoggedIn.value = authManager.hasCachedCredentials()
     }
 
+    fun setDuration(duration: TopItemsDuration) {
+        if (_selectedDuration.value != duration) {
+            _selectedDuration.value = duration
+            loadData()
+        }
+    }
+
     fun loadTrack(track: Track) {
         // TODO: set the context
         spirc.load(track.toOutifyUri())
@@ -119,7 +136,9 @@ class HomeViewModel @Inject constructor(
                     return@launch
                 }
 
-                val topArtistsJson = spClient.getUserTop("artists") ?: ""
+                val duration = _selectedDuration.value.value
+
+                val topArtistsJson = spClient.getUserTop("artists", duration) ?: ""
                 val topArtistsError = NativeErrorHandler.handleErrorJson(topArtistsJson, "top artists")
                 if (topArtistsError != null) {
                     _uiState.value = HomeUiState.NotAuthenticated
@@ -127,7 +146,7 @@ class HomeViewModel @Inject constructor(
                     return@launch
                 }
 
-                val topTracksJson = spClient.getUserTop("tracks") ?: ""
+                val topTracksJson = spClient.getUserTop("tracks", duration) ?: ""
                 val topTracksError = NativeErrorHandler.handleErrorJson(topTracksJson, "top tracks")
                 if (topTracksError != null) {
                     _uiState.value = HomeUiState.NotAuthenticated
@@ -175,11 +194,12 @@ class HomeViewModel @Inject constructor(
     private fun parseTopArtists(raw: String): List<TopArtist> {
         return try {
             val data = json.decodeFromString<TopArtistsResponse>(raw)
-            data.items.map { artist ->
+            data.items.mapIndexed { index, artist ->
                 TopArtist(
                     uri = artist.uri ?: "",
                     name = artist.name,
-                    imageUrl = artist.images?.firstOrNull()?.url
+                    imageUrl = artist.images?.firstOrNull()?.url,
+                    rank = index + 1
                 )
             }
         } catch (e: Exception) {

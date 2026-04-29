@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.PlayCircleOutline
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import cc.tomko.outify.ui.components.PreferenceHeader
 import cc.tomko.outify.ui.components.PreferenceSectionHeader
+import cc.tomko.outify.ui.components.PreferenceEntry
 import cc.tomko.outify.ui.components.SwitchPreferenceEntry
 import cc.tomko.outify.data.repository.InterfaceSettings
 import cc.tomko.outify.ui.viewmodel.settings.AppearanceViewModel
@@ -130,6 +132,28 @@ fun AppearanceSettingScreen(
                         }
                     )
                 }
+            }
+        }
+
+        item {
+            PreferenceSectionHeader("Font")
+
+            ElevatedCard {
+                PreferenceEntry(
+                    title = { Text("Font scale") },
+                    description = "%.1f×".format(settings.fontScale),
+                    icon = { Icon(Icons.Default.DesignServices, contentDescription = null) },
+                    content = {
+                        Slider(
+                            value = settings.fontScale,
+                            onValueChange = { viewModel.setFontScale(it) },
+                            valueRange = 0.5f..2.0f,
+                            steps = 14,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        )
+                    },
+                    onClick = { },
+                )
             }
         }
 

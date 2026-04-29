@@ -38,7 +38,7 @@ class SpClient @Inject constructor() {
      * Default type = artists
      * Possible types: artists, tracks
      */
-    external fun getUserTop(type: String? = null): String?
+    external fun getUserTop(type: String? = null, timeRange: String? = null): String?
 
     /**
      * Gets the available devices to stream playback from.

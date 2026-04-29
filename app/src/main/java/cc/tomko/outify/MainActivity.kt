@@ -39,6 +39,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -200,140 +202,154 @@ class MainActivity : ComponentActivity() {
         val swipeSettings by viewModel.swipeSettings.collectAsState(initial = interfaceSettings.gestureSettings)
         val currentTrack by viewModel.currentTrack.collectAsState(initial = null)
 
+        val density = LocalDensity.current
+        val fixedDensity = Density(density.density, fontScale = interfaceSettings.fontScale)
+
         OutifyTheme(
             track = currentTrack,
             enableDynamicTheme = interfaceSettings.dynamicTheme,
             pureBlack = interfaceSettings.pureBlack,
             highContrastCompat = interfaceSettings.highContrastCompat,
             content = {
-                SharedTransitionLayout {
-                    CompositionLocalProvider(
-                        LocalSharedTransitionScope provides this,
-                        LocalSwipeGestureSettings provides swipeSettings,
-                        LocalSwipeActionHandler provides viewModel.swipeActionHandler,
-                        LocalUiSettings provides interfaceSettings,
-                    ) {
-                        Scaffold(
-                            bottomBar = {
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = slideInVertically(
-                                        initialOffsetY = { fullHeight -> fullHeight }
-                                    ) + fadeIn(),
-                                    exit = slideOutVertically(
-                                        targetOffsetY = { fullHeight -> fullHeight }
-                                    ) + fadeOut(),
-                                ) {
-                                    OutifyBottomNav(
-                                        items = routes,
-                                        selectedId = selectedId,
-                                        onItemSelected = { item -> backStack.add(item.route) }
-                                    )
+                CompositionLocalProvider(
+                    LocalDensity provides fixedDensity
+                ) {
+                    SharedTransitionLayout {
+                        CompositionLocalProvider(
+                            LocalSharedTransitionScope provides this,
+                            LocalSwipeGestureSettings provides swipeSettings,
+                            LocalSwipeActionHandler provides viewModel.swipeActionHandler,
+                            LocalUiSettings provides interfaceSettings,
+                        ) {
+                            Scaffold(
+                                bottomBar = {
+                                    AnimatedVisibility(
+                                        visible = true,
+                                        enter = slideInVertically(
+                                            initialOffsetY = { fullHeight -> fullHeight }
+                                        ) + fadeIn(),
+                                        exit = slideOutVertically(
+                                            targetOffsetY = { fullHeight -> fullHeight }
+                                        ) + fadeOut(),
+                                    ) {
+                                        OutifyBottomNav(
+                                            items = routes,
+                                            selectedId = selectedId,
+                                            onItemSelected = { item -> backStack.add(item.route) }
+                                        )
+                                    }
                                 }
-                            }
-                        ) { innerPadding ->
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(bottom = innerPadding.calculateBottomPadding())
-                            ) {
-                                NavigationRoot(
-                                    backStack,
-                                    modifier = Modifier.matchParentSize(),
-                                    bottomPadding = if (currentTrack != null) 88.dp else 0.dp
-                                )
-
-                                InAppNotificationHost(
-                                    modifier = Modifier.matchParentSize(),
-                                    maxWidthFraction = 0.92f
-                                )
-
-                                GlobalPopupHost(
-                                    backStack = backStack,
-                                    addToQueue = { viewModel.addToQueue(it.toUriString()) },
-                                    playNext = { viewModel.playNext(it.toUriString()) },
-                                    startRadio = { viewModel.startRadio(it) },
-                                    openRadio = {
-                                        val uri = viewModel.getRadioUri(it) ?: return@GlobalPopupHost
-                                        backStack.add(Route.PlaylistScreen(uri))
-                                    },
-                                    addToPlaylist = { viewModel.addToPlaylist(it) },
-                                    toggleLike = { viewModel.favorite(it.toUriString()) },
-
-                                    addToPlaylistViewModel = addToPlaylistViewModel,
-                                    playbackDevicesViewModel = playbackDevicesViewModel,
-                                )
-
-                                AnimatedVisibility(
-                                    visible = currentTrack != null,
-                                    enter = slideInVertically(
-                                        initialOffsetY = { fullHeight -> fullHeight }
-                                    ) + fadeIn(),
-                                    exit = slideOutVertically(
-                                        targetOffsetY = { fullHeight -> fullHeight }
-                                    ) + fadeOut(),
-                                    modifier = Modifier.align(Alignment.BottomCenter)
+                            ) { innerPadding ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(bottom = innerPadding.calculateBottomPadding())
                                 ) {
-                                    PlayerSheet(
-                                        sheetState = playerSheetState,
-                                        listState = playerListState,
-                                        miniPlayerHeight = 88.dp,
-                                        miniContent = { progress ->
-                                            MiniPlayer(
-                                                viewModel = miniPlayerViewModel,
-                                                onDismiss = {
-                                                    miniPlayerViewModel.setTrack(null)
-                                                },
-                                                modifier = Modifier.padding(
-                                                    horizontal = 12.dp,
-                                                    vertical = 12.dp
-                                                ),
-                                                showQueue = { sheetState.show() },
-                                                onClick = {
-                                                    scope.launch { playerSheetState.expand() }
-                                                }
-                                            )
+                                    NavigationRoot(
+                                        backStack,
+                                        modifier = Modifier.matchParentSize(),
+                                        bottomPadding = if (currentTrack != null) 88.dp else 0.dp
+                                    )
+
+                                    InAppNotificationHost(
+                                        modifier = Modifier.matchParentSize(),
+                                        maxWidthFraction = 0.92f
+                                    )
+
+                                    GlobalPopupHost(
+                                        backStack = backStack,
+                                        addToQueue = { viewModel.addToQueue(it.toUriString()) },
+                                        playNext = { viewModel.playNext(it.toUriString()) },
+                                        startRadio = { viewModel.startRadio(it) },
+                                        openRadio = {
+                                            val uri =
+                                                viewModel.getRadioUri(it) ?: return@GlobalPopupHost
+                                            backStack.add(Route.PlaylistScreen(uri))
                                         },
-                                        fullContent = { progress ->
-                                            PlayerScreen(
-                                                viewModel = playerViewModel,
-                                                listState = playerListState,
-                                                onArtistClick = {
-                                                    scope.launch {
-                                                        playerSheetState.collapse()
+                                        addToPlaylist = { viewModel.addToPlaylist(it) },
+                                        toggleLike = { viewModel.favorite(it.toUriString()) },
+
+                                        addToPlaylistViewModel = addToPlaylistViewModel,
+                                        playbackDevicesViewModel = playbackDevicesViewModel,
+                                    )
+
+                                    AnimatedVisibility(
+                                        visible = currentTrack != null,
+                                        enter = slideInVertically(
+                                            initialOffsetY = { fullHeight -> fullHeight }
+                                        ) + fadeIn(),
+                                        exit = slideOutVertically(
+                                            targetOffsetY = { fullHeight -> fullHeight }
+                                        ) + fadeOut(),
+                                        modifier = Modifier.align(Alignment.BottomCenter)
+                                    ) {
+                                        PlayerSheet(
+                                            sheetState = playerSheetState,
+                                            listState = playerListState,
+                                            miniPlayerHeight = 88.dp,
+                                            miniContent = { progress ->
+                                                MiniPlayer(
+                                                    viewModel = miniPlayerViewModel,
+                                                    onDismiss = {
+                                                        miniPlayerViewModel.setTrack(null)
+                                                    },
+                                                    modifier = Modifier.padding(
+                                                        horizontal = 12.dp,
+                                                        vertical = 12.dp
+                                                    ),
+                                                    showQueue = { sheetState.show() },
+                                                    onClick = {
+                                                        scope.launch { playerSheetState.expand() }
                                                     }
-                                                    backStack.add(Route.ArtistScreen(it.uri))
-                                                },
-                                                onMoreOptions = {
-                                                    val isLiked = playerViewModel.isLiked.value
-                                                    GlobalPopupController.show(PopupSpec.TrackInfo(currentTrack!!, action = {
+                                                )
+                                            },
+                                            fullContent = { progress ->
+                                                PlayerScreen(
+                                                    viewModel = playerViewModel,
+                                                    listState = playerListState,
+                                                    onArtistClick = {
                                                         scope.launch {
                                                             playerSheetState.collapse()
                                                         }
-                                                    }, isLiked = isLiked))
-                                                }
-                                            )
-                                        }
-                                    )
+                                                        backStack.add(Route.ArtistScreen(it.uri))
+                                                    },
+                                                    onMoreOptions = {
+                                                        val isLiked = playerViewModel.isLiked.value
+                                                        GlobalPopupController.show(
+                                                            PopupSpec.TrackInfo(
+                                                                currentTrack!!,
+                                                                action = {
+                                                                    scope.launch {
+                                                                        playerSheetState.collapse()
+                                                                    }
+                                                                },
+                                                                isLiked = isLiked
+                                                            )
+                                                        )
+                                                    }
+                                                )
+                                            }
+                                        )
+                                    }
                                 }
                             }
-                        }
 
-                        if (sheetState.visible.value) {
-                            QueueBottomSheet(
-                                sheetState = sheetState.sheetState,
-                                viewModel = queueViewModel,
-                                multiQueueViewModel = multiQueueViewModel,
-                                onArtistClick = {
-                                    backStack.add(Route.ArtistScreen(it.uri))
-                                },
-                                onArtworkClick = {
-                                    backStack.add(Route.TrackScreen(it.uri))
-                                },
-                                onDismissRequest = {
-                                    sheetState.hide()
-                                }
-                            )
+                            if (sheetState.visible.value) {
+                                QueueBottomSheet(
+                                    sheetState = sheetState.sheetState,
+                                    viewModel = queueViewModel,
+                                    multiQueueViewModel = multiQueueViewModel,
+                                    onArtistClick = {
+                                        backStack.add(Route.ArtistScreen(it.uri))
+                                    },
+                                    onArtworkClick = {
+                                        backStack.add(Route.TrackScreen(it.uri))
+                                    },
+                                    onDismissRequest = {
+                                        sheetState.hide()
+                                    }
+                                )
+                            }
                         }
                     }
                 }
