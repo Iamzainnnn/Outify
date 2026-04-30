@@ -67,9 +67,13 @@ fun GlobalPopupHost(
                     onAddToPlaylist = { addToPlaylist(popup.track) },
                     onToggleLike = { toggleLike(popup.track.toOutifyUri()) },
                     onStartRadio = { startRadio(popup.track) },
-                    onOpenRadio = { openRadio(popup.track) },
+                    onOpenRadio = {
+                        openRadio(popup.track)
+                        popup.action?.invoke()
+                    },
                     onScrollToLiked = {
                         scope.launch {
+                            popup.action?.invoke()
                             backStack.add(Route.LikedScreen(scrollToIndex = popup.likedTrackIndex ?: -1))
                             GlobalPopupController.dismiss(popup.id)
                         }
