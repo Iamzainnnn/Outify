@@ -9,6 +9,7 @@ import android.media.AudioManager
 import android.os.Binder
 import android.util.Log
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.C.AUDIO_CONTENT_TYPE_MUSIC
@@ -134,6 +135,15 @@ class PlaybackService : MediaLibraryService(),
         super.onCreate()
 
         createNotificationChannel()
+
+        startForeground(
+            NOTIFICATION_ID,
+            NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("Outify")
+                .setContentText("Loading...")
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .build()
+        )
 
         mediaLibrarySessionCallback.apply {
             service = this@PlaybackService
@@ -311,9 +321,7 @@ class PlaybackService : MediaLibraryService(),
         if(!keepAlive)
             return
 
-        if(player.isPlaying) {
-            super.onUpdateNotification(session, startInForegroundRequired)
-        }
+        super.onUpdateNotification(session, startInForegroundRequired)
     }
 
     override fun onDestroy() {
