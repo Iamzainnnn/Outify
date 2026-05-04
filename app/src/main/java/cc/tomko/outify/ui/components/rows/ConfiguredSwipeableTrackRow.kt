@@ -36,6 +36,11 @@ fun SharedTransitionScope.SwipeableTrackRowConfigured(
     isTransitioning: Boolean = false,
     isSelected: Boolean = false,
 
+    /**
+     * Instead of showing artists names show the album name
+     */
+    showAlbumName: Boolean = false,
+
     onRowClick: (() -> Unit)? = null,
     onRowLongClick: (() -> Unit)? = null,
     onArtworkClick: (() -> Unit)? = null,
@@ -75,6 +80,9 @@ fun SharedTransitionScope.SwipeableTrackRowConfigured(
                 isLoaded = currentTrack?.uri.equals(track.uri),
                 isPlaying = isPlaybackPlaying,
                 isSelected = isSelected,
+
+                showAlbumName = showAlbumName,
+                albumName = track.album?.name,
 
                 onRowClick = onRowClick,
                 onRowLongClick = {

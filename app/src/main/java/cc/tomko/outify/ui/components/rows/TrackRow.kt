@@ -56,6 +56,12 @@ fun TrackRow(
     density: TrackRowDensity = TrackRowDensity.Default,
     trailingContent: @Composable (() -> Unit)? = null,
 
+    /**
+     * Instead of showing artists names show the album name
+     */
+    showAlbumName: Boolean = false,
+    albumName: String? = null,
+
     // Interaction handlers
     onRowClick: (() -> Unit)? = null,
     onRowLongClick: (() -> Unit)? = null,
@@ -166,34 +172,52 @@ fun TrackRow(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 // Artists
-                Row(modifier = modifier) {
-                    artists.forEachIndexed { index, artist ->
+                if(!showAlbumName) {
+                    Row(modifier = modifier) {
+                        artists.forEachIndexed { index, artist ->
 
-                        Text(
-                            text = artist.name,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier
-                                .then(
-                                    if (onArtistClick != null) {
-                                        Modifier.combinedClickable(
-                                            onClick = { onArtistClick(artist) },
-                                            onLongClick = {}
-                                        )
-                                    } else Modifier
-                                )
-                                .testTag("trackrow.artist.$index")
-                        )
-
-                        // Add comma separator except after last
-                        if (index < artists.lastIndex) {
                             Text(
-                                text = ", ",
-                                style = MaterialTheme.typography.bodySmall
+                                text = artist.name,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier
+                                    .then(
+                                        if (onArtistClick != null) {
+                                            Modifier.combinedClickable(
+                                                onClick = { onArtistClick(artist) },
+                                                onLongClick = {}
+                                            )
+                                        } else Modifier
+                                    )
+                                    .testTag("trackrow.artist.$index")
                             )
+
+                            // Add comma separator except after last
+                            if (index < artists.lastIndex) {
+                                Text(
+                                    text = ", ",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
                         }
                     }
+                } else {
+                    Text(
+                        text = albumName ?: "",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .then(
+                                if (onArtistClick != null) {
+                                    Modifier.combinedClickable(
+                                        onClick = { onArtworkClick?.invoke() },
+                                        onLongClick = {}
+                                    )
+                                } else Modifier
+                            )
+                    )
                 }
             }
 

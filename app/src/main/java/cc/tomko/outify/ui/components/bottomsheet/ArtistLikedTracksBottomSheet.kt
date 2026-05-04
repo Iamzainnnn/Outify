@@ -179,6 +179,7 @@ fun SharedTransitionScope.ArtistLikedTracksBottomSheet(
                                 track = track,
                                 currentTrack = currentTrack,
                                 isPlaybackPlaying = isPlaybackPlaying,
+                                showAlbumName = true,
                                 onRowClick = remember(track.uri) {
                                     {
                                         spirc.load(null, track.toSpotifyUri())

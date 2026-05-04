@@ -205,6 +205,7 @@ fun SharedTransitionScope.ArtistDetailScreen(
                             currentTrack = currentTrack,
                             isLiked = track.id in likedTrackIds,
                             isPlaybackPlaying = isPlaybackPlaying,
+                            showAlbumName = true,
                             onRowClick = remember(track.uri) {
                                 {
                                     spirc.load(artist.toSpotifyUri(), track.toSpotifyUri())
