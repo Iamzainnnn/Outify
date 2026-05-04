@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cc.tomko.outify.ALBUM_COVER_URL
 import cc.tomko.outify.core.model.CoverSize
+import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.core.model.getCover
 import cc.tomko.outify.core.model.toSpotifyUri
@@ -107,6 +108,8 @@ fun SharedTransitionScope.ArtistLikedTracksBottomSheet(
                 val isPlaybackPlaying by viewModel.isPlaying.collectAsState(initial = false)
                 val spirc = viewModel.spirc
 
+                val context = OutifyUri.ArtistLiked(artistState.id)
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -152,12 +155,10 @@ fun SharedTransitionScope.ArtistLikedTracksBottomSheet(
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            val artistUri = artistState.toSpotifyUri()
-
-                            IconButton(onClick = { spirc.shuffleLoad(artistState.uri) }) {
+                            IconButton(onClick = { spirc.shuffleLoad(context.toUriString()) }) {
                                 Icon(Icons.Rounded.Shuffle, contentDescription = "Shuffle")
                             }
-                            IconButton(onClick = { spirc.load(artistUri) }) {
+                            IconButton(onClick = { spirc.load(context) }) {
                                 Icon(Icons.Rounded.PlayArrow, contentDescription = "Play in order")
                             }
                         }
@@ -182,7 +183,7 @@ fun SharedTransitionScope.ArtistLikedTracksBottomSheet(
                                 showAlbumName = true,
                                 onRowClick = remember(track.uri) {
                                     {
-                                        spirc.load(null, track.toSpotifyUri())
+                                        spirc.load(context, track.toSpotifyUri())
                                         // Optimistic UI
                                         viewModel.setTrack(track)
                                     }
