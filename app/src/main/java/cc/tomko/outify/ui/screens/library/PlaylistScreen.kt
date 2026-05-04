@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Shuffle
 import cc.tomko.outify.ui.components.PlaylistDetailSkeleton
+import cc.tomko.outify.ui.components.SkeletonTrackRow
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
@@ -72,6 +73,7 @@ import cc.tomko.outify.ui.components.rows.SwipeableTrackRowConfigured
 import cc.tomko.outify.ui.components.user.UserChipAvatar
 import cc.tomko.outify.ui.screens.MaterialSearchBar
 import cc.tomko.outify.ui.viewmodel.detail.PlaylistDetailViewModel
+import cc.tomko.outify.ui.viewmodel.detail.PlaylistRow
 import cc.tomko.outify.ui.viewmodel.detail.PlaylistUiState
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -131,10 +133,14 @@ fun SharedTransitionScope.PlaylistScreen(
             }
             val showAvatarCount = 4
 
-            val filteredTracks = remember(tracks, searchQuery, viewModel) {
-                if (searchQuery.isBlank()) tracks
-                else tracks.filter { item ->
-                    val state = viewModel.getTrackState(item.uri)
+            val playlistRows = remember(playlist.uri, tracks) {
+                viewModel.buildPlaylistRows(playlist)
+            }
+
+            val filteredRows = remember(playlistRows, searchQuery, viewModel) {
+                if (searchQuery.isBlank()) playlistRows
+                else playlistRows.filter { row ->
+                    val state = viewModel.getTrackState(row.trackUri)
                     state?.name?.contains(searchQuery, ignoreCase = true) == true ||
                     state?.artists?.any { it.name.contains(searchQuery, ignoreCase = true) } == true
                 }
@@ -201,10 +207,18 @@ fun SharedTransitionScope.PlaylistScreen(
                         }
                     }
 
-                    itemsIndexed(filteredTracks, key = { idx,track -> "${track.id}_${idx}" }) { idx,playlistItem ->
-                        val track by remember(playlistItem.uri) {
-                            viewModel.trackFlow(playlistItem.uri)
+                    items(
+                        items = filteredRows,
+                        key = { it.key },
+                        contentType = { "playlist_track_row" }
+                    ) { row ->
+                        val track by remember(row.trackUri) {
+                            viewModel.trackFlow(row.trackUri)
                         }.collectAsState(initial = null)
+
+                        LaunchedEffect(row.trackUri) {
+                            if (track == null) viewModel.getOrLoadTrack(row.trackUri)
+                        }
 
                         if (track != null) {
                             SwipeableTrackRowConfigured(
@@ -224,7 +238,7 @@ fun SharedTransitionScope.PlaylistScreen(
                                 },
                                 onArtistClick = onArtistClick,
                                 trailingContent = {
-                                    val author = authorMap[playlistItem.attributes.addedBy]
+                                    val author = authorMap[row.addedBy]
 
                                     author?.let {
                                         UserChipAvatar(
@@ -237,10 +251,8 @@ fun SharedTransitionScope.PlaylistScreen(
                                     }
                                 }
                             )
-                        } else  {
-                            LaunchedEffect(playlistItem.uri) {
-                                viewModel.getOrLoadTrack(playlistItem.uri)
-                            }
+                        } else {
+                            SkeletonTrackRow(showSubtitle = false)
                         }
                     }
                 }

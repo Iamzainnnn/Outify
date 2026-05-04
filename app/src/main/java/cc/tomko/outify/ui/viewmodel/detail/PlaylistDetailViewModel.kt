@@ -31,6 +31,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import cc.tomko.outify.core.SpClient
 import kotlinx.serialization.json.Json
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 
 @HiltViewModel
 class PlaylistDetailViewModel @Inject constructor(
@@ -99,6 +101,9 @@ class PlaylistDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<PlaylistUiState>(PlaylistUiState.Loading)
     val uiState: StateFlow<PlaylistUiState> = _uiState
 
+    private val _trackMetadataMap = mutableStateMapOf<String, Track>()
+    val trackMetadataMap: Map<String, Track> = _trackMetadataMap
+
     private val _trackMetadata = MutableStateFlow<Map<String, Track>>(emptyMap())
     val trackMetadata: StateFlow<Map<String, Track>> = _trackMetadata.asStateFlow()
 
@@ -161,19 +166,30 @@ class PlaylistDetailViewModel @Inject constructor(
             .distinctUntilChanged()
 
     fun getTrackState(uri: String): Track? =
-        trackMetadata.value[uri]
+        _trackMetadataMap[uri] ?: trackMetadata.value[uri]
 
     suspend fun getOrLoadTrack(uri: String): Track? {
+        _trackMetadataMap[uri]?.let { return it }
         trackMetadata.value[uri]?.let { return it }
 
         val fetched = withContext(Dispatchers.IO) {
             metadata.getTrackMetadata(listOf(uri)).firstOrNull()
         } ?: return null
 
+        _trackMetadataMap[uri] = fetched
         _trackMetadata.update { current -> current + (uri to fetched) }
 
         return fetched
     }
+
+    fun buildPlaylistRows(playlist: Playlist): List<PlaylistRow> =
+        playlist.contents.mapIndexed { index, item ->
+            PlaylistRow(
+                key = "${playlist.uri}:$index:${item.uri}",
+                trackUri = item.uri,
+                addedBy = item.attributes.addedBy
+            )
+        }
 
     suspend fun getArtworkUrl(playlist: Playlist): String {
         return playlist.getCover(metadata) ?: "unknown cover"
@@ -214,6 +230,12 @@ class PlaylistDetailViewModel @Inject constructor(
         playbackStateHolder.setTrack(track)
     }
 }
+
+data class PlaylistRow(
+    val key: String,
+    val trackUri: String,
+    val addedBy: String,
+)
 
 sealed interface PlaylistUiState {
     object Loading : PlaylistUiState
