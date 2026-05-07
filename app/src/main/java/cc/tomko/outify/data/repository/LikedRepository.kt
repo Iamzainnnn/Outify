@@ -10,10 +10,10 @@ import cc.tomko.outify.data.dao.LikedDao
 import cc.tomko.outify.data.database.track.LikedTrackEntity
 import cc.tomko.outify.data.metadata.Metadata
 import cc.tomko.outify.data.metadata.TrackMetadataHelper
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -32,16 +32,18 @@ class LikedRepository @Inject constructor(
         private const val SUBSTRING_OFFSET = "spotify:track:".length
     }
 
-    suspend fun syncLikedTracks(forceSync: Boolean = false): Boolean {
+    suspend fun syncLikedTracks(
+        forceSync: Boolean = false,
+        onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
+    ): Boolean = withContext(Dispatchers.IO) {
         val pageSize = 20
         val perPageDelayMs = 100L
         val maxRetries = 3
         val initialBackoffMs = 500L
-        val scope = CoroutineScope(Dispatchers.IO)
 
         try {
             try {
-                if(!syncLikedUris() && !forceSync) return false
+                if (!syncLikedUris() && !forceSync) return@withContext false
             } catch (t: Throwable) {
                 Log.w(TAG, "syncLikedUris failed (continuing): ${t.message}", t)
             }
@@ -50,6 +52,7 @@ class LikedRepository @Inject constructor(
             var offset = 0
             var anyFetched = false
             var batchNum = 0
+            val total = likedDao.getCount()
 
             while (true) {
                 val ids = likedDao.getIdsWindow(limit = pageSize, offset = offset)
@@ -76,7 +79,7 @@ class LikedRepository @Inject constructor(
                         val isTransient = true
                         if (attempt >= maxRetries || !isTransient) {
                             Log.e(TAG, "Failed fetching metadata for liked tracks (offset=$offset).", e)
-                            return false
+                            return@withContext false
                         } else {
                             Log.w(TAG, "Transient failure fetching metadata (offset=$offset), retrying in $backoff ms (attempt=$attempt).", e)
                             delay(backoff)
@@ -84,6 +87,9 @@ class LikedRepository @Inject constructor(
                         }
                     }
                 }
+
+                val processed = min(offset + pageSize, total)
+                onProgress(processed, total)
 
                 yield()
 
@@ -93,10 +99,10 @@ class LikedRepository @Inject constructor(
             }
 
             Log.d(TAG, "syncLikedTracks finished; anyFetched=$anyFetched")
-            return true
+            return@withContext true
         } catch (t: Throwable) {
             Log.e("LikedRepository", "syncLikedTracks failed unexpectedly", t)
-            return false
+            return@withContext false
         }
     }
 

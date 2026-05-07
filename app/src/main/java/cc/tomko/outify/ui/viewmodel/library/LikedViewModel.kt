@@ -10,6 +10,7 @@ import cc.tomko.outify.core.model.getCover
 import cc.tomko.outify.data.database.toDomain
 import cc.tomko.outify.playback.PlaybackStateHolder
 import cc.tomko.outify.data.repository.LikedRepository
+import cc.tomko.outify.services.SyncNotificationManager
 import coil3.ImageLoader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -51,6 +52,7 @@ class LikedViewModel @Inject constructor(
     val imageLoader: ImageLoader,
     private val likedRepository: LikedRepository,
     private val playbackStateHolder: PlaybackStateHolder,
+    private val syncNotificationManager: SyncNotificationManager,
 ) : ViewModel() {
     val isRefreshing = MutableStateFlow(false)
     private val query = MutableStateFlow("")
@@ -124,11 +126,28 @@ class LikedViewModel @Inject constructor(
 
     fun refresh() {
         if(spirc.isUsable) {
+            syncNotificationManager.showIndeterminate()
             viewModelScope.launch {
                 isRefreshing.value = true
                 _isFetchingTracks.value = true
-                runCatching {
-                    likedRepository.syncLikedTracks()
+                var totalTracks = 0
+                val result = runCatching {
+                    likedRepository.syncLikedTracks(
+                        onProgress = { current, total ->
+                            totalTracks = total
+                            _fetchedCount.value = current
+                            syncNotificationManager.showProgress(current, total)
+                        }
+                    )
+                }
+                result.onSuccess {
+                    if (totalTracks > 0) {
+                        syncNotificationManager.showComplete(totalTracks)
+                    } else {
+                        syncNotificationManager.cancel()
+                    }
+                }.onFailure {
+                    syncNotificationManager.showError(it.message ?: "Sync failed")
                 }
                 isRefreshing.value = false
                 _isFetchingTracks.value = false

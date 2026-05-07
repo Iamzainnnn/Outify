@@ -54,6 +54,10 @@ interface LikedDao {
     @Query("SELECT COUNT(*) FROM liked_songs")
     fun observeCount(): Flow<Int>
 
+    /** Total count (suspend version for sync progress) */
+    @Query("SELECT COUNT(*) FROM liked_songs")
+    suspend fun getCount(): Int
+
     /** Wipe all cached positions (used during full re-sync) */
     @Query("DELETE FROM liked_songs")
     suspend fun clearAll()

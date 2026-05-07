@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import cc.tomko.outify.core.SpClient
 import cc.tomko.outify.data.repository.LikedRepository
 import cc.tomko.outify.services.OAuthService
+import cc.tomko.outify.services.SyncNotificationManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
@@ -28,6 +29,7 @@ sealed class SyncStatus {
 class MiscSettingsViewModel @Inject constructor(
     private val likedRepository: LikedRepository,
     private val spClient: SpClient,
+    private val syncNotificationManager: SyncNotificationManager,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -61,17 +63,29 @@ class MiscSettingsViewModel @Inject constructor(
         }
 
         OAuthService.start(context)
+        syncNotificationManager.showIndeterminate()
         viewModelScope.launch {
             _syncStatus.value = SyncStatus.Syncing
             try {
-                val urisSynced = likedRepository.syncLikedTracks(forceSync = true)
+                var totalTracks = 0
+                val urisSynced = likedRepository.syncLikedTracks(
+                    forceSync = true,
+                    onProgress = { current, total ->
+                        totalTracks = total
+                        _syncStatus.value = SyncStatus.Progress(current, total)
+                        syncNotificationManager.showProgress(current, total)
+                    }
+                )
                 if (urisSynced) {
                     _syncStatus.value = SyncStatus.Success
+                    syncNotificationManager.showComplete(totalTracks)
                 } else {
                     _syncStatus.value = SyncStatus.Error("Failed to sync liked tracks")
+                    syncNotificationManager.showError("Failed to sync liked tracks")
                 }
             } catch (e: Exception) {
                 _syncStatus.value = SyncStatus.Error(e.message ?: "Unknown error")
+                syncNotificationManager.showError(e.message ?: "Unknown error")
             } finally {
                 OAuthService.stop(context)
             }
