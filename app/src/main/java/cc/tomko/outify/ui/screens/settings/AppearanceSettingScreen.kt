@@ -65,6 +65,41 @@ fun AppearanceSettingScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {
+                PreferenceSectionHeader("Dynamic")
+
+                ElevatedCard {
+                    SwitchPreferenceEntry(
+                        title = { Text("Dynamic theme") },
+                        description = "Colorscheme will change according to current track",
+                        icon = { Icon(Icons.Default.DesignServices, contentDescription = null) },
+                        isChecked = settings.dynamicTheme,
+                        onCheckedChange = { enabled ->
+                            viewModel.setDynamicTheme(enabled)
+                        }
+                    )
+
+                    SwitchPreferenceEntry(
+                        title = { Text("Pure black") },
+                        description = "Use AMOLED black",
+                        icon = { Icon(Icons.Default.DarkMode, contentDescription = null) },
+                        isChecked = settings.pureBlack,
+                        onCheckedChange = { enabled ->
+                            viewModel.setPureBlack(enabled)
+                        }
+                    )
+
+                    SwitchPreferenceEntry(
+                        title = { Text("High contrast") },
+                        icon = { Icon(Icons.Default.Contrast, contentDescription = null) },
+                        isChecked = settings.highContrastCompat,
+                        onCheckedChange = { enabled ->
+                            viewModel.setHighContrastCompat(enabled)
+                        }
+                    )
+                }
+            }
+
+            item {
                 ElevatedCard(
                     modifier = modifier
                         .fillMaxWidth(),
@@ -167,41 +202,6 @@ fun AppearanceSettingScreen(
                             )
                         },
                         onClick = { },
-                    )
-                }
-            }
-
-            item {
-                PreferenceSectionHeader("Dynamic")
-
-                ElevatedCard {
-                    SwitchPreferenceEntry(
-                        title = { Text("Dynamic theme") },
-                        description = "Colorscheme will change according to current track",
-                        icon = { Icon(Icons.Default.DesignServices, contentDescription = null) },
-                        isChecked = settings.dynamicTheme,
-                        onCheckedChange = { enabled ->
-                            viewModel.setDynamicTheme(enabled)
-                        }
-                    )
-
-                    SwitchPreferenceEntry(
-                        title = { Text("Pure black") },
-                        description = "Use AMOLED black",
-                        icon = { Icon(Icons.Default.DarkMode, contentDescription = null) },
-                        isChecked = settings.pureBlack,
-                        onCheckedChange = { enabled ->
-                            viewModel.setPureBlack(enabled)
-                        }
-                    )
-
-                    SwitchPreferenceEntry(
-                        title = { Text("High contrast") },
-                        icon = { Icon(Icons.Default.Contrast, contentDescription = null) },
-                        isChecked = settings.highContrastCompat,
-                        onCheckedChange = { enabled ->
-                            viewModel.setHighContrastCompat(enabled)
-                        }
                     )
                 }
             }
