@@ -107,7 +107,7 @@ fun TrackRow(
         },
     ) {
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .padding(horizontal = 12.dp, vertical = when (density) {
                     TrackRowDensity.Compact -> 6.dp
                     TrackRowDensity.Default -> 8.dp

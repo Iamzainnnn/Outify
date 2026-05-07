@@ -143,6 +143,7 @@ fun SharedTransitionScope.NavigationRoot(
 
                 AlbumDetailScreen(
                     viewModel = viewModel,
+                    highlightTrackUri = it.trackUri,
                     onBack = {
                         backStack.removeAt(backStack.lastIndex)
                     },

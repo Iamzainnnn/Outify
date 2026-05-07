@@ -37,8 +37,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +67,7 @@ fun SharedTransitionScope.AlbumDetailScreen(
     viewModel: AlbumDetailViewModel,
     onBack: () -> Unit,
     artistClick: (uri: String) -> Unit,
+    highlightTrackUri: String? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -105,6 +109,24 @@ fun SharedTransitionScope.AlbumDetailScreen(
 
             val collapsingState = rememberCollapsingHeaderState()
             val scope = rememberCoroutineScope()
+
+            var highlightedUri by remember { mutableStateOf(highlightTrackUri) }
+
+            LaunchedEffect(highlightedUri) {
+                if (highlightedUri != null) {
+                    delay(2500)
+                    highlightedUri = null
+                }
+            }
+
+            LaunchedEffect(highlightTrackUri, tracks) {
+                if (highlightTrackUri != null && tracks.isNotEmpty()) {
+                    val index = tracks.indexOfFirst { it.uri == highlightTrackUri }
+                    if (index >= 0) {
+                        lazyList.scrollToItem(index + 1)
+                    }
+                }
+            }
 
             val isScrolled by remember {
                 derivedStateOf {
@@ -151,14 +173,19 @@ fun SharedTransitionScope.AlbumDetailScreen(
                     }
 
                     items(tracks, key = { track -> "album_song_${track.uri}" }) { track ->
+                        val isHighlighted = track.uri == highlightedUri
                         SwipeableTrackRowConfigured(
                             track = track,
+                            modifier = if (isHighlighted)
+                                Modifier.background(
+                                    MaterialTheme.colorScheme.primaryContainer
+                                ) else Modifier,
                             currentTrack = currentTrack,
                             isPlaybackPlaying = isPlaybackPlaying,
                             onRowClick = remember(track.uri) {
                                 {
                                     spirc.load(album.toSpotifyUri(), track.toSpotifyUri())
-                                    // Optimistic UI
+                                    highlightedUri = null
                                     viewModel.setTrack(track)
                                 }
                             },

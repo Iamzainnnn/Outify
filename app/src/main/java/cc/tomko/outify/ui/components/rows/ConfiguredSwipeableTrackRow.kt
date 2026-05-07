@@ -115,7 +115,8 @@ fun SharedTransitionScope.SwipeableTrackRowConfigured(
 
                 sharedTransitionScope = this@SwipeableTrackRowConfigured,
                 sharedTransitionKey = if(isTransitioning)
-                    track.album?.sharedTransitionKey() else null
+                    track.album?.sharedTransitionKey() else null,
+                modifier = modifier
             )
         }
     }
