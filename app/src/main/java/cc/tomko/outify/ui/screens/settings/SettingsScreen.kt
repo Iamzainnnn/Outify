@@ -64,6 +64,7 @@ fun SettingsScreen(
                 ) {
                     PreferenceEntry(
                         title = { Text("Interface") },
+                        description = "Gestures, Appearance, ..",
                         icon = { Icon(Icons.Default.Interests, contentDescription = null) },
                         onClick = openInterfaceSettings,
                     )
@@ -77,6 +78,7 @@ fun SettingsScreen(
                 ) {
                     PreferenceEntry(
                         title = { Text("Playback") },
+                        description = "Bitrate, Spotify Connect, Gapless, ..",
                         icon = { Icon(Icons.Default.Headphones, contentDescription = null) },
                         onClick = openPlaybackSettings,
                     )
@@ -90,12 +92,14 @@ fun SettingsScreen(
                 ) {
                     PreferenceEntry(
                         title = { Text("Misc") },
+                        description = "Sync",
                         icon = { Icon(Icons.Default.DeveloperMode, contentDescription = null) },
                         onClick = openMiscSettings,
                     )
 
                     PreferenceEntry(
                         title = { Text("About") },
+                        description = "Build number",
                         icon = { Icon(Icons.Default.Info, contentDescription = null) },
                         onClick = openAboutSettings,
                     )
@@ -109,6 +113,7 @@ fun SettingsScreen(
                 ) {
                     PreferenceEntry(
                         title = { Text("Accounts") },
+                        description = "Playback & Account login",
                         icon = { Icon(Icons.Default.AccountCircle, contentDescription = null) },
                         onClick = openAccountSettings,
                     )
