@@ -50,6 +50,7 @@ import cc.tomko.outify.ui.components.PreferenceHeader
 import cc.tomko.outify.ui.components.SwitchPreferenceEntry
 import cc.tomko.outify.data.repository.PlaybackSettings
 import cc.tomko.outify.playback.model.Bitrate
+import cc.tomko.outify.playback.model.getName
 import cc.tomko.outify.ui.components.DropdownOption
 import cc.tomko.outify.ui.components.DropdownPreferenceEntry
 import cc.tomko.outify.ui.components.PreferenceEntry
@@ -145,9 +146,9 @@ fun PlaybackSettingScreen(
                             description = "Choose your preferred streaming quality",
                             icon = { Icon(Icons.Default.HighQuality, contentDescription = null ) },
                             options = listOf(
-                                DropdownOption(Bitrate.KBPS320, "320Kbps, ${Bitrate.KBPS320.name}"),
-                                DropdownOption(Bitrate.KBPS160, "160Kbps, ${Bitrate.KBPS160.name}"),
-                                DropdownOption(Bitrate.KBPS96, "96Kbps, ${Bitrate.KBPS96.name}"),
+                                DropdownOption(Bitrate.KBPS320, "320Kbps, ${Bitrate.KBPS320.getName()}"),
+                                DropdownOption(Bitrate.KBPS160, "160Kbps, ${Bitrate.KBPS160.getName()}"),
+                                DropdownOption(Bitrate.KBPS96, "96Kbps, ${Bitrate.KBPS96.getName()}"),
                             ),
                             selectedValue = settings.bitrate,
                             onValueChange = { viewModel.setBitrate(it) }
