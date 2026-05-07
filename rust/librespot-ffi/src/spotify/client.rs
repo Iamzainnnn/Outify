@@ -364,6 +364,7 @@ impl SpotifyClient {
     pub async fn get_top(
         &self,
         request_type: Option<String>,
+        time_range: String,
     ) -> Result<ArtistsOrTracksPage, SpotifyApiError> {
         let token = match self.load_token().await {
             Ok(o) => match o {
@@ -383,7 +384,7 @@ impl SpotifyClient {
 
         let res = self
             .client
-            .get(format!("{}/v1/me/top/{}", SPOTIFY_API_URL, request_type))
+            .get(format!("{}/v1/me/top/{}?time_range={}", SPOTIFY_API_URL, request_type, time_range))
             .bearer_auth(token.access_token)
             .timeout(REQUEST_TIMEOUT)
             .send()

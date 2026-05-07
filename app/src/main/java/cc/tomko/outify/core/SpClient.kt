@@ -37,8 +37,9 @@ class SpClient @Inject constructor() {
      * Get the current user's top artists or tracks based on calculated affinity.
      * Default type = artists
      * Possible types: artists, tracks
+     * https://developer.spotify.com/documentation/web-api/reference/get-users-top-artists-and-tracks
      */
-    external fun getUserTop(type: String? = null, timeRange: String? = null): String?
+    external fun getUserTop(type: String? = null, timeRange: String = "medium_range"): String?
 
     /**
      * Gets the available devices to stream playback from.

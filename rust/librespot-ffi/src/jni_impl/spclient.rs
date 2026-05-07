@@ -205,7 +205,7 @@ pub extern "system" fn delete_items(
 }
 
 #[unsafe(export_name = "Java_cc_tomko_outify_core_SpClient_getUserTop")]
-pub extern "system" fn get_user_top(mut env: JNIEnv, _class: JClass, r#type: JString) -> jstring {
+pub extern "system" fn get_user_top(mut env: JNIEnv, _class: JClass, r#type: JString, time_range: JString) -> jstring {
     let client = get_client();
 
     let request_type: Option<String> = if r#type.is_null() {
@@ -220,6 +220,18 @@ pub extern "system" fn get_user_top(mut env: JNIEnv, _class: JClass, r#type: JSt
         }
     };
 
+    let time_range: String = match env.get_string(&time_range) {
+        Ok(t) => t.into(),
+        Err(e) => {
+            error!("failed to get time range: {e}");
+            let _ = env.throw_new(
+                "java/lang/IllegalArgumentException",
+                format!("Invalid time_range: {}", e),
+            );
+            return std::ptr::null_mut();
+        },
+    };
+
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
@@ -228,7 +240,7 @@ pub extern "system" fn get_user_top(mut env: JNIEnv, _class: JClass, r#type: JSt
         }
     };
 
-    let result = rt.block_on(async { client.get_top(request_type).await });
+    let result = rt.block_on(async { client.get_top(request_type, time_range).await });
 
     match result {
         Ok(result) => match serde_json::to_string(&result) {
