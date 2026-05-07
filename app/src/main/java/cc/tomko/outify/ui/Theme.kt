@@ -60,6 +60,8 @@ fun OutifyTheme(
         mutableStateOf(DefaultThemeColor)
     }
 
+    val contrastLevel = if (highContrastCompat) 1.0 else 0.0
+
     LaunchedEffect(track?.id, themeMode) {
         if (themeMode != ThemeMode.DYNAMIC_ALBUM) return@LaunchedEffect
 
@@ -85,7 +87,7 @@ fun OutifyTheme(
                 SchemeTonalSpot(
                     Hct.fromInt(staticAccentColor.toArgb()),
                     darkTheme,
-                    0.0
+                    contrastLevel
                 ).toColorScheme()
             }
 
@@ -118,8 +120,8 @@ fun OutifyTheme(
                 SchemeTonalSpot(
                     Hct.fromInt(albumColor.toArgb()),
                     darkTheme,
-                    0.0
-                ).toColorScheme()
+                    contrastLevel
+                ).toColorScheme().pureBlack(pureBlack)
             }
         }
 
