@@ -4,26 +4,27 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,15 +43,16 @@ import cc.tomko.outify.data.setting.Side
 import cc.tomko.outify.data.setting.getDisplayName
 import cc.tomko.outify.data.setting.DisplayIcon
 import cc.tomko.outify.ui.components.PreferenceEntry
-import cc.tomko.outify.ui.components.PreferenceHeader
 import cc.tomko.outify.ui.components.SwitchPreferenceEntry
 import cc.tomko.outify.ui.components.bottomsheet.GestureCustomizeBottomSheet
 import cc.tomko.outify.ui.components.rows.SwipeableTrackRowConfigured
 import cc.tomko.outify.ui.viewmodel.settings.GestureSettingViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SharedTransitionScope.GestureSettingsScreen(
     viewModel: GestureSettingViewModel,
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val gestures by viewModel.gestures.collectAsState()
@@ -60,88 +62,100 @@ fun SharedTransitionScope.GestureSettingsScreen(
     var customizeGesture by remember { mutableStateOf<GestureSetting?>(null)}
     var customizeGestureIndex by remember { mutableStateOf<Int?>(null)}
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding())
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            PreferenceHeader("Gestures")
-
-            ElevatedCard(
-                modifier = modifier
-                    .fillMaxWidth()
-            ) {
-                SwitchPreferenceEntry(
-                    title = { Text("Enable swipe gestures") },
-                    description = "Quick action on track row",
-                    icon = { Icon(Icons.Default.Gesture, contentDescription = null) },
-                    onCheckedChange = { viewModel.setGesturesEnabled(it) },
-                    isChecked = swipeEnabled
-                )
-            }
-        }
-
-        // gestures list
-        itemsIndexed(gestures) { index, gesture ->
-            val triggerLabel = gesture.trigger.getDisplayName()
-            val actionLabel = gesture.action.getDisplayName()
-            val directionLabel = gesture.side?.getDisplayName() ?: ""
-
-            PreferenceEntry(
-                title = { Text(actionLabel) },
-                description = if (gesture.enabled) "$triggerLabel • $directionLabel" else "Disabled",
-                icon = { Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) { gesture.action.DisplayIcon(Modifier.size(20.dp)) } },
-                onClick = {
-                    customizeGesture = gesture
-                    customizeGestureIndex = index
-                },
-                trailingContent = {
-                    if (!gesture.enabled) {
-                        Text("Off", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    IconButton(
-                        onClick = { viewModel.removeGesture(index) }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete",
-                            tint = MaterialTheme.colorScheme.error
-                        )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Gestures") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
-        }
-
-        if(swipeEnabled) {
+        },
+        modifier = modifier
+    ) { innerPaddings ->
+        LazyColumn(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(top = innerPaddings.calculateTopPadding())
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             item {
                 ElevatedCard(
                     modifier = modifier
                         .fillMaxWidth()
                 ) {
-                    PreferenceEntry(
-                        title = { Text("Add gesture") },
-                        icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                        onClick = {
-                            viewModel.addGesture()
-                        }
+                    SwitchPreferenceEntry(
+                        title = { Text("Enable swipe gestures") },
+                        description = "Quick action on track row",
+                        icon = { Icon(Icons.Default.Gesture, contentDescription = null) },
+                        onCheckedChange = { viewModel.setGesturesEnabled(it) },
+                        isChecked = swipeEnabled
                     )
                 }
             }
-        }
 
-        item {
-            Spacer(modifier = Modifier.height(32.dp))
+            // gestures list
+            itemsIndexed(gestures) { index, gesture ->
+                val triggerLabel = gesture.trigger.getDisplayName()
+                val actionLabel = gesture.action.getDisplayName()
+                val directionLabel = gesture.side?.getDisplayName() ?: ""
 
-            Text(
-                text = "Try it out"
-            )
+                PreferenceEntry(
+                    title = { Text(actionLabel) },
+                    description = if (gesture.enabled) "$triggerLabel • $directionLabel" else "Disabled",
+                    icon = { Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) { gesture.action.DisplayIcon(Modifier.size(20.dp)) } },
+                    onClick = {
+                        customizeGesture = gesture
+                        customizeGestureIndex = index
+                    },
+                    trailingContent = {
+                        if (!gesture.enabled) {
+                            Text("Off", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        IconButton(
+                            onClick = { viewModel.removeGesture(index) }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete",
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                )
+            }
 
-            SwipeableTrackRowConfigured(
-                track = Track.dummy()
-            )
+            if(swipeEnabled) {
+                item {
+                    ElevatedCard(
+                        modifier = modifier
+                            .fillMaxWidth()
+                    ) {
+                        PreferenceEntry(
+                            title = { Text("Add gesture") },
+                            icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                            onClick = {
+                                viewModel.addGesture()
+                            }
+                        )
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Try it out"
+                )
+
+                SwipeableTrackRowConfigured(
+                    track = Track.dummy()
+                )
+            }
         }
     }
 

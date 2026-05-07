@@ -244,6 +244,7 @@ fun SharedTransitionScope.NavigationRoot(
 
                 SettingsScreen(
                     viewModel = viewModel,
+                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                     openInterfaceSettings = {
                         backStack.add(Route.InterfaceSettings)
                     },
@@ -267,6 +268,7 @@ fun SharedTransitionScope.NavigationRoot(
 
                 InterfaceSettingScreen(
                     viewModel = viewModel,
+                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                     openGestureSettings = {
                         backStack.add(Route.GestureSettings)
                     },
@@ -281,6 +283,7 @@ fun SharedTransitionScope.NavigationRoot(
 
                 AppearanceSettingScreen(
                     viewModel = viewModel,
+                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                 )
             }
 
@@ -288,7 +291,8 @@ fun SharedTransitionScope.NavigationRoot(
                 val viewModel: GestureSettingViewModel = hiltViewModel()
 
                 GestureSettingsScreen(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                 )
             }
 
@@ -296,7 +300,8 @@ fun SharedTransitionScope.NavigationRoot(
                 val viewModel: PlaybackSettingViewModel = hiltViewModel()
 
                 PlaybackSettingScreen(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                 )
             }
 
@@ -304,16 +309,20 @@ fun SharedTransitionScope.NavigationRoot(
                 val viewModel: AccountsViewModel = hiltViewModel()
 
                 AccountsScreen(
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                 )
             }
 
             entry<Route.AboutScreen> {
-                AboutScreen {
-                    context.startActivity(
-                        Intent(Intent.ACTION_VIEW, it.toUri())
-                    )
-                }
+                AboutScreen(
+                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
+                    onOpenUrl = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, it.toUri())
+                        )
+                    }
+                )
             }
 
             entry<Route.MiscSettings> {

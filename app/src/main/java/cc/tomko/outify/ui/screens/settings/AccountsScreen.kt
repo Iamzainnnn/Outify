@@ -5,29 +5,31 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Cancel
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,10 +51,11 @@ import cc.tomko.outify.ui.components.SmartImage
 import cc.tomko.outify.ui.components.bottomsheet.AccountDetailBottomSheet
 import cc.tomko.outify.ui.viewmodel.settings.AccountsViewModel
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AccountsScreen(
     viewModel: AccountsViewModel,
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -92,216 +95,226 @@ fun AccountsScreen(
         )
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            PreferenceHeader("Accounts")
-        }
-
-        item {
-            ElevatedCard(
-                modifier = modifier.fillMaxWidth(),
-            ) {
-                PreferenceEntry(
-                    title = { Text("Playback login") },
-                    icon = {
-                        if(isPlaybackLoggedIn) {
-                            Icon(
-                                Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        } else {
-                            Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
-                        }
-                    },
-                    onClick = {
-                        if(isPlaybackLoggedIn) {
-                            showPlaybackSheet = true
-                        } else {
-                           viewModel.startSpircAuth(context)
-                        }
-                    },
-                )
-
-                Spacer(Modifier.height(12.dp))
-
-                Column(
-                    modifier = Modifier
-                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                        .fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Accounts") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                }
+            )
+        },
+        modifier = modifier
+    ) { innerPaddings ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = innerPaddings.calculateTopPadding())
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                ElevatedCard(
+                    modifier = modifier.fillMaxWidth(),
                 ) {
-                    Text(
-                        text = "This login is mandatory to allow for playback.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                    PreferenceEntry(
+                        title = { Text("Playback login") },
+                        icon = {
+                            if(isPlaybackLoggedIn) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            } else {
+                                Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
+                            }
+                        },
+                        onClick = {
+                            if(isPlaybackLoggedIn) {
+                                showPlaybackSheet = true
+                            } else {
+                                viewModel.startSpircAuth(context)
+                            }
+                        },
                     )
-                    Text(
-                        text = "It uses fake Spotify credentials to stream audio.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    Column(
+                        modifier = Modifier
+                            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "This login is mandatory to allow for playback.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = "It uses fake Spotify credentials to stream audio.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
-        }
 
-        item {
-            ElevatedCard(
-                modifier = modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            if(isAccountLoggedIn) {
-                                showAccountSheet = true
-                            } else {
-                                viewModel.startAccountAuth(context)
-                            }
-                        }
+            item {
+                ElevatedCard(
+                    modifier = modifier.fillMaxWidth(),
                 ) {
-                    if (isAccountLoggedIn) {
-                        Row(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            if (userImageUrl != null) {
-                                Surface(
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if(isAccountLoggedIn) {
+                                    showAccountSheet = true
+                                } else {
+                                    viewModel.startAccountAuth(context)
+                                }
+                            }
+                    ) {
+                        if (isAccountLoggedIn) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                if (userImageUrl != null) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .size(48.dp)
+                                            .clip(CircleShape),
+                                        color = MaterialTheme.colorScheme.surfaceVariant
+                                    ) {
+                                        SmartImage(
+                                            url = userImageUrl,
+                                            contentDescription = "Profile picture",
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
+                                }
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = username ?: "Account",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        text = if (isPremium) "Logged in" else "Logged in (Free)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isPremium) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                    )
+                                }
+
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = "Logged in",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+
+                            if (!isPremium) {
+                                Row(
                                     modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(CircleShape),
-                                    color = MaterialTheme.colorScheme.surfaceVariant
+                                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    SmartImage(
-                                        url = userImageUrl,
-                                        contentDescription = "Profile picture",
-                                        modifier = Modifier.fillMaxSize(),
+                                    Icon(
+                                        Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = "Spotify Premium required for playback",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.error,
                                     )
                                 }
                             }
-
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text = username ?: "Account",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Medium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Text(
-                                    text = if (isPremium) "Logged in" else "Logged in (Free)",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = if (isPremium) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                                )
-                            }
-
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = "Logged in",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        if (!isPremium) {
-                            Row(
-                                modifier = Modifier
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                                    .fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    Icons.Default.Warning,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = "Spotify Premium required for playback",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            }
-                        }
-                    } else {
-                        PreferenceEntry(
-                            title = { Text("Account login") },
-                            icon = { Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null) },
-                            onClick = { viewModel.startAccountAuth(context) },
-                        )
-
-                        Spacer(Modifier.height(12.dp))
-
-                        Column(
-                            modifier = Modifier
-                                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                                .fillMaxWidth(),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = "This login allows for manipulation of your Spotify account.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
+                        } else {
+                            PreferenceEntry(
+                                title = { Text("Account login") },
+                                icon = { Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null) },
+                                onClick = { viewModel.startAccountAuth(context) },
                             )
 
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(12.dp))
 
                             Column(
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                modifier = Modifier
+                                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                                    .fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                FeatureItem("Liking and unliking tracks")
-                                FeatureItem("Creating and modifying playlists")
-                                FeatureItem("Accessing your recommendations")
-                                FeatureItem("Managing your library")
+                                Text(
+                                    text = "This login allows for manipulation of your Spotify account.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+
+                                Spacer(Modifier.height(8.dp))
+
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    FeatureItem("Liking and unliking tracks")
+                                    FeatureItem("Creating and modifying playlists")
+                                    FeatureItem("Accessing your recommendations")
+                                    FeatureItem("Managing your library")
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        item {
-            PreferenceHeader("Feature availability")
-        }
+            item {
+                PreferenceHeader("Feature availability")
+            }
 
-        item {
-            ElevatedCard(
-                modifier = modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+            item {
+                ElevatedCard(
+                    modifier = modifier.fillMaxWidth(),
                 ) {
-                    Text(
-                        text = "Features available based on your login status:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Text(
+                            text = "Features available based on your login status:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
 
-                    Spacer(Modifier.height(16.dp))
+                        Spacer(Modifier.height(16.dp))
 
-                    FeatureAvailability("Stream tracks from Outify", isPlaybackLoggedIn && isPremium)
-                    FeatureAvailability("Sync your liked tracks and playlists", isPlaybackLoggedIn)
-                    FeatureAvailability("View artists, albums, playlists", isPlaybackLoggedIn)
+                        FeatureAvailability("Stream tracks from Outify", isPlaybackLoggedIn && isPremium)
+                        FeatureAvailability("Sync your liked tracks and playlists", isPlaybackLoggedIn)
+                        FeatureAvailability("View artists, albums, playlists", isPlaybackLoggedIn)
 
-                    Spacer(Modifier.height(12.dp))
+                        Spacer(Modifier.height(12.dp))
 
-                    FeatureAvailability("Search Spotify", isAccountLoggedIn)
-                    FeatureAvailability("Modify playlists", isAccountLoggedIn)
-                    FeatureAvailability("Liking and unliking tracks", isAccountLoggedIn)
-                    FeatureAvailability("Viewing user profiles", isAccountLoggedIn)
+                        FeatureAvailability("Search Spotify", isAccountLoggedIn)
+                        FeatureAvailability("Modify playlists", isAccountLoggedIn)
+                        FeatureAvailability("Liking and unliking tracks", isAccountLoggedIn)
+                        FeatureAvailability("Viewing user profiles", isAccountLoggedIn)
+                    }
                 }
             }
         }
