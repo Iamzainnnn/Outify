@@ -32,7 +32,6 @@ import androidx.compose.material.icons.filled.NoAccounts
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -42,11 +41,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -57,17 +52,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import cc.tomko.outify.core.model.Album
-import cc.tomko.outify.core.model.Artist
-import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.core.model.Track
-import cc.tomko.outify.core.model.toSpotifyUri
 import cc.tomko.outify.ui.components.SkeletonTrackRow
 import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.components.SmartImage
@@ -88,6 +78,9 @@ fun SharedTransitionScope.HomeScreen(
     val username by viewModel.username.collectAsState(initial = "User")
     val userAvatarUrl by viewModel.userImageUrl.collectAsState(initial = null)
     val selectedDuration by viewModel.selectedDuration.collectAsState(initial = TopItemsDuration.SHORT_TERM)
+    val isPlaybackLoggedIn by viewModel.isPlaybackLoggedIn.collectAsState(initial = false)
+    val currentTrack by viewModel.currentTrack.collectAsState(initial = null)
+    val isPlaybackPlaying by viewModel.isPlaying.collectAsState(initial = false)
     var durationExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -97,107 +90,248 @@ fun SharedTransitionScope.HomeScreen(
     Scaffold(
         modifier = modifier,
     ) { innerPaddings ->
-        Box(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = innerPaddings.calculateTopPadding())
+                .padding(top = innerPaddings.calculateTopPadding()),
+            contentPadding = PaddingValues(bottom = 24.dp)
         ) {
+            item {
+                HeaderSection(
+                    username = username,
+                    userAvatarUrl = userAvatarUrl,
+                    isPlaybackLoggedIn = isPlaybackLoggedIn,
+                    selectedDuration = selectedDuration,
+                    onDurationChange = { viewModel.setDuration(it) },
+                    onSettingsClick = { backStack.add(Route.SettingsScreen) },
+                    onAccountClick = { backStack.add(Route.AccountsScreen) },
+                    durationExpanded = durationExpanded,
+                    onDurationExpandedChange = { durationExpanded = it }
+                )
+            }
+
             when (val state = uiState) {
                 is HomeUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                    item {
+                        Spacer(Modifier.height(24.dp))
+                        Text(
+                            text = "Top Artists",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
                     }
+                    item { SkeletonArtistRow() }
+                    item {
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = "Top Tracks",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
+                    items(10) { SkeletonTrackRow() }
                 }
 
                 is HomeUiState.NotAuthenticated -> {
-                    println(userAvatarUrl)
-                    NotAuthenticatedContent(
-                        username = username,
-                        onSettingsClick = {
-                            backStack.add(Route.SettingsScreen)
-                        },
-                        onAccountClick = {
-                            backStack.add(Route.AccountsScreen)
-                        }
-                    )
+                    item { Spacer(Modifier.height(32.dp)) }
+                    item {
+                        ConnectSpotifyCard(
+                            onConnectClick = { backStack.add(Route.AccountsScreen) }
+                        )
+                    }
                 }
 
                 is HomeUiState.Success -> {
-                    val currentTrack by viewModel.currentTrack.collectAsState(initial = null)
-                    val isPlaybackPlaying by viewModel.isPlaying.collectAsState(initial = false)
-                    val isPlaybackLoggedIn by viewModel.isPlaybackLoggedIn.collectAsState(initial = false)
+                    item {
+                        Spacer(Modifier.height(24.dp))
+                        Text(
+                            text = "Top Artists",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
+                    if (state.topArtists.isNotEmpty()) {
+                        item {
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                items(state.topArtists.take(10)) { artist ->
+                                    TopArtistItem(
+                                        artist = artist,
+                                        modifier = Modifier.clickable {
+                                            backStack.add(Route.ArtistScreen(artist.uri))
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
 
-                    HomeContent(
-                        username = username,
-                        userAvatarUrl = userAvatarUrl,
-                        topArtists = state.topArtists,
-                        topTracks = state.topTracks,
-                        isPlaybackLoggedIn = isPlaybackLoggedIn,
-                        selectedDuration = selectedDuration,
-                        onDurationChange = { viewModel.setDuration(it) },
-                        onSettingsClick = {
-                            backStack.add(Route.SettingsScreen)
-                        },
-                        onAccountClick = {
-                            backStack.add(Route.AccountsScreen)
-                        },
-                        onArtistClick = {
-                            backStack.add(Route.ArtistScreen(it))
-                        },
-                        currentTrack = currentTrack,
-                        isPlaybackPlaying = isPlaybackPlaying,
-                        onArtworkClick = {
-                            backStack.add(Route.AlbumScreen(it.uri))
-                        },
-                        onTrackClick = {
-                            viewModel.loadTrack(it)
-                        },
-                        durationExpanded = durationExpanded,
-                        onDurationExpandedChange = { durationExpanded = it },
-                    )
+                    item {
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            text = "Top Tracks",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
+                    if (state.topTracks.isNotEmpty()) {
+                        items(state.topTracks.take(10)) { track ->
+                            SwipeableTrackRowConfigured(
+                                track,
+                                currentTrack = currentTrack,
+                                isPlaybackPlaying = isPlaybackPlaying,
+                                onRowClick = remember(track.uri) {
+                                    { viewModel.loadTrack(track) }
+                                },
+                                onArtworkClick = {
+                                    backStack.add(Route.AlbumScreen(track.album!!.uri))
+                                },
+                                onArtistClick = { artist ->
+                                    backStack.add(Route.ArtistScreen(artist.uri))
+                                },
+                                trailingContent = {},
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+                    }
                 }
 
                 is HomeUiState.Error -> {
-                    ErrorContent(
-                        message = state.message,
-                        onSettingsClick = {
-                            backStack.add(Route.SettingsScreen)
-                        }
-                    )
+                    item { Spacer(Modifier.height(24.dp)) }
+                    item {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(horizontal = 24.dp)
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun NotAuthenticatedContent(
+private fun HeaderSection(
     username: String?,
+    userAvatarUrl: String?,
+    isPlaybackLoggedIn: Boolean,
+    selectedDuration: TopItemsDuration,
+    onDurationChange: (TopItemsDuration) -> Unit,
     onSettingsClick: () -> Unit,
     onAccountClick: () -> Unit,
+    durationExpanded: Boolean,
+    onDurationExpandedChange: (Boolean) -> Unit,
 ) {
-    Column(
+    Row(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 24.dp)
+            .fillMaxWidth()
+            .padding(start = 24.dp, end = 24.dp, top = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "Welcome back,\n${username ?: "User"}!",
                 style = MaterialTheme.typography.headlineLargeEmphasized,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
 
+            Spacer(modifier = Modifier.height(4.dp))
+
+            ExposedDropdownMenuBox(
+                expanded = durationExpanded,
+                onExpandedChange = onDurationExpandedChange
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .menuAnchor()
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onDurationExpandedChange(!durationExpanded) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = selectedDuration.label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                            .size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                ExposedDropdownMenu(
+                    expanded = durationExpanded,
+                    onDismissRequest = { onDurationExpandedChange(false) },
+                    modifier = Modifier.wrapContentWidth()
+                ) {
+                    TopItemsDuration.entries.forEach { duration ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    text = duration.label,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (duration == selectedDuration)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurface
+                                )
+                            },
+                            onClick = {
+                                onDurationChange(duration)
+                                onDurationExpandedChange(false)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onAccountClick) {
-                Icon(Icons.Default.NoAccounts, contentDescription = null)
+                if (userAvatarUrl != null) {
+                    SmartImage(
+                        url = userAvatarUrl,
+                        contentDescription = "Account",
+                        shape = CircleShape,
+                    )
+                } else {
+                    Icon(
+                        Icons.Default.NoAccounts,
+                        contentDescription = "Account",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            if (!isPlaybackLoggedIn) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "Not logged in",
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = CircleShape
+                        )
+                        .padding(2.dp)
+                )
             }
 
             IconButton(onClick = onSettingsClick) {
@@ -207,152 +341,45 @@ private fun NotAuthenticatedContent(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Connect to Spotify",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Link your Spotify account to see your top artists and tracks.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        onAccountClick()
-                    },
-                    shape = RoundedCornerShape(50),
-                ) {
-                    Text("Connect Spotify")
-                }
-            }
-        }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun SharedTransitionScope.HomeContent(
-    username: String?,
-    userAvatarUrl: String?,
-    currentTrack: Track?,
-    isPlaybackPlaying: Boolean,
-    isPlaybackLoggedIn: Boolean,
-    topArtists: List<TopArtist>,
-    topTracks: List<Track>,
-    selectedDuration: TopItemsDuration,
-    onDurationChange: (TopItemsDuration) -> Unit,
-    onSettingsClick: () -> Unit,
-    onAccountClick: () -> Unit,
-    onArtistClick: (uri: String) -> Unit,
-    onArtworkClick: (album: Album) -> Unit,
-    onTrackClick: (track: Track) -> Unit,
-    durationExpanded: Boolean,
-    onDurationExpandedChange: (Boolean) -> Unit,
+private fun ConnectSpotifyCard(
+    onConnectClick: () -> Unit,
 ) {
-    val isLoading = topArtists.isEmpty() || topTracks.isEmpty()
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 24.dp)
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        item {
-            HeaderSection(
-                username = username,
-                userAvatarUrl = userAvatarUrl,
-                isPlaybackLoggedIn = isPlaybackLoggedIn,
-                selectedDuration = selectedDuration,
-                onDurationChange = onDurationChange,
-                onSettingsClick = onSettingsClick,
-                onAccountClick = onAccountClick,
-                durationExpanded = durationExpanded,
-                onDurationExpandedChange = { onDurationExpandedChange(it) }
-            )
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(24.dp))
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text(
-                text = "Top Artists",
+                text = "Connect to Spotify",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 24.dp)
+                fontWeight = FontWeight.Bold
             )
-        }
 
-        if (isLoading) {
-            item {
-                SkeletonArtistRow()
-            }
-        } else if (topArtists.isNotEmpty()) {
-            item {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(topArtists.take(10)) { artist ->
-                        TopArtistItem(
-                            artist = artist,
-                            modifier = Modifier.clickable {
-                                onArtistClick(artist.uri)
-                            })
-                    }
-                }
-            }
-        }
+            Spacer(modifier = Modifier.height(8.dp))
 
-        item {
+            Text(
+                text = "Link your Spotify account to see your top artists and tracks.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Top Tracks",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 24.dp)
-            )
-        }
 
-        if (isLoading) {
-            items(10) {
-                SkeletonTrackRow()
-            }
-        } else if (topTracks.isNotEmpty()) {
-            items(topTracks.take(10)) { track ->
-                SwipeableTrackRowConfigured(
-                    track,
-                    currentTrack = currentTrack,
-                    isPlaybackPlaying = isPlaybackPlaying,
-                    onRowClick = remember(track.uri) {
-                        {
-                            onTrackClick(track)
-                        }
-                    },
-                    onArtworkClick = {
-                        onArtworkClick(track.album!!)
-                    },
-                    onArtistClick = { artist ->
-                        onArtistClick(artist.uri)
-                    },
-                    trailingContent = {},
-                    modifier = Modifier.animateItem()
-                )
+            Button(
+                onClick = onConnectClick,
+                shape = RoundedCornerShape(50),
+            ) {
+                Text("Connect Spotify")
             }
         }
     }
@@ -402,162 +429,6 @@ private fun TopArtistItem(artist: TopArtist, modifier: Modifier = Modifier) {
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun ErrorContent(
-    message: String,
-    onSettingsClick: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Welcome back!",
-                style = MaterialTheme.typography.headlineLargeEmphasized,
-                fontWeight = FontWeight.Bold
-            )
-
-            IconButton(onClick = onSettingsClick) {
-                Icon(
-                    Icons.Default.Settings,
-                    contentDescription = "Settings"
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error,
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun HeaderSection(
-    username: String?,
-    userAvatarUrl: String?,
-    isPlaybackLoggedIn: Boolean,
-    selectedDuration: TopItemsDuration,
-    onDurationChange: (TopItemsDuration) -> Unit,
-    onSettingsClick: () -> Unit,
-    onAccountClick: () -> Unit,
-    durationExpanded: Boolean,
-    onDurationExpandedChange: (Boolean) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, top = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "Welcome back,\n${username ?: "User"}!",
-                style = MaterialTheme.typography.headlineLargeEmphasized,
-                fontWeight = FontWeight.Bold,
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            ExposedDropdownMenuBox(
-                expanded = durationExpanded,
-                onExpandedChange = onDurationExpandedChange
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .menuAnchor() // anchor whole row
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onDurationExpandedChange(!durationExpanded) }
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = selectedDuration.label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .padding(start = 4.dp)
-                            .size(18.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                ExposedDropdownMenu(
-                    expanded = durationExpanded,
-                    onDismissRequest = { onDurationExpandedChange(false) },
-                    modifier = Modifier.wrapContentWidth()
-                ) {
-                    TopItemsDuration.entries.forEach { duration ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    text = duration.label,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (duration == selectedDuration)
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.onSurface
-                                )
-                            },
-                            onClick = {
-                                onDurationChange(duration)
-                                onDurationExpandedChange(false)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        Row {
-            IconButton(onClick = onAccountClick) {
-                SmartImage(
-                    url = userAvatarUrl
-                )
-            }
-
-            if (!isPlaybackLoggedIn) {
-                Icon(
-                    imageVector = Icons.Default.Warning,
-                    contentDescription = "Not logged in",
-                    tint = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.surface,
-                            shape = CircleShape
-                        )
-                        .padding(2.dp)
-                )
-            }
-
-            IconButton(onClick = onSettingsClick) {
-                Icon(
-                    Icons.Default.Settings,
-                    contentDescription = "Settings"
-                )
-            }
-        }
-    }
-}
-
 @Composable
 private fun SkeletonArtistRow() {
     val infiniteTransition = rememberInfiniteTransition(label = "skeleton")
@@ -566,7 +437,7 @@ private fun SkeletonArtistRow() {
         targetValue = 0.7f,
         animationSpec = infiniteRepeatable(
             animation = tween(1000),
-            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+            repeatMode = RepeatMode.Reverse
         ),
         label = "skeletonAlpha"
     )
