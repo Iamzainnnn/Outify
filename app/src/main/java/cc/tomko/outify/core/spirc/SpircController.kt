@@ -116,11 +116,15 @@ class SpircController @Inject constructor(
             return
         }
 
-        if (!spirc.transfer()) {
-            Log.e("SpircController", "Failed to transfer Spirc session!")
-        }
+        spirc.scope.launch {
+            if(settingsRepository.autoTransfer.first()) {
+                if (!spirc.transfer()) {
+                    Log.e("SpircController", "Failed to transfer Spirc session!")
+                }
 
-        playbackStateHolder.setActiveDevice(true)
+                playbackStateHolder.setActiveDevice(true)
+            }
+        }
 
         spirc.isUsable = true
 

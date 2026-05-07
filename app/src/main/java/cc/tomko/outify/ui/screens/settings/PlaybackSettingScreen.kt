@@ -169,5 +169,24 @@ fun PlaybackSettingScreen(
                 }
             }
         }
+
+        item {
+            PreferenceHeader("Spotify")
+
+            ElevatedCard(
+                modifier = modifier
+                    .fillMaxWidth()
+            ) {
+                Column {
+                    SwitchPreferenceEntry(
+                        title = { Text("Auto transfer") },
+                        description = "Make Outify the active device to stream from",
+                        icon = { Icon(Icons.Default.SkipNext, contentDescription = null) },
+                        onCheckedChange = { viewModel.setAutoTransfer(it) },
+                        isChecked = settings.autoTransfer
+                    )
+                }
+            }
+        }
     }
 }

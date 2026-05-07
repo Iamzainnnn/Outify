@@ -34,6 +34,11 @@ class SettingsRepository @Inject constructor(
          * aka session resurrection
          */
         val KEEPALIVE = booleanPreferencesKey("keepalive")
+
+        /**
+         * Should we auto transfer the playback session upon connect
+         */
+        val AUTO_TRANSFER = booleanPreferencesKey("auto_transfer")
         val BITRATE = stringPreferencesKey("bitrate")
 
         val USER_ID = stringPreferencesKey("user_id")
@@ -118,6 +123,7 @@ class SettingsRepository @Inject constructor(
             gapless = prefs[Keys.GAPLESS] ?: false,
             normalizeAudio = prefs[Keys.NORMALIZE_AUDIO] ?: false,
             keepalive = prefs[Keys.KEEPALIVE] ?: true,
+            autoTransfer = prefs[Keys.AUTO_TRANSFER] ?: true,
             bitrate = Bitrate.valueOf(bitrate),
         )
     }
@@ -176,6 +182,10 @@ class SettingsRepository @Inject constructor(
         it[Keys.KEEPALIVE] ?: false
     }
 
+    val autoTransfer = dataStore.data.map {
+        it[Keys.AUTO_TRANSFER] ?: false
+    }
+
     val bitrate = dataStore.data.map {
         val bitrate = it[Keys.BITRATE] ?: Bitrate.KBPS320.name
         Bitrate.valueOf(bitrate)
@@ -215,6 +225,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setBitrate(bitrate: Bitrate) {
         dataStore.edit { it[Keys.BITRATE] = bitrate.name }
+    }
+
+    suspend fun setAutoTransfer(enabled: Boolean) {
+        dataStore.edit { it[Keys.AUTO_TRANSFER] = enabled }
     }
 
     suspend fun setGesturesEnabled(enabled: Boolean) {
@@ -355,5 +369,6 @@ data class PlaybackSettings(
     val gapless: Boolean = false,
     val normalizeAudio: Boolean = false,
     val keepalive: Boolean = true,
+    val autoTransfer: Boolean = true,
     val bitrate: Bitrate = Bitrate.KBPS320
 )

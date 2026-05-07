@@ -52,6 +52,12 @@ class PlaybackSettingViewModel @Inject constructor(
         }
     }
 
+    fun setAutoTransfer(transfer: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setAutoTransfer(transfer)
+        }
+    }
+
     fun restartSpirc(){
         viewModelScope.launch {
             spirc.restart()
