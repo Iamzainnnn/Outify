@@ -2,11 +2,12 @@ package cc.tomko.outify.data.repository
 
 import android.content.Context
 import android.net.Uri
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -14,6 +15,15 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
+
+object PendingBackupImport {
+    private val _uri = MutableSharedFlow<Uri>(replay = 1)
+    val uri: SharedFlow<Uri> = _uri.asSharedFlow()
+
+    fun offer(uri: Uri) {
+        _uri.tryEmit(uri)
+    }
+}
 
 @Serializable
 data class OutifyBackup(
@@ -25,6 +35,7 @@ data class OutifyBackup(
     companion object {
         const val CURRENT_VERSION = 1
         const val FILE_EXTENSION = "outify"
+        const val MIME_TYPE = "application/x-outify-backup"
     }
 }
 
@@ -66,12 +77,12 @@ data class BackupPreferences(
 
 @Singleton
 class BackupRepository @Inject constructor(
-    private val dataStore: DataStore<Preferences>,
+    private val settingsRepository: SettingsRepository,
     private val json: Json,
     @ApplicationContext private val context: Context,
 ) {
     suspend fun exportBackup(uri: Uri, appVersion: String): Result<Unit> = runCatching {
-        val prefs = dataStore.data.first()
+        val prefs = settingsRepository.dataStore.data.first()
 
         val backup = OutifyBackup(
             appVersion = appVersion,
@@ -130,7 +141,7 @@ class BackupRepository @Inject constructor(
         val backup = json.decodeFromString<OutifyBackup>(jsonString)
         val prefs = backup.preferences ?: throw IllegalStateException("Backup file contains no preferences")
 
-        dataStore.edit { data ->
+        settingsRepository.dataStore.edit { data ->
             prefs.shuffle?.let { data[SettingsRepository.Keys.SHUFFLE] = it }
             prefs.repeat?.let { data[SettingsRepository.Keys.REPEAT] = it }
             prefs.gapless?.let { data[SettingsRepository.Keys.GAPLESS] = it }

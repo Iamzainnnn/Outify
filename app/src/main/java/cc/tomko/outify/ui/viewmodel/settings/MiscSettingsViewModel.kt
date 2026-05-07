@@ -2,12 +2,12 @@ package cc.tomko.outify.ui.viewmodel.settings
 
 import android.content.Context
 import android.net.Uri
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cc.tomko.outify.BuildConfig
 import cc.tomko.outify.core.SpClient
 import cc.tomko.outify.data.repository.BackupRepository
+import cc.tomko.outify.data.repository.PendingBackupImport
 import cc.tomko.outify.data.repository.LikedRepository
 import cc.tomko.outify.data.repository.SavedQueueRepository
 import cc.tomko.outify.data.repository.SettingsRepository
@@ -67,6 +67,11 @@ class MiscSettingsViewModel @Inject constructor(
                 _likedCount.value = count
             }
         }
+        viewModelScope.launch {
+            PendingBackupImport.uri.collect { uri: Uri ->
+                importBackup(uri)
+            }
+        }
         checkAuthState()
     }
 
@@ -123,6 +128,7 @@ class MiscSettingsViewModel @Inject constructor(
     }
 
     fun exportBackup(uri: Uri) {
+        if (_backupStatus.value is BackupStatus.Exporting) return
         viewModelScope.launch {
             _backupStatus.value = BackupStatus.Exporting
             backupRepository.exportBackup(uri, BuildConfig.VERSION_NAME)
@@ -138,6 +144,7 @@ class MiscSettingsViewModel @Inject constructor(
     }
 
     fun importBackup(uri: Uri) {
+        if (_backupStatus.value is BackupStatus.Importing) return
         viewModelScope.launch {
             _backupStatus.value = BackupStatus.Importing
             backupRepository.importBackup(uri)

@@ -65,6 +65,7 @@ import cc.tomko.outify.ui.components.player.rememberPlayerSheetState
 import cc.tomko.outify.ui.components.player.rememberQueueBottomSheetState
 import cc.tomko.outify.ui.notifications.InAppNotificationHost
 import cc.tomko.outify.data.repository.InterfaceSettings
+import cc.tomko.outify.data.repository.PendingBackupImport
 import cc.tomko.outify.ui.screens.PlayerScreen
 import cc.tomko.outify.ui.OutifyTheme
 import cc.tomko.outify.ui.PopupSpec
@@ -142,8 +143,14 @@ class MainActivity : ComponentActivity() {
 
         LaunchedEffect(Unit) {
             deepLinkFlow.collect { uri ->
-                parseDeepLinkUriToNavKey(uri)?.let { navKey ->
-                    backStack.add(navKey)
+                val path = uri.lastPathSegment?.lowercase() ?: ""
+                if (path.endsWith(".outify")) {
+                    PendingBackupImport.offer(uri)
+                    backStack.add(Route.MiscSettings)
+                } else {
+                    parseDeepLinkUriToNavKey(uri)?.let { navKey ->
+                        backStack.add(navKey)
+                    }
                 }
             }
         }

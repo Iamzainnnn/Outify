@@ -59,7 +59,7 @@ fun MiscSettingsScreen(
     val backupStatus by viewModel.backupStatus.collectAsStateWithLifecycle()
 
     val exportLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.CreateDocument("application/octet-stream")
+        contract = ActivityResultContracts.CreateDocument("application/x-outify-backup")
     ) { uri: Uri? ->
         uri?.let { viewModel.exportBackup(it) }
     }
