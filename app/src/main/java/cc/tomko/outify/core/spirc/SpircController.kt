@@ -50,6 +50,7 @@ class SpircController @Inject constructor(
         val gapless = settingsRepository.gaplessPlayback.first()
         val normalise = settingsRepository.normalizePlayback.first()
         val bitrate = settingsRepository.bitrate.first()
+        val deviceName = settingsRepository.deviceName.first()
 
         Spirc.initializeSpirc(object : SpircInitializationCallback {
             override fun initialized() {
@@ -86,7 +87,7 @@ class SpircController @Inject constructor(
                 handleSpircFailure()
             }
 
-        }, gapless, normalise, bitrate.getSpeed())
+        }, gapless, normalise, bitrate.getSpeed(), deviceName)
     }
 
     private suspend fun restoreLastPlayback() {

@@ -36,8 +36,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cc.tomko.outify.ui.components.PreferenceHeader
@@ -47,7 +51,10 @@ import cc.tomko.outify.playback.model.Bitrate
 import cc.tomko.outify.ui.components.DropdownOption
 import cc.tomko.outify.ui.components.DropdownPreferenceEntry
 import cc.tomko.outify.ui.components.PreferenceEntry
+import cc.tomko.outify.ui.components.TextInputPreferenceEntry
+import cc.tomko.outify.ui.screens.MaterialSearchBar
 import cc.tomko.outify.ui.viewmodel.settings.PlaybackSettingViewModel
+import kotlinx.coroutines.delay
 import kotlin.collections.listOf
 
 @Composable
@@ -55,7 +62,7 @@ fun PlaybackSettingScreen(
     viewModel: PlaybackSettingViewModel,
     modifier: Modifier = Modifier
 ) {
-    val settings by viewModel.settings.collectAsState(initial = PlaybackSettings())
+    val settings by viewModel.settings.collectAsState(initial = PlaybackSettings.Default)
     val restartNeeded by viewModel.needsRestart.collectAsState()
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
@@ -70,7 +77,8 @@ fun PlaybackSettingScreen(
     )
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
             .padding(top = WindowInsets.systemBars.asPaddingValues().calculateTopPadding())
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -134,6 +142,46 @@ fun PlaybackSettingScreen(
         }
 
         item {
+            PreferenceHeader("Spotify")
+
+            ElevatedCard(
+                modifier = modifier
+                    .fillMaxWidth()
+            ) {
+                Column {
+                    var deviceName by remember(settings.deviceName) {
+                        mutableStateOf(settings.deviceName)
+                    }
+
+                    LaunchedEffect(deviceName) {
+                        delay(500)
+
+                        val finalValue = deviceName.ifBlank { "Outify" }
+
+                        if (finalValue != settings.deviceName) {
+                            viewModel.setDeviceName(finalValue)
+                        }
+                    }
+
+                    SwitchPreferenceEntry(
+                        title = { Text("Auto transfer") },
+                        description = "Make Outify the active device to stream from",
+                        icon = { Icon(Icons.Default.SkipNext, contentDescription = null) },
+                        onCheckedChange = { viewModel.setAutoTransfer(it) },
+                        isChecked = settings.autoTransfer
+                    )
+
+                    TextInputPreferenceEntry(
+                        title = { Text("Spotify Connect name") },
+                        placeholder = "Outify",
+                        value = deviceName,
+                        onValueChange = { deviceName = it },
+                    )
+                }
+            }
+        }
+
+        item {
             ElevatedCard(
                 colors = CardDefaults.elevatedCardColors(
                     containerColor = if (restartNeeded)
@@ -170,23 +218,5 @@ fun PlaybackSettingScreen(
             }
         }
 
-        item {
-            PreferenceHeader("Spotify")
-
-            ElevatedCard(
-                modifier = modifier
-                    .fillMaxWidth()
-            ) {
-                Column {
-                    SwitchPreferenceEntry(
-                        title = { Text("Auto transfer") },
-                        description = "Make Outify the active device to stream from",
-                        icon = { Icon(Icons.Default.SkipNext, contentDescription = null) },
-                        onCheckedChange = { viewModel.setAutoTransfer(it) },
-                        isChecked = settings.autoTransfer
-                    )
-                }
-            }
-        }
     }
 }

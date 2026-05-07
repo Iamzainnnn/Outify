@@ -58,6 +58,13 @@ class PlaybackSettingViewModel @Inject constructor(
         }
     }
 
+    fun setDeviceName(name: String) {
+        viewModelScope.launch {
+            _needsRestart.value = true
+            settingsRepository.setDeviceName(name)
+        }
+    }
+
     fun restartSpirc(){
         viewModelScope.launch {
             spirc.restart()

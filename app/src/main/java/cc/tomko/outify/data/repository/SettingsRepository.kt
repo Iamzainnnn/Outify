@@ -40,6 +40,7 @@ class SettingsRepository @Inject constructor(
          */
         val AUTO_TRANSFER = booleanPreferencesKey("auto_transfer")
         val BITRATE = stringPreferencesKey("bitrate")
+        val DEVICE_NAME = stringPreferencesKey("device_name")
 
         val USER_ID = stringPreferencesKey("user_id")
         val USERNAME = stringPreferencesKey("username")
@@ -117,14 +118,16 @@ class SettingsRepository @Inject constructor(
     }
 
     val playbackSettings: Flow<PlaybackSettings> =  dataStore.data.map { prefs ->
-        val bitrate = prefs[Keys.BITRATE] ?: Bitrate.KBPS320.name
+        val default = PlaybackSettings.Default
+        val bitrate = prefs[Keys.BITRATE] ?: default.bitrate.name
 
         PlaybackSettings(
-            gapless = prefs[Keys.GAPLESS] ?: false,
-            normalizeAudio = prefs[Keys.NORMALIZE_AUDIO] ?: false,
-            keepalive = prefs[Keys.KEEPALIVE] ?: true,
-            autoTransfer = prefs[Keys.AUTO_TRANSFER] ?: true,
+            gapless = prefs[Keys.GAPLESS] ?: default.gapless,
+            normalizeAudio = prefs[Keys.NORMALIZE_AUDIO] ?: default.normalizeAudio,
+            keepalive = prefs[Keys.KEEPALIVE] ?: default.keepalive,
+            autoTransfer = prefs[Keys.AUTO_TRANSFER] ?: default.autoTransfer,
             bitrate = Bitrate.valueOf(bitrate),
+            deviceName = prefs[Keys.DEVICE_NAME] ?: default.deviceName
         )
     }
 
@@ -191,6 +194,10 @@ class SettingsRepository @Inject constructor(
         Bitrate.valueOf(bitrate)
     }
 
+    val deviceName = dataStore.data.map {
+        it[Keys.DEVICE_NAME] ?: "Outify"
+    }
+
     val showLyricsByDefault = dataStore.data.map {
         it[Keys.Lyrics.SHOW_LYRICS_ALWAYS] ?: true
     }
@@ -229,6 +236,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setAutoTransfer(enabled: Boolean) {
         dataStore.edit { it[Keys.AUTO_TRANSFER] = enabled }
+    }
+
+    suspend fun setDeviceName(name: String) {
+        dataStore.edit { it[Keys.DEVICE_NAME] = name }
     }
 
     suspend fun setGesturesEnabled(enabled: Boolean) {
@@ -370,5 +381,10 @@ data class PlaybackSettings(
     val normalizeAudio: Boolean = false,
     val keepalive: Boolean = true,
     val autoTransfer: Boolean = true,
-    val bitrate: Bitrate = Bitrate.KBPS320
-)
+    val bitrate: Bitrate = Bitrate.KBPS320,
+    val deviceName: String = "Outify",
+) {
+    companion object {
+        val Default = PlaybackSettings()
+    }
+}

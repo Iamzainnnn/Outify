@@ -19,12 +19,13 @@ pub static DEVICE_CALLBACK: Mutex<Option<GlobalRef>> = Mutex::new(None);
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_initializeSpirc(
-    env: JNIEnv,
+    mut env: JNIEnv,
     _this: JClass,
     callback: JObject,
     gapless: jboolean,
     normalisation: jboolean,
     bitrate: jint,
+    device_name: JString,
 ) -> jboolean {
     info!("Initializing spirc!");
 
@@ -45,6 +46,15 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_initializeSpirc(
             return 0;
         }
     };
+
+    let name: String = match env.get_string(&device_name) {
+        Ok(s) => s.into(),
+        Err(e) => {
+            error!("Failed to read device_name: {e}");
+            return 0;
+        }
+    };
+
     let jvm = crate::JVM.get().unwrap();
 
     let bitrate = match bitrate {
@@ -56,7 +66,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_initializeSpirc(
 
     handle.spawn(async move {
         let result =
-            crate::spirc::initialize_spirc(gapless != 0, normalisation != 0, bitrate).await;
+            crate::spirc::initialize_spirc(name, gapless != 0, normalisation != 0, bitrate).await;
 
         let mut env = match jvm.attach_current_thread() {
             Ok(env) => env,

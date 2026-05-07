@@ -37,6 +37,7 @@ pub enum SpircError {
 static SPIRC_RUNTIME: OnceCell<RwLock<Option<SpircRuntime>>> = OnceCell::new();
 static CURRENT_TRACK: OnceCell<Mutex<Option<String>>> = OnceCell::new();
 pub static BITRATE: OnceCell<Mutex<Bitrate>> = OnceCell::new();
+pub static DEVICE_NAME: OnceCell<Mutex<String>> = OnceCell::new();
 
 pub static NORMALISE_AUDIO: AtomicBool = AtomicBool::new(false);
 pub static GAPLESS: AtomicBool = AtomicBool::new(false);
@@ -58,6 +59,7 @@ pub fn init_spirc_container() {
     CURRENT_TRACK.get_or_init(|| Mutex::new(None));
     CURRENT_CONTEXT.get_or_init(|| Mutex::new(None));
     BITRATE.get_or_init(|| Mutex::new(Bitrate::Bitrate320));
+    DEVICE_NAME.get_or_init(|| Mutex::new("Outify".to_string()));
 }
 
 pub struct SpircRuntime {
@@ -69,6 +71,7 @@ impl SpircRuntime {
     pub async fn new(
         session: &Session,
         credentials: Credentials,
+        device_name: String,
         gapless: bool,
         normalisation: bool,
         bitrate: Bitrate,
@@ -101,7 +104,7 @@ impl SpircRuntime {
         );
 
         let connect_config = ConnectConfig {
-            name: "Outify".to_string(), // TODO: Make configurable?
+            name: device_name,
             ..Default::default()
         };
 
@@ -462,11 +465,16 @@ pub async fn auto_initialize_spirc() -> Result<(), SpircError> {
     let normalisation = NORMALISE_AUDIO.load(std::sync::atomic::Ordering::Relaxed);
     let bitrate_mutex = BITRATE.get().expect("BITRATE not initialized");
     let bitrate = *bitrate_mutex.lock().unwrap();
+    let device_name = DEVICE_NAME
+        .get()
+        .map(|m| m.lock().unwrap().clone())
+        .unwrap_or("Outify".to_string());
 
-    initialize_spirc(gapless, normalisation, bitrate).await
+    initialize_spirc(device_name, gapless, normalisation, bitrate).await
 }
 
 pub async fn initialize_spirc(
+    device_name: String,
     gapless: bool,
     normalisation: bool,
     bitrate: Bitrate,
@@ -502,7 +510,11 @@ pub async fn initialize_spirc(
         )
     })?;
 
-    let runtime = SpircRuntime::new(&session, credentials, gapless, normalisation, bitrate)
+    if let Some(name_mutex) = DEVICE_NAME.get() {
+        *name_mutex.lock().unwrap() = device_name.clone();
+    }
+
+    let runtime = SpircRuntime::new(&session, credentials, device_name, gapless, normalisation, bitrate)
         .await
         .map_err(|e| SpircError::Other(e.to_string()))?;
 
