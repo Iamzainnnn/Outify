@@ -40,7 +40,7 @@ import com.google.android.material.color.utilities.Hct
 import com.google.android.material.color.utilities.SchemeTonalSpot
 import com.google.android.material.color.utilities.Score
 
-val DefaultThemeColor = Color(0xFF94ED55)
+val DefaultThemeColor = Color(0xFF465D69)
 
 @OptIn(UnstableApi::class)
 @SuppressLint("RestrictedApi")
