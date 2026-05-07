@@ -132,12 +132,16 @@ class SettingsRepository @Inject constructor(
     }
 
     object Gesture {
-        fun defaultGestureList(): List<GestureSetting> = listOf(
+        val Defaults: List<GestureSetting> = listOf(
             GestureSetting(
                 action = GestureAction.ADD_TO_QUEUE,
                 side = Side.End,
                 thresholdFraction = 0.05f,
-                backgroundHex = 0xC43C8C52,
+            ),
+            GestureSetting(
+                action = GestureAction.PLAY_NEXT,
+                side = Side.End,
+                thresholdFraction = 0.25f,
             ),
             GestureSetting(
                 action = GestureAction.START_RADIO,
@@ -149,6 +153,10 @@ class SettingsRepository @Inject constructor(
                 side = Side.Start,
                 thresholdFraction = 0.25f,
                 backgroundHex = 0xC43C8C52,
+            ),
+            GestureSetting(
+                action = GestureAction.SHOW_TRACK_INFO,
+                trigger = GestureTrigger.LongPress,
             )
         )
     }
@@ -158,7 +166,7 @@ class SettingsRepository @Inject constructor(
             dataStore.edit { prefs ->
                 val current = prefs[Keys.Gesture.GESTURES]
                 if (current.isNullOrBlank()) {
-                    val serializedDefaults = json.encodeToString(Gesture.defaultGestureList())
+                    val serializedDefaults = json.encodeToString(Gesture.Defaults)
                     prefs[Keys.Gesture.GESTURES] = serializedDefaults
                 }
             }
@@ -323,11 +331,11 @@ class SettingsRepository @Inject constructor(
     }
 
     private fun decodeGestures(serialized: String?): List<GestureSetting> {
-        if (serialized.isNullOrBlank()) return Gesture.defaultGestureList()
+        if (serialized.isNullOrBlank()) return Gesture.Defaults
         return try {
             return json.decodeFromString(serialized)
         } catch (e: Exception) {
-            Gesture.defaultGestureList()
+            Gesture.Defaults
         }
     }
 }

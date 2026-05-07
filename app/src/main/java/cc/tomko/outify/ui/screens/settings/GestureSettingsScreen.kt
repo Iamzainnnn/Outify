@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Gesture
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -139,6 +140,14 @@ fun SharedTransitionScope.GestureSettingsScreen(
                             icon = { Icon(Icons.Default.Add, contentDescription = null) },
                             onClick = {
                                 viewModel.addGesture()
+                            }
+                        )
+
+                        PreferenceEntry(
+                            title = { Text("Reset to defaults") },
+                            icon = { Icon(Icons.Default.RestartAlt, contentDescription = null) },
+                            onClick = {
+                                viewModel.resetToDefaults()
                             }
                         )
                     }

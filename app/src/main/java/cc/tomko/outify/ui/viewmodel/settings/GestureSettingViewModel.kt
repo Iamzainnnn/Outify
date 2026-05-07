@@ -23,7 +23,7 @@ class GestureSettingViewModel @Inject constructor(
 
     val gestures = settingsRepository.interfaceSettings
         .map { it.gestureSettings }
-        .stateIn(viewModelScope, SharingStarted.Lazily, SettingsRepository.Gesture.defaultGestureList())
+        .stateIn(viewModelScope, SharingStarted.Lazily, SettingsRepository.Gesture.Defaults)
 
     // --- Mutations ---
 
@@ -63,32 +63,6 @@ class GestureSettingViewModel @Inject constructor(
         }
     }
 
-    fun moveUp(index: Int) {
-        if (index <= 0) return
-        viewModelScope.launch {
-            val current = gestures.value.toMutableList()
-            if (index in current.indices) {
-                val item = current.removeAt(index)
-                val insertIndex = index - 1
-                current.add(insertIndex, item)
-                settingsRepository.saveGestures(current)
-            }
-        }
-    }
-
-    fun moveDown(index: Int) {
-        viewModelScope.launch {
-            val current = gestures.value.toMutableList()
-            val lastIndex = current.size - 1
-            if (index in current.indices && index < lastIndex) {
-                val item = current.removeAt(index)
-                val insertIndex = index + 1
-                current.add(insertIndex, item)
-                settingsRepository.saveGestures(current)
-            }
-        }
-    }
-
     fun updateGestureAt(index: Int, updated: GestureSetting) {
         viewModelScope.launch {
             val current = gestures.value.toMutableList()
@@ -96,6 +70,12 @@ class GestureSettingViewModel @Inject constructor(
                 current[index] = updated
                 settingsRepository.saveGestures(current)
             }
+        }
+    }
+
+    fun resetToDefaults() {
+        viewModelScope.launch {
+            settingsRepository.saveGestures(SettingsRepository.Gesture.Defaults)
         }
     }
 }
