@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -67,6 +68,7 @@ import cc.tomko.outify.data.repository.InterfaceSettings
 import cc.tomko.outify.ui.screens.PlayerScreen
 import cc.tomko.outify.ui.OutifyTheme
 import cc.tomko.outify.ui.PopupSpec
+import cc.tomko.outify.ui.ThemeMode
 import cc.tomko.outify.ui.viewmodel.MainViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.AddToPlaylistViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.PlaybackDevicesViewModel
@@ -205,9 +207,12 @@ class MainActivity : ComponentActivity() {
         val density = LocalDensity.current
         val fixedDensity = Density(density.density, fontScale = interfaceSettings.fontScale)
 
+        val themeMode = if (interfaceSettings.dynamicTheme) ThemeMode.DYNAMIC_ALBUM else if (interfaceSettings.dynamicSystem) ThemeMode.DYNAMIC_SYSTEM else ThemeMode.STATIC
+
         OutifyTheme(
             track = currentTrack,
-            enableDynamicTheme = interfaceSettings.dynamicTheme,
+            themeMode = themeMode,
+            staticAccentColor = interfaceSettings.accentColor,
             pureBlack = interfaceSettings.pureBlack,
             highContrastCompat = interfaceSettings.highContrastCompat,
             content = {

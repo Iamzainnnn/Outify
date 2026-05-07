@@ -1,10 +1,13 @@
 package cc.tomko.outify.data.repository
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import cc.tomko.outify.data.setting.GestureAction
 import cc.tomko.outify.data.setting.GestureSetting
@@ -60,6 +63,8 @@ class SettingsRepository @Inject constructor(
 
         object Interface {
             val DYNAMIC_THEME = booleanPreferencesKey("dynamic_theme")
+            val DYNAMIC_SYSTEM = booleanPreferencesKey("dynamic_system")
+            val ACCENT_COLOR = longPreferencesKey("accent_color")
             val PURE_BLACK = booleanPreferencesKey("pure_black")
             val HIGH_CONTRAST_COMPAT = booleanPreferencesKey("high_contrast_compat")
             val FONT_SCALE = floatPreferencesKey("font_scale")
@@ -94,12 +99,16 @@ class SettingsRepository @Inject constructor(
         val enabled = prefs[Keys.Gesture.ENABLED] ?: true
         
         val monochrome = prefs[Keys.Interface.MONOCHROME_IMAGES] ?: false
+        val accentColor = prefs[Keys.Interface.ACCENT_COLOR] ?: Color.Cyan.toArgb().toLong()
+
         InterfaceSettings(
             swipeGesturesEnabled = enabled,
             gestureSettings = if (enabled) decodeGestures(prefs[Keys.Gesture.GESTURES]) else emptyList(),
 
             // Dynamic theme
             dynamicTheme = prefs[Keys.Interface.DYNAMIC_THEME] ?: true,
+            dynamicSystem = prefs[Keys.Interface.DYNAMIC_SYSTEM] ?: true,
+            accentColor = Color(accentColor.toInt()),
             pureBlack = prefs[Keys.Interface.PURE_BLACK] ?: false,
             highContrastCompat = prefs[Keys.Interface.HIGH_CONTRAST_COMPAT] ?: false,
 
@@ -269,6 +278,14 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.Interface.DYNAMIC_THEME] = enabled }
     }
 
+    suspend fun setDynamicSystem(enabled: Boolean) {
+        dataStore.edit { it[Keys.Interface.DYNAMIC_SYSTEM] = enabled }
+    }
+
+    suspend fun setAccentColor(color: Color) {
+        dataStore.edit { it[Keys.Interface.ACCENT_COLOR] = color.toArgb().toLong() }
+    }
+
     suspend fun setPureBlack(enabled: Boolean) {
         dataStore.edit { it[Keys.Interface.PURE_BLACK] = enabled }
     }
@@ -368,8 +385,10 @@ data class InterfaceSettings(
     ),
     // Dynamic theme
     val dynamicTheme: Boolean = true,
+    val dynamicSystem: Boolean = true,
     val pureBlack: Boolean = false,
     val highContrastCompat: Boolean = false,
+    val accentColor: Color = Color.Cyan,
 
     // Font scaling (1.0 = uniform/no system scaling)
     val fontScale: Float = 1.0f,

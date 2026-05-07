@@ -14,8 +14,10 @@ import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DesignServices
 import androidx.compose.material.icons.filled.MonochromePhotos
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayCircleOutline
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,7 +28,11 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -34,7 +40,9 @@ import cc.tomko.outify.ui.components.PreferenceSectionHeader
 import cc.tomko.outify.ui.components.PreferenceEntry
 import cc.tomko.outify.ui.components.SwitchPreferenceEntry
 import cc.tomko.outify.data.repository.InterfaceSettings
+import cc.tomko.outify.ui.components.ColorPreferenceEntry
 import cc.tomko.outify.ui.viewmodel.settings.AppearanceViewModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,6 +86,32 @@ fun AppearanceSettingScreen(
                         }
                     )
 
+                    if (!settings.dynamicTheme) {
+                        SwitchPreferenceEntry(
+                            title = { Text("Dynamic system") },
+                            description = "Colorscheme will adapt to your system's colorscheme",
+                            icon = { Icon(Icons.Default.SystemUpdate, contentDescription = null) },
+                            isChecked = settings.dynamicSystem,
+                            onCheckedChange = { enabled ->
+                                viewModel.setDynamicSystem(enabled)
+                            }
+                        )
+
+                        if (!settings.dynamicSystem) {
+                            ColorPreferenceEntry(
+                                title = { Text("Accent color") },
+                                description = "Color of Outify's interface",
+                                icon = { Icon(Icons.Default.Palette, contentDescription = null) },
+                                value = settings.accentColor,
+                                onValueChange = { viewModel.setAccentColor(it) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                ElevatedCard {
                     SwitchPreferenceEntry(
                         title = { Text("Pure black") },
                         description = "Use AMOLED black",

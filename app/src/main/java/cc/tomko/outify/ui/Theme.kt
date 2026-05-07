@@ -47,7 +47,8 @@ val DefaultThemeColor = Color(0xFF94ED55)
 @Composable
 fun OutifyTheme(
     track: Track?,
-    enableDynamicTheme: Boolean = true,
+    themeMode: ThemeMode = ThemeMode.DYNAMIC_ALBUM,
+    staticAccentColor: Color = DefaultThemeColor,
     darkTheme: Boolean = isSystemInDarkTheme(),
     pureBlack: Boolean = false,
     highContrastCompat: Boolean = false,
@@ -55,20 +56,16 @@ fun OutifyTheme(
 ) {
     val context = LocalContext.current
 
-    var themeColor by rememberSaveable(stateSaver = ColorSaver) {
+    var albumColor by rememberSaveable(stateSaver = ColorSaver) {
         mutableStateOf(DefaultThemeColor)
     }
-    var usingDefaultColor by rememberSaveable { mutableStateOf(true) }
 
-    val coverUrl = track?.album?.getCover(CoverSize.SMALL)?.let {
-        ALBUM_COVER_URL + it.uri
-    }
+    LaunchedEffect(track?.id, themeMode) {
+        if (themeMode != ThemeMode.DYNAMIC_ALBUM) return@LaunchedEffect
 
-    LaunchedEffect(track?.id, enableDynamicTheme, darkTheme) {
-        if (!enableDynamicTheme || coverUrl == null) {
-            themeColor = DefaultThemeColor
-            return@LaunchedEffect
-        }
+        val coverUrl = track?.album?.getCover(CoverSize.SMALL)?.let {
+            ALBUM_COVER_URL + it.uri
+        } ?: return@LaunchedEffect
 
         val result = context.imageLoader.execute(
             ImageRequest.Builder(context)
@@ -78,36 +75,52 @@ fun OutifyTheme(
         )
 
         val extracted = result.image?.toBitmap()?.extractThemeColor()
-        if (extracted != null) {
-            themeColor = extracted
-            usingDefaultColor = false
-        } else {
-            themeColor = DefaultThemeColor
-            usingDefaultColor = true
-        }
+
+        albumColor = extracted ?: DefaultThemeColor
     }
 
-
     val colorScheme =
-        if (usingDefaultColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val systemTheme = if (darkTheme) {
-                dynamicDarkColorScheme(context).pureBlack(pureBlack)
-            } else {
-                dynamicLightColorScheme(context)
+        when (themeMode) {
+            ThemeMode.STATIC -> {
+                SchemeTonalSpot(
+                    Hct.fromInt(staticAccentColor.toArgb()),
+                    darkTheme,
+                    0.0
+                ).toColorScheme()
             }
 
-            if (highContrastCompat) {
-                systemTheme.copy(
-                    secondaryContainer = systemTheme.surfaceContainerHigh,
-                    onSecondaryContainer = systemTheme.secondary,
-                )
-            } else {
-                systemTheme
+            ThemeMode.DYNAMIC_SYSTEM -> {
+                val systemTheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (darkTheme) {
+                        dynamicDarkColorScheme(context).pureBlack(pureBlack)
+                    } else {
+                        dynamicLightColorScheme(context)
+                    }
+                } else null
+
+                if (systemTheme != null) {
+                    if (highContrastCompat) {
+                        systemTheme.copy(
+                            secondaryContainer = systemTheme.surfaceContainerHigh,
+                            onSecondaryContainer = systemTheme.secondary,
+                        )
+                    } else systemTheme
+                } else {
+                    SchemeTonalSpot(
+                        Hct.fromInt(DefaultThemeColor.toArgb()),
+                        darkTheme,
+                        0.0
+                    ).toColorScheme()
+                }
             }
-        } else {
-            SchemeTonalSpot(Hct.fromInt(themeColor.toArgb()), darkTheme, 0.0)
-                .toColorScheme()
-                .pureBlack(darkTheme && pureBlack)
+
+            ThemeMode.DYNAMIC_ALBUM -> {
+                SchemeTonalSpot(
+                    Hct.fromInt(albumColor.toArgb()),
+                    darkTheme,
+                    0.0
+                ).toColorScheme()
+            }
         }
 
     val animatedScheme = animateColorScheme(
@@ -255,4 +268,10 @@ fun animateColorScheme(target: ColorScheme, animationSpec: AnimationSpec<Color>)
 val ColorSaver = object : Saver<Color, Int> {
     override fun restore(value: Int): Color = Color(value)
     override fun SaverScope.save(value: Color): Int = value.toArgb()
+}
+
+enum class ThemeMode {
+    DYNAMIC_SYSTEM,
+    DYNAMIC_ALBUM,
+    STATIC
 }
