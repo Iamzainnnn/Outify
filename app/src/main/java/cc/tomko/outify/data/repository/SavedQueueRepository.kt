@@ -105,6 +105,14 @@ class SavedQueueRepository @Inject constructor(
         }
     }
 
+    fun reload() {
+        scope.launch {
+            val prefs = dataStore.data.first()
+            _queues.value = decode(prefs[SettingsRepository.Keys.Queue.QUEUES])
+            _activeQueueId.value = prefs[SettingsRepository.Keys.Queue.ACTIVE_ID]
+        }
+    }
+
     private fun decode(raw: String?): List<SavedQueue> {
         raw ?: return emptyList()
         return try {

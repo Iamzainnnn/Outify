@@ -92,7 +92,7 @@ fun SettingsScreen(
                 ) {
                     PreferenceEntry(
                         title = { Text("Misc") },
-                        description = "Sync",
+                        description = "Sync, Backup & restore",
                         icon = { Icon(Icons.Default.DeveloperMode, contentDescription = null) },
                         onClick = openMiscSettings,
                     )

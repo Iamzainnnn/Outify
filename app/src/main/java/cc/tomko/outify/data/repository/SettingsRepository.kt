@@ -355,6 +355,12 @@ class SettingsRepository @Inject constructor(
             Gesture.Defaults
         }
     }
+
+    suspend fun resetSettings() {
+        dataStore.edit { prefs ->
+            prefs.clear()
+        }
+    }
 }
 
 data class InterfaceSettings(

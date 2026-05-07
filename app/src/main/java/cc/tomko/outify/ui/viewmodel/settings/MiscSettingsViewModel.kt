@@ -1,11 +1,16 @@
 package cc.tomko.outify.ui.viewmodel.settings
 
 import android.content.Context
-import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cc.tomko.outify.BuildConfig
 import cc.tomko.outify.core.SpClient
+import cc.tomko.outify.data.repository.BackupRepository
 import cc.tomko.outify.data.repository.LikedRepository
+import cc.tomko.outify.data.repository.SavedQueueRepository
+import cc.tomko.outify.data.repository.SettingsRepository
 import cc.tomko.outify.services.OAuthService
 import cc.tomko.outify.services.SyncNotificationManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,11 +30,22 @@ sealed class SyncStatus {
     data class Error(val message: String) : SyncStatus()
 }
 
+sealed class BackupStatus {
+    data object Idle : BackupStatus()
+    data object Exporting : BackupStatus()
+    data object Importing : BackupStatus()
+    data class Success(val message: String) : BackupStatus()
+    data class Error(val message: String) : BackupStatus()
+}
+
 @HiltViewModel
 class MiscSettingsViewModel @Inject constructor(
     private val likedRepository: LikedRepository,
     private val spClient: SpClient,
     private val syncNotificationManager: SyncNotificationManager,
+    private val settingsRepository: SettingsRepository,
+    private val backupRepository: BackupRepository,
+    private val savedQueueRepository: SavedQueueRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -41,6 +57,9 @@ class MiscSettingsViewModel @Inject constructor(
 
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated.asStateFlow()
+
+    private val _backupStatus = MutableStateFlow<BackupStatus>(BackupStatus.Idle)
+    val backupStatus: StateFlow<BackupStatus> = _backupStatus.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -101,5 +120,42 @@ class MiscSettingsViewModel @Inject constructor(
 
     fun resetStatus() {
         _syncStatus.value = SyncStatus.Idle
+    }
+
+    fun exportBackup(uri: Uri) {
+        viewModelScope.launch {
+            _backupStatus.value = BackupStatus.Exporting
+            backupRepository.exportBackup(uri, BuildConfig.VERSION_NAME)
+                .onSuccess {
+                    _backupStatus.value = BackupStatus.Success("Backup saved")
+                }
+                .onFailure { e ->
+                    _backupStatus.value = BackupStatus.Error(e.message ?: "Export failed")
+                }
+            delay(3000)
+            _backupStatus.value = BackupStatus.Idle
+        }
+    }
+
+    fun importBackup(uri: Uri) {
+        viewModelScope.launch {
+            _backupStatus.value = BackupStatus.Importing
+            backupRepository.importBackup(uri)
+                .onSuccess {
+                    savedQueueRepository.reload()
+                    _backupStatus.value = BackupStatus.Success("Settings restored")
+                }
+                .onFailure { e ->
+                    _backupStatus.value = BackupStatus.Error(e.message ?: "Import failed")
+                }
+            delay(3000)
+            _backupStatus.value = BackupStatus.Idle
+        }
+    }
+
+    fun resetPreferences(){
+        viewModelScope.launch {
+            settingsRepository.resetSettings()
+        }
     }
 }
