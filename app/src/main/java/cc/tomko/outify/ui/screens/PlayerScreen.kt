@@ -32,6 +32,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowLeft
+import androidx.compose.material.icons.automirrored.filled.ArrowRight
+import androidx.compose.material.icons.filled.ArrowLeft
+import androidx.compose.material.icons.filled.ArrowRight
 import androidx.compose.material.icons.filled.Explicit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -443,26 +447,8 @@ fun PlaybackControls(
             onClick = onPreviousTrack,
             modifier = Modifier.size(42.dp)
         ) {
-            Icon(Icons.Outlined.SkipPrevious, contentDescription = "Previous track")
+            Icon(Icons.AutoMirrored.Filled.ArrowLeft, contentDescription = "Previous track", modifier = Modifier.size(42.dp))
         }
-
-        // Play / Pause — Cookie9Sided with spring rotation bounce + AnimatedContent
-//        var rotated by remember { mutableStateOf(false) }
-//        val rotation by animateFloatAsState(
-//            targetValue = if (rotated) 20f else 0f,
-//            animationSpec = spring(
-//                dampingRatio = Spring.DampingRatioMediumBouncy,
-//                stiffness = Spring.StiffnessMedium
-//            ),
-//            label = "playButtonRotation"
-//        )
-
-//        LaunchedEffect(rotated) {
-//            if (rotated) {
-//                delay(300)
-//                rotated = false
-//            }
-//        }
 
         val iconState = when {
             isBuffering -> PlaybackIconState.Buffering
@@ -477,7 +463,6 @@ fun PlaybackControls(
             shape = MaterialShapes.Cookie9Sided.toShape(),
             modifier = Modifier
                 .size(96.dp),
-//                .graphicsLayer { rotationZ = rotation },
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -523,7 +508,7 @@ fun PlaybackControls(
             onClick = onNextTrack,
             modifier = Modifier.size(42.dp)
         ) {
-            Icon(Icons.Outlined.SkipNext, contentDescription = "Next track")
+            Icon(Icons.AutoMirrored.Filled.ArrowRight, contentDescription = "Next track", modifier = Modifier.size(42.dp))
         }
 
         FilledTonalIconToggleButton(
