@@ -61,6 +61,9 @@ class LibraryViewModel @Inject constructor(
     val authors: StateFlow<Map<String, Profile>> = _authors
     val isRefreshing = MutableStateFlow(false)
 
+    private val artworkCache = mutableMapOf<String, String?>()
+    private val authorsCache = mutableMapOf<String, List<Profile>>()
+
     private val foldersFlow = settingsRepository.folders
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
@@ -95,7 +98,10 @@ class LibraryViewModel @Inject constructor(
     )
 
     suspend fun getArtworkUrl(playlist: Playlist): String? {
-        return playlist.getCover(metadata)
+        artworkCache[playlist.uri]?.let { return it }
+        val url = playlist.getCover(metadata)
+        artworkCache[playlist.uri] = url
+        return url
     }
 
     fun loadPlaylistUris(force: Boolean = false) {
@@ -125,11 +131,13 @@ class LibraryViewModel @Inject constructor(
     }
 
     suspend fun getAuthors(playlist: Playlist): List<Profile> = coroutineScope {
+        authorsCache[playlist.uri]?.let { return@coroutineScope it }
+
         val ids = playlist.contents
             .map { it.attributes.addedBy }
             .distinct()
 
-        ids.map { id ->
+        val profiles = ids.map { id ->
             async(Dispatchers.IO) {
                 _authors.value[id]?.let { return@async it }
 
@@ -148,15 +156,19 @@ class LibraryViewModel @Inject constructor(
                 }
 
                 _authors.update { current -> current + (id to profile) }
-
                 profile
             }
         }.awaitAll()
             .filterNotNull()
+
+        authorsCache[playlist.uri] = profiles
+        profiles
     }
 
     fun refresh(){
         playlistsLoaded = false
+        artworkCache.clear()
+        authorsCache.clear()
         loadPlaylistUris(force = true)
     }
 
