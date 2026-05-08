@@ -6,9 +6,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cc.tomko.outify.core.UserProfile
 import cc.tomko.outify.core.model.Playlist
+import cc.tomko.outify.core.model.PlaylistFolder
 import cc.tomko.outify.core.model.Profile
 import cc.tomko.outify.core.model.getCover
 import cc.tomko.outify.data.metadata.Metadata
+import cc.tomko.outify.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +22,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
@@ -29,12 +33,18 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlin.collections.plus
 
+data class LibraryState(
+    val playlists: List<Playlist> = emptyList(),
+    val folders: List<PlaylistFolder> = emptyList(),
+)
+
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val metadata: Metadata,
     private val json: Json,
     private val userProfile: UserProfile,
-): ViewModel() {
+    private val settingsRepository: SettingsRepository,
+) : ViewModel() {
 
     init {
         viewModelScope.launch {
@@ -45,10 +55,13 @@ class LibraryViewModel @Inject constructor(
     val headerArtwork = _headerArtwork
 
     private val playlistUris = MutableStateFlow<List<String>>(emptyList())
+    private var playlistsLoaded = false
 
     private val _authors = MutableStateFlow<Map<String, Profile>>(emptyMap())
     val authors: StateFlow<Map<String, Profile>> = _authors
     val isRefreshing = MutableStateFlow(false)
+
+    private val foldersFlow = settingsRepository.folders
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val playlists: StateFlow<List<Playlist>> =
@@ -67,18 +80,33 @@ class LibraryViewModel @Inject constructor(
                 emptyList()
             )
 
+    val libraryState: StateFlow<LibraryState> = combine(
+        playlists,
+        foldersFlow,
+    ) { playlists, folders ->
+        LibraryState(
+            playlists = playlists,
+            folders = folders,
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        LibraryState()
+    )
 
     suspend fun getArtworkUrl(playlist: Playlist): String? {
         return playlist.getCover(metadata)
     }
 
-    fun loadPlaylistUris() {
+    fun loadPlaylistUris(force: Boolean = false) {
+        if (!force && playlistsLoaded) return
         viewModelScope.launch {
             isRefreshing.value = true
             runCatching {
                 metadata.getPlaylistUris()
             }.onSuccess { uris ->
                 playlistUris.value = uris
+                playlistsLoaded = true
             }.onFailure {
                 Log.w("LibraryViewModel", "Failed to load playlist URIs", it)
             }
@@ -128,6 +156,58 @@ class LibraryViewModel @Inject constructor(
     }
 
     fun refresh(){
-        loadPlaylistUris()
+        playlistsLoaded = false
+        loadPlaylistUris(force = true)
+    }
+
+    fun createFolder(folder: PlaylistFolder) {
+        viewModelScope.launch {
+            val current = settingsRepository.folders.first()
+            settingsRepository.saveFolders(current + folder)
+        }
+    }
+
+    fun updateFolder(folder: PlaylistFolder) {
+        viewModelScope.launch {
+            val current = settingsRepository.folders.first()
+            settingsRepository.saveFolders(current.map { if (it.id == folder.id) folder else it })
+        }
+    }
+
+    fun deleteFolder(folderId: String) {
+        viewModelScope.launch {
+            val current = settingsRepository.folders.first()
+            settingsRepository.saveFolders(current.filter { it.id != folderId })
+        }
+    }
+
+    fun movePlaylistToFolder(playlistUri: String, folderId: String?) {
+        viewModelScope.launch {
+            val current = settingsRepository.folders.first()
+            val updated = current.map { folder ->
+                if (folder.id == folderId) {
+                    if (playlistUri in folder.playlistIds) folder
+                    else folder.copy(playlistIds = folder.playlistIds + playlistUri)
+                } else {
+                    folder.copy(playlistIds = folder.playlistIds - playlistUri)
+                }
+            }
+            settingsRepository.saveFolders(updated)
+        }
+    }
+
+    fun reorderPlaylistsInFolder(folderId: String, playlistIds: List<String>) {
+        viewModelScope.launch {
+            val current = settingsRepository.folders.first()
+            settingsRepository.saveFolders(current.map {
+                if (it.id == folderId) it.copy(playlistIds = playlistIds) else it
+            })
+        }
+    }
+
+    fun reorderFolders(folders: List<PlaylistFolder>) {
+        viewModelScope.launch {
+            settingsRepository.saveFolders(folders)
+        }
     }
 }

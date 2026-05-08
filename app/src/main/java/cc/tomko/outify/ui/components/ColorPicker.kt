@@ -100,7 +100,8 @@ private fun NormalSlider(
 @Composable
 fun ColorPicker(
     initial: Color,
-    onColorChanged: (Color) -> Unit
+    onColorChanged: (Color) -> Unit,
+    preview: Boolean = true,
 ) {
     var hsv by remember { mutableStateOf(initial.toHsv()) }
 
@@ -137,12 +138,14 @@ fun ColorPicker(
             }
         )
 
-        // Preview
-        Box(
-            modifier = Modifier
-                .size(60.dp)
-                .background(hsv.toColor(), CircleShape)
-                .border(1.dp, Color.Gray, CircleShape)
-        )
+        if(preview) {
+            // Preview
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .background(hsv.toColor(), CircleShape)
+                    .border(1.dp, Color.Gray, CircleShape)
+            )
+        }
     }
 }

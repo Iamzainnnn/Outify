@@ -8,12 +8,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import cc.tomko.outify.core.model.OutifyUri
+import cc.tomko.outify.core.model.PlaylistFolder
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.core.model.toOutifyUri
 import cc.tomko.outify.ui.GlobalPopupController
 import cc.tomko.outify.ui.PopupSpec
 import cc.tomko.outify.ui.components.bottomsheet.AddToPlaylistBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.AuthResultBottomSheet
+import cc.tomko.outify.ui.components.bottomsheet.CreateFolderBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.CreatePlaylistBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.PlaybackDevicesBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.PlaylistInfoBottomSheet
@@ -158,6 +160,11 @@ fun GlobalPopupHost(
                         GlobalPopupController.dismiss(popup.id)
                     }
                 )
+            }
+
+            is PopupSpec.CreateFolder,
+            is PopupSpec.EditFolder -> {
+                // Handled locally in LibraryScreen
             }
         }
     }

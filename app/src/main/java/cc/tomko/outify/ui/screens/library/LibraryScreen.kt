@@ -1,7 +1,7 @@
 package cc.tomko.outify.ui.screens.library
 
-import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -15,33 +15,35 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CreateNewFolder
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.PlaylistAdd
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,10 +55,11 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -64,8 +67,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import cc.tomko.outify.core.model.Profile
 import cc.tomko.outify.core.model.Playlist
+import cc.tomko.outify.core.model.PlaylistFolder
+import cc.tomko.outify.core.model.toColor
 import cc.tomko.outify.ui.GlobalPopupController
 import cc.tomko.outify.ui.PopupSpec
 import cc.tomko.outify.ui.components.ArtworkBackground
@@ -74,10 +78,21 @@ import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.components.rememberCollapsingHeaderState
 import cc.tomko.outify.ui.components.rows.PlaylistRow
 import cc.tomko.outify.ui.components.user.UserChipAvatar
-import cc.tomko.outify.ui.components.bottomsheet.CreatePlaylistBottomSheet
+import cc.tomko.outify.ui.components.bottomsheet.CreateFolderBottomSheet
+import cc.tomko.outify.ui.components.bottomsheet.MoveToFolderBottomSheet
 import cc.tomko.outify.ui.screens.MaterialSearchBar
-import cc.tomko.outify.ui.viewmodel.bottomsheet.CreatePlaylistViewModel
 import cc.tomko.outify.ui.viewmodel.library.LibraryViewModel
+import kotlinx.coroutines.launch
+
+private sealed class LibraryItem {
+    abstract val key: String
+    data class FolderHeader(val folder: PlaylistFolder, val isExpanded: Boolean) : LibraryItem() {
+        override val key get() = "folder:${folder.id}"
+    }
+    data class PlaylistRow(val playlist: Playlist, val folderId: String?) : LibraryItem() {
+        override val key get() = "playlist:${playlist.uri}"
+    }
+}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -86,16 +101,11 @@ fun SharedTransitionScope.LibraryScreen(
     backStack: NavBackStack<NavKey>,
     modifier: Modifier = Modifier,
 ) {
-    val playlists by viewModel.playlists.collectAsState()
-    LaunchedEffect(Unit) {
-        viewModel.loadPlaylistUris()
-    }
+    val libraryState by viewModel.libraryState.collectAsState()
+    LaunchedEffect(Unit) { viewModel.loadPlaylistUris() }
 
     val density = LocalDensity.current
-    val sharedTransitionScope = this
-
     var searchQuery by remember { mutableStateOf("") }
-    var showSearch by remember { mutableStateOf(false) }
 
     val lazyListState = rememberLazyListState()
     val collapsingState = rememberCollapsingHeaderState()
@@ -110,20 +120,31 @@ fun SharedTransitionScope.LibraryScreen(
     }
     val showScrollToTop = isScrolled
 
-    val filteredPlaylists = remember(playlists, searchQuery) {
-        if (searchQuery.isBlank()) playlists
-        else playlists.filter { playlist ->
-            playlist.attributes.name.contains(searchQuery, ignoreCase = true) ||
-            playlist.ownerUsername.contains(searchQuery, ignoreCase = true)
+    var expandedFolderIds by remember { mutableStateOf(setOf<String>()) }
+    var showCreateFolder by remember { mutableStateOf(false) }
+    var editingFolder by remember { mutableStateOf<PlaylistFolder?>(null) }
+    var showMoveToFolder by remember { mutableStateOf(false) }
+    var movePlaylistUri by remember { mutableStateOf<String?>(null) }
+    var moveCurrentFolderId by remember { mutableStateOf<String?>(null) }
+    var deleteFolderId by remember { mutableStateOf<String?>(null) }
+
+    val filteredPlaylists = remember(libraryState, searchQuery) {
+        if (searchQuery.isBlank()) libraryState.playlists
+        else libraryState.playlists.filter { p ->
+            p.attributes.name.contains(searchQuery, ignoreCase = true) ||
+            p.ownerUsername.contains(searchQuery, ignoreCase = true)
         }
+    }
+
+    val flatItems = remember(libraryState.folders, filteredPlaylists, expandedFolderIds) {
+        buildFlatList(libraryState.folders, filteredPlaylists, expandedFolderIds)
     }
 
     LaunchedEffect(lazyListState.isScrollInProgress) {
         if (!lazyListState.isScrollInProgress) {
             val canExpand =
                 lazyListState.firstVisibleItemIndex == 0 &&
-                        lazyListState.firstVisibleItemScrollOffset == 0
-
+                lazyListState.firstVisibleItemScrollOffset == 0
             collapsingState.snapIfNeeded(canExpand)
         }
     }
@@ -136,15 +157,15 @@ fun SharedTransitionScope.LibraryScreen(
             .background(color = MaterialTheme.colorScheme.surface)
             .nestedScroll(collapsingState.nestedScrollConnection)
     ) {
-        val currentTopBarHeightDp = with(density) { collapsingState.height.value.toDp() }
+        val topPadding = with(density) { collapsingState.height.value.toDp() }
 
         LazyColumn(
             state = lazyListState,
-            contentPadding = PaddingValues(top = currentTopBarHeightDp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(top = topPadding),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxSize()
         ) {
-            item {
+            item(key = "search_bar") {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -162,68 +183,60 @@ fun SharedTransitionScope.LibraryScreen(
             }
 
             items(
-                items = filteredPlaylists,
-                key = { it.uri },
-                contentType = { "playlist" }
-            ) { playlist ->
-                val artworkUrl by produceState<String?>(
-                    initialValue = null,
-                    key1 = playlist.uri
-                ) {
-                    value = viewModel.getArtworkUrl(playlist)
+                items = flatItems,
+                key = { it.key },
+                contentType = {
+                    when (it) {
+                        is LibraryItem.FolderHeader -> "folder_header"
+                        is LibraryItem.PlaylistRow -> if (it.folderId != null) "folder_playlist" else "unorg_playlist"
+                    }
                 }
+            ) { item ->
+                when (item) {
+                    is LibraryItem.FolderHeader -> {
+                        FolderHeaderContent(
+                            folder = item.folder,
+                            isExpanded = item.isExpanded,
+                            onToggleExpand = {
+                                expandedFolderIds = if (item.isExpanded)
+                                    expandedFolderIds - item.folder.id
+                                else
+                                    expandedFolderIds + item.folder.id
+                            },
+                            onEdit = { editingFolder = item.folder },
+                            onDelete = { deleteFolderId = item.folder.id },
+                        )
+                    }
 
-                val authors by produceState(
-                    initialValue = emptyList(),
-                    key1 = playlist.uri
-                ) {
-                    value = viewModel.getAuthors(playlist).take(3)
+                    is LibraryItem.PlaylistRow -> {
+                        PlaylistRowContent(
+                            playlist = item.playlist,
+                            folderId = item.folderId,
+                            backStack = backStack,
+                            viewModel = viewModel,
+                            onMovePlaylist = { uri, fid ->
+                                movePlaylistUri = uri
+                                moveCurrentFolderId = fid
+                                showMoveToFolder = true
+                            },
+                        )
+                    }
                 }
-
-                PlaylistRow(
-                    playlist = playlist,
-                    artworkUrl = artworkUrl,
-                    onRowClick = {
-                        backStack.add(Route.PlaylistScreen(playlist.uri))
-                    },
-                    onRowLongClick = {
-                        GlobalPopupController.show(PopupSpec.PlaylistInfo(playlist, artworkUrl))
-                    },
-                    trailingContent = {
-                        authors.forEach {
-                            UserChipAvatar(
-                                artworkUrl = it.imageUrl,
-                                modifier = Modifier
-                                    .clickable {
-                                        backStack.add(Route.ProfileScreen(it.uri))
-                                    })
-                        }
-                    },
-                    sharedTransitionScope = this@LibraryScreen
-                )
             }
         }
 
         CollapsingHeader(
             collapseFraction = collapsingState.collapseFraction,
-            headerHeight = currentTopBarHeightDp,
-            onBackPressed = {
-                backStack.removeAt(backStack.lastIndex)
-            },
+            headerHeight = topPadding,
+            onBackPressed = { backStack.removeAt(backStack.lastIndex) },
             backgroundContent = {
                 var artworkUrl by viewModel.headerArtwork
-                LaunchedEffect(playlists) {
-                    viewModel.loadHeaderArtwork(playlists)
+                LaunchedEffect(libraryState.playlists) {
+                    viewModel.loadHeaderArtwork(libraryState.playlists)
                 }
-
                 ArtworkBackground(
                     artworkUrl = artworkUrl,
-                    fallback = {
-                        Icon(
-                            Icons.Default.LibraryMusic,
-                            contentDescription = null
-                        )
-                    }
+                    fallback = { Icon(Icons.Default.LibraryMusic, contentDescription = null) }
                 )
             },
             titleContent = {
@@ -232,9 +245,8 @@ fun SharedTransitionScope.LibraryScreen(
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
-
                 Text(
-                    text = "Account • ${playlists.count()} playlists",
+                    text = "Account • ${libraryState.playlists.count()} playlists",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
@@ -257,51 +269,44 @@ fun SharedTransitionScope.LibraryScreen(
                     exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
                 ) {
                     FloatingActionButton(
+                        onClick = { scope.launch { lazyListState.animateScrollToItem(0) } },
+                        shape = CircleShape,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(Icons.Default.KeyboardArrowUp, contentDescription = "Scroll to top")
+                    }
+                }
+
+                AnimatedVisibility(visible = fabExpanded) {
+                    FloatingActionButton(
                         onClick = {
-                            scope.launch {
-                                lazyListState.animateScrollToItem(0)
-                            }
+                            fabExpanded = false
+                            GlobalPopupController.show(PopupSpec.CreatePlaylist())
                         },
                         shape = CircleShape,
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
-                            Icons.Default.KeyboardArrowUp,
-                            contentDescription = "Scroll to top"
-                        )
-                    }
-                }
-
-                AnimatedVisibility(visible = fabExpanded) {
-                    SmallFloatingActionButton(
-                        onClick = {
-                            fabExpanded = false
-                            GlobalPopupController.show(PopupSpec.CreatePlaylist())
-                        },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
+                            Icons.AutoMirrored.Filled.PlaylistAdd,
                             contentDescription = "Add playlist"
                         )
                     }
                 }
 
                 AnimatedVisibility(visible = fabExpanded) {
-                    SmallFloatingActionButton(
+                    FloatingActionButton(
                         onClick = {
                             fabExpanded = false
-                            // TODO: open add folder flow
+                            showCreateFolder = true
                         },
+                        shape = CircleShape,
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        shape = RoundedCornerShape(16.dp)
+                        modifier = Modifier.size(40.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.CreateNewFolder,
+                            Icons.Default.CreateNewFolder,
                             contentDescription = "Add folder"
                         )
                     }
@@ -310,7 +315,7 @@ fun SharedTransitionScope.LibraryScreen(
                 val cornerRadius by animateFloatAsState(
                     targetValue = if (fabExpanded) 25f else 90f,
                     animationSpec = tween(durationMillis = 250),
-                    label = "fab_rotation"
+                    label = "fab_corner"
                 )
 
                 FloatingActionButton(
@@ -325,9 +330,8 @@ fun SharedTransitionScope.LibraryScreen(
                         animationSpec = tween(durationMillis = 250),
                         label = "fab_rotation"
                     )
-
                     Icon(
-                        imageVector = Icons.Default.Add,
+                        Icons.Default.Add,
                         contentDescription = if (fabExpanded) "Close menu" else "Add",
                         modifier = Modifier.rotate(rotation)
                     )
@@ -335,4 +339,184 @@ fun SharedTransitionScope.LibraryScreen(
             }
         }
     }
+
+    if (showCreateFolder || editingFolder != null) {
+        val folder = editingFolder
+        CreateFolderBottomSheet(
+            initialName = folder?.name ?: "",
+            initialColor = folder?.toColor() ?: Color(0xFF1DB954),
+            folderId = folder?.id,
+            onDismiss = {
+                showCreateFolder = false
+                editingFolder = null
+            },
+            onCreated = { newFolder ->
+                if (folder != null) viewModel.updateFolder(newFolder)
+                else viewModel.createFolder(newFolder)
+            }
+        )
+    }
+
+    if (showMoveToFolder && movePlaylistUri != null) {
+        MoveToFolderBottomSheet(
+            folders = libraryState.folders,
+            currentFolderId = moveCurrentFolderId,
+            onDismiss = {
+                showMoveToFolder = false
+                movePlaylistUri = null
+                moveCurrentFolderId = null
+            },
+            onSelectFolder = { folderId ->
+                movePlaylistUri?.let { viewModel.movePlaylistToFolder(it, folderId) }
+            }
+        )
+    }
+
+    deleteFolderId?.let { folderId ->
+        val folder = libraryState.folders.find { it.id == folderId }
+        AlertDialog(
+            onDismissRequest = { deleteFolderId = null },
+            title = { Text("Delete folder") },
+            text = {
+                Text("Are you sure you want to delete \"${folder?.name}\"? Playlists inside will be unorganized.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteFolder(folderId)
+                    deleteFolderId = null
+                }) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteFolderId = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
+
+@Composable
+private fun FolderHeaderContent(
+    folder: PlaylistFolder,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val folderColor = folder.toColor()
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .padding(start = 16.dp)
+                .size(56.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(folderColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.CreateNewFolder, null, tint = Color.White, modifier = Modifier.size(24.dp))
+        }
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(Modifier.weight(1f).clickable { onToggleExpand() }) {
+            Text(folder.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+            Text(
+                "${folder.playlistIds.size} playlists",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.Edit, "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+        }
+        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+        }
+
+        Icon(
+            if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+            if (isExpanded) "Collapse" else "Expand",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun PlaylistRowContent(
+    playlist: Playlist,
+    folderId: String?,
+    backStack: NavBackStack<NavKey>,
+    viewModel: LibraryViewModel,
+    onMovePlaylist: (String, String?) -> Unit,
+) {
+    val artworkUrl by produceState<String?>(null, playlist.uri) { value = viewModel.getArtworkUrl(playlist) }
+    val authors by produceState<List<cc.tomko.outify.core.model.Profile>>(emptyList(), playlist.uri) { value = viewModel.getAuthors(playlist).take(3) }
+
+    val startIndent = if (folderId != null) 24.dp else 0.dp
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = startIndent, end = 12.dp),
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            PlaylistRow(
+                playlist = playlist,
+                artworkUrl = artworkUrl,
+                onRowClick = { backStack.add(Route.PlaylistScreen(playlist.uri)) },
+                onRowLongClick = { GlobalPopupController.show(PopupSpec.PlaylistInfo(playlist, artworkUrl)) },
+                trailingContent = {
+                    authors.forEach { author ->
+                        UserChipAvatar(
+                            artworkUrl = author.imageUrl,
+                            modifier = Modifier.clickable { backStack.add(Route.ProfileScreen(author.uri)) },
+                        )
+                    }
+                },
+            )
+        }
+
+        IconButton(onClick = { onMovePlaylist(playlist.uri, folderId) }, modifier = Modifier.size(32.dp)) {
+            Icon(Icons.Default.CreateNewFolder, "Move", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+        }
+    }
+}
+
+private fun buildFlatList(
+    folders: List<PlaylistFolder>,
+    playlists: List<Playlist>,
+    expandedFolderIds: Set<String>,
+): List<LibraryItem> {
+    val items = mutableListOf<LibraryItem>()
+    val organizedUris = folders.flatMap { it.playlistIds }.toSet()
+    val byUri = playlists.associateBy { it.uri }
+
+    for (folder in folders) {
+        val exp = folder.id in expandedFolderIds
+        items.add(LibraryItem.FolderHeader(folder, exp))
+        if (exp) {
+            for (uri in folder.playlistIds) {
+                byUri[uri]?.let { items.add(LibraryItem.PlaylistRow(it, folder.id)) }
+            }
+        }
+    }
+
+    for (p in playlists) {
+        if (p.uri !in organizedUris) items.add(LibraryItem.PlaylistRow(p, null))
+    }
+
+    return items
+}
+
+

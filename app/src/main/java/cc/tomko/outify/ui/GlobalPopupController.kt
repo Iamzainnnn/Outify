@@ -1,6 +1,7 @@
 package cc.tomko.outify.ui
 
 import cc.tomko.outify.core.model.Playlist
+import cc.tomko.outify.core.model.PlaylistFolder
 import cc.tomko.outify.core.model.Track
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,6 +73,15 @@ sealed class PopupSpec(
     ) : PopupSpec(id)
 
     data class PlaybackDevices(
+        override val id: String = UUID.randomUUID().toString(),
+    ) : PopupSpec(id)
+
+    data class CreateFolder(
+        override val id: String = UUID.randomUUID().toString(),
+    ) : PopupSpec(id)
+
+    data class EditFolder(
+        val folder: PlaylistFolder,
         override val id: String = UUID.randomUUID().toString(),
     ) : PopupSpec(id)
 }

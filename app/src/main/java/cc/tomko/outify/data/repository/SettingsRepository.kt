@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import cc.tomko.outify.core.model.PlaylistFolder
 import cc.tomko.outify.data.setting.GestureAction
 import cc.tomko.outify.data.setting.GestureSetting
 import cc.tomko.outify.data.setting.GestureTrigger
@@ -87,6 +88,10 @@ class SettingsRepository @Inject constructor(
             val LAST_TRACK_URI = stringPreferencesKey("last_track_uri")
             val LAST_CONTEXT_URI = stringPreferencesKey("last_context_uri")
             val LAST_POSITION_MS = stringPreferencesKey("last_position_ms")
+        }
+
+        object Folders {
+            val FOLDERS = stringPreferencesKey("playlist_folders_v1")
         }
     }
 
@@ -353,6 +358,24 @@ class SettingsRepository @Inject constructor(
             return json.decodeFromString(serialized)
         } catch (e: Exception) {
             Gesture.Defaults
+        }
+    }
+
+    val folders: Flow<List<PlaylistFolder>> = dataStore.data.map { prefs ->
+        decodeFolders(prefs[Keys.Folders.FOLDERS])
+    }
+
+    suspend fun saveFolders(folders: List<PlaylistFolder>) {
+        val serialized = json.encodeToString(folders)
+        dataStore.edit { it[Keys.Folders.FOLDERS] = serialized }
+    }
+
+    private fun decodeFolders(serialized: String?): List<PlaylistFolder> {
+        if (serialized.isNullOrBlank()) return emptyList()
+        return try {
+            json.decodeFromString(serialized)
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 
