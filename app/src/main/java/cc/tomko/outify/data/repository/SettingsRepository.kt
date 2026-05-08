@@ -93,6 +93,10 @@ class SettingsRepository @Inject constructor(
         object Folders {
             val FOLDERS = stringPreferencesKey("playlist_folders_v1")
         }
+
+        object Library {
+            val CACHED_URIS = stringPreferencesKey("cached_playlist_uris_v1")
+        }
     }
 
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -371,6 +375,24 @@ class SettingsRepository @Inject constructor(
     }
 
     private fun decodeFolders(serialized: String?): List<PlaylistFolder> {
+        if (serialized.isNullOrBlank()) return emptyList()
+        return try {
+            json.decodeFromString(serialized)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    val cachedUris: Flow<List<String>> = dataStore.data.map { prefs ->
+        decodeUris(prefs[Keys.Library.CACHED_URIS])
+    }
+
+    suspend fun saveCachedUris(uris: List<String>) {
+        val serialized = json.encodeToString(uris)
+        dataStore.edit { it[Keys.Library.CACHED_URIS] = serialized }
+    }
+
+    private fun decodeUris(serialized: String?): List<String> {
         if (serialized.isNullOrBlank()) return emptyList()
         return try {
             json.decodeFromString(serialized)

@@ -108,14 +108,22 @@ class LibraryViewModel @Inject constructor(
         if (!force && playlistsLoaded) return
         viewModelScope.launch {
             isRefreshing.value = true
+
+            val cached = settingsRepository.cachedUris.first()
+            if (cached.isNotEmpty()) {
+                playlistUris.value = cached
+            }
+
             runCatching {
                 metadata.getPlaylistUris()
             }.onSuccess { uris ->
                 playlistUris.value = uris
+                settingsRepository.saveCachedUris(uris)
                 playlistsLoaded = true
             }.onFailure {
-                Log.w("LibraryViewModel", "Failed to load playlist URIs", it)
+                Log.w("LibraryViewModel", "Failed to fetch playlist URIs", it)
             }
+
             isRefreshing.value = false
         }
     }
