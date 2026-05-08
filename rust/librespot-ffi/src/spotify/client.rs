@@ -14,8 +14,9 @@ use tokio::sync::RwLock;
 use crate::spotify::{
     error::SpotifyApiError,
     requests::{
-        AddItemRequest, ArtistsOrTracksPage, CurrentUserResponse, DevicesResponse, RemoveItem,
-        RemoveItemRequest, TransferPlaybackRequest,
+        AddItemRequest, ArtistsOrTracksPage, CreatePlaylistRequest, CreatePlaylistResponse,
+        CurrentUserResponse, DevicesResponse, RemoveItem, RemoveItemRequest,
+        TransferPlaybackRequest,
     },
     search::extract_all_uris,
     token::{TokenResponse, WebApiToken},
@@ -384,13 +385,58 @@ impl SpotifyClient {
 
         let res = self
             .client
-            .get(format!("{}/v1/me/top/{}?time_range={}", SPOTIFY_API_URL, request_type, time_range))
+            .get(format!(
+                "{}/v1/me/top/{}?time_range={}",
+                SPOTIFY_API_URL, request_type, time_range
+            ))
             .bearer_auth(token.access_token)
             .timeout(REQUEST_TIMEOUT)
             .send()
             .await?;
 
         let data = res.json::<ArtistsOrTracksPage>().await?;
+
+        Ok(data)
+    }
+
+    pub async fn create_playlist(
+        &self,
+        name: String,
+        description: Option<String>,
+        public: bool,
+        collaborative: bool,
+    ) -> Result<CreatePlaylistResponse, SpotifyApiError> {
+        let token = match self.load_token().await {
+            Ok(o) => match o {
+                Some(t) => t,
+                None => {
+                    return Err(SpotifyApiError::Generic(
+                        "No account token present!".to_string(),
+                    ));
+                }
+            },
+            Err(e) => {
+                return Err(e);
+            }
+        };
+
+        let body = CreatePlaylistRequest {
+            name,
+            public,
+            collaborative,
+            description,
+        };
+
+        let res = self
+            .client
+            .post(format!("{}/v1/me/playlists", SPOTIFY_API_URL))
+            .json(&body)
+            .bearer_auth(token.access_token)
+            .timeout(REQUEST_TIMEOUT)
+            .send()
+            .await?;
+
+        let data = res.json::<CreatePlaylistResponse>().await?;
 
         Ok(data)
     }

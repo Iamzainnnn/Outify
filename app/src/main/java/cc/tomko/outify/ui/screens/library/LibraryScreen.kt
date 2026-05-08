@@ -2,6 +2,8 @@ package cc.tomko.outify.ui.screens.library
 
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -10,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,10 +23,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -32,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -47,10 +56,12 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import cc.tomko.outify.core.model.Profile
@@ -63,7 +74,9 @@ import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.components.rememberCollapsingHeaderState
 import cc.tomko.outify.ui.components.rows.PlaylistRow
 import cc.tomko.outify.ui.components.user.UserChipAvatar
+import cc.tomko.outify.ui.components.bottomsheet.CreatePlaylistBottomSheet
 import cc.tomko.outify.ui.screens.MaterialSearchBar
+import cc.tomko.outify.ui.viewmodel.bottomsheet.CreatePlaylistViewModel
 import cc.tomko.outify.ui.viewmodel.library.LibraryViewModel
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
@@ -231,26 +244,92 @@ fun SharedTransitionScope.LibraryScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.BottomEnd
         ) {
-            AnimatedVisibility(
-                visible = showScrollToTop,
-                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
+            var fabExpanded by remember { mutableStateOf(false) }
+
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(16.dp)
             ) {
-                FloatingActionButton(
-                    onClick = {
-                        scope.launch {
-                            lazyListState.animateScrollToItem(0)
-                        }
-                    },
-                    shape = CircleShape,
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .size(40.dp)
+                AnimatedVisibility(
+                    visible = showScrollToTop,
+                    enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
+                    exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
                 ) {
+                    FloatingActionButton(
+                        onClick = {
+                            scope.launch {
+                                lazyListState.animateScrollToItem(0)
+                            }
+                        },
+                        shape = CircleShape,
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        modifier = Modifier.size(40.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.KeyboardArrowUp,
+                            contentDescription = "Scroll to top"
+                        )
+                    }
+                }
+
+                AnimatedVisibility(visible = fabExpanded) {
+                    SmallFloatingActionButton(
+                        onClick = {
+                            fabExpanded = false
+                            GlobalPopupController.show(PopupSpec.CreatePlaylist())
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
+                            contentDescription = "Add playlist"
+                        )
+                    }
+                }
+
+                AnimatedVisibility(visible = fabExpanded) {
+                    SmallFloatingActionButton(
+                        onClick = {
+                            fabExpanded = false
+                            // TODO: open add folder flow
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CreateNewFolder,
+                            contentDescription = "Add folder"
+                        )
+                    }
+                }
+
+                val cornerRadius by animateFloatAsState(
+                    targetValue = if (fabExpanded) 25f else 90f,
+                    animationSpec = tween(durationMillis = 250),
+                    label = "fab_rotation"
+                )
+
+                FloatingActionButton(
+                    onClick = { fabExpanded = !fabExpanded },
+                    shape = RoundedCornerShape(cornerRadius),
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(56.dp)
+                ) {
+                    val rotation by animateFloatAsState(
+                        targetValue = if (fabExpanded) 45f else 0f,
+                        animationSpec = tween(durationMillis = 250),
+                        label = "fab_rotation"
+                    )
+
                     Icon(
-                        Icons.Default.KeyboardArrowUp,
-                        contentDescription = "Scroll to top"
+                        imageVector = Icons.Default.Add,
+                        contentDescription = if (fabExpanded) "Close menu" else "Add",
+                        modifier = Modifier.rotate(rotation)
                     )
                 }
             }

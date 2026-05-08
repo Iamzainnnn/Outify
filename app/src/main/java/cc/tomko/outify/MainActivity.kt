@@ -72,6 +72,7 @@ import cc.tomko.outify.ui.PopupSpec
 import cc.tomko.outify.ui.ThemeMode
 import cc.tomko.outify.ui.viewmodel.MainViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.AddToPlaylistViewModel
+import cc.tomko.outify.ui.viewmodel.bottomsheet.CreatePlaylistViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.PlaybackDevicesViewModel
 import cc.tomko.outify.ui.viewmodel.player.MiniPlayerViewModel
 import cc.tomko.outify.ui.viewmodel.player.MultiQueueViewModel
@@ -198,6 +199,7 @@ class MainActivity : ComponentActivity() {
         val miniPlayerViewModel: MiniPlayerViewModel = hiltViewModel()
         val playerViewModel: PlayerViewModel = hiltViewModel()
         val addToPlaylistViewModel: AddToPlaylistViewModel = hiltViewModel()
+        val createPlaylistViewModel: CreatePlaylistViewModel = hiltViewModel()
         val playbackDevicesViewModel: PlaybackDevicesViewModel = hiltViewModel()
 
         val playerSheetState = rememberPlayerSheetState()
@@ -282,6 +284,7 @@ class MainActivity : ComponentActivity() {
                                         toggleLike = { viewModel.favorite(it.toUriString()) },
 
                                         addToPlaylistViewModel = addToPlaylistViewModel,
+                                        createPlaylistViewModel = createPlaylistViewModel,
                                         playbackDevicesViewModel = playbackDevicesViewModel,
                                     )
 

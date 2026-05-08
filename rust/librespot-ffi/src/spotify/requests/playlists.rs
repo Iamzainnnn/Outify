@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
 pub struct AddItemRequest {
@@ -14,4 +14,18 @@ pub struct RemoveItemRequest {
 #[derive(Serialize)]
 pub struct RemoveItem {
     pub uri: String,
+}
+
+#[derive(Serialize)]
+pub struct CreatePlaylistRequest {
+    pub name: String,
+    pub public: bool,
+    // Public has to be set to false for collaborative to work
+    pub collaborative: bool,
+    pub description: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct CreatePlaylistResponse {
+    pub id: String,
 }

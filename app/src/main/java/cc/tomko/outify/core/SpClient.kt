@@ -69,6 +69,14 @@ class SpClient @Inject constructor() {
     external fun deleteFromPlaylist(playlist_id: String, track_uris: Array<String>): Boolean
 
     /**
+     * Creates new playlist.
+     * For it to be collaborative, public has to be false
+     *
+     * Returns ID of the new playlist
+     */
+    external fun createPlaylist(name: String, description: String = "", public: Boolean, collaborative: Boolean): String?
+
+    /**
      * Retrieves the metadata for singular track by its ID
      */
     external fun getTrackData(id: String): String?

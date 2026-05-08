@@ -8,7 +8,9 @@ use librespot_metadata::Metadata;
 use regex::Regex;
 
 use crate::{
-    jni_utils::vec_to_jstring_array, outifyuri::OutifyUri, session::with_session,
+    jni_utils::{optionable_string, throw_exception, vec_to_jstring_array},
+    outifyuri::OutifyUri,
+    session::with_session,
     spotify::client::get_client,
 };
 
@@ -34,7 +36,7 @@ pub extern "system" fn username(env: JNIEnv, _class: JClass) -> jstring {
 #[unsafe(export_name = "Java_cc_tomko_outify_core_SpClient_getCurrentUserProfile")]
 pub extern "system" fn get_current_user(env: JNIEnv, _class: JClass) -> jstring {
     let client = get_client();
-    
+
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
@@ -44,19 +46,17 @@ pub extern "system" fn get_current_user(env: JNIEnv, _class: JClass) -> jstring 
     };
 
     let result = match rt.block_on(async { client.get_current_user().await }) {
-        Ok(r) => {
-            match serde_json::to_string(&r) {
-                Ok(j) => j,
-                Err(e) => {
-                    error!("failed to convert struct to json: {e}");
-                    return std::ptr::null_mut();
-                },
+        Ok(r) => match serde_json::to_string(&r) {
+            Ok(j) => j,
+            Err(e) => {
+                error!("failed to convert struct to json: {e}");
+                return std::ptr::null_mut();
             }
         },
         Err(e) => {
             error!("failed to get current user: {e}");
             return std::ptr::null_mut();
-        },
+        }
     };
 
     match env.new_string(&result) {
@@ -64,10 +64,9 @@ pub extern "system" fn get_current_user(env: JNIEnv, _class: JClass) -> jstring 
         Err(e) => {
             error!("failed to convert JString: {e}");
             return std::ptr::null_mut();
-        },
+        }
     }
 }
-
 
 #[unsafe(export_name = "Java_cc_tomko_outify_core_SpClient_search")]
 pub extern "system" fn spotify_search(
@@ -205,7 +204,12 @@ pub extern "system" fn delete_items(
 }
 
 #[unsafe(export_name = "Java_cc_tomko_outify_core_SpClient_getUserTop")]
-pub extern "system" fn get_user_top(mut env: JNIEnv, _class: JClass, r#type: JString, time_range: JString) -> jstring {
+pub extern "system" fn get_user_top(
+    mut env: JNIEnv,
+    _class: JClass,
+    r#type: JString,
+    time_range: JString,
+) -> jstring {
     let client = get_client();
 
     let request_type: Option<String> = if r#type.is_null() {
@@ -229,7 +233,7 @@ pub extern "system" fn get_user_top(mut env: JNIEnv, _class: JClass, r#type: JSt
                 format!("Invalid time_range: {}", e),
             );
             return std::ptr::null_mut();
-        },
+        }
     };
 
     let rt = match crate::TOKIO_RUNTIME.get() {
@@ -455,6 +459,58 @@ pub extern "system" fn delete_from_playlist(
         Err(e) => {
             error!("delete_from_playlist failed: {e}");
             0
+        }
+    }
+}
+
+#[unsafe(export_name = "Java_cc_tomko_outify_core_SpClient_createPlaylist")]
+pub extern "system" fn create_playlist(
+    mut env: JNIEnv,
+    _class: JClass,
+    name: JString,
+    description: JString,
+    public: jboolean,
+    collaborative: jboolean,
+) -> jstring {
+    let client = get_client();
+
+    let name: String = match env.get_string(&name) {
+        Ok(n) => n.into(),
+        Err(e) => {
+            error!("failed to get name: {e}");
+            throw_exception(&mut env, format!("Failed to get name: {e}"));
+            return std::ptr::null_mut();
+        }
+    };
+
+    let description = optionable_string(&mut env, description);
+
+    let rt = match crate::TOKIO_RUNTIME.get() {
+        Some(r) => r,
+        None => {
+            error!("failed to get Tokio runtime!");
+            return std::ptr::null_mut();
+        }
+    };
+
+    let result = rt.block_on(async {
+        client
+            .create_playlist(name, description, public != 0, collaborative != 0)
+            .await
+    });
+
+    match result {
+        Ok(response) => match env.new_string(&response.id) {
+            Ok(id) => id.into_raw(),
+            Err(e) => {
+                throw_exception(&mut env, format!("failed to convert into jstring: {e}"));
+                return std::ptr::null_mut();
+            }
+        },
+        Err(e) => {
+            error!("create_playlist failed: {e}");
+            throw_exception(&mut env, format!("create_playlist failed: {e}"));
+            return std::ptr::null_mut();
         }
     }
 }
@@ -848,7 +904,10 @@ pub extern "system" fn complete_oauth_flow(
 }
 
 fn spclient_make_error_json(env: &JNIEnv, error_type: &str, message: &str) -> jstring {
-    let json = format!(r#"{{"error":{{"type":"{}","message":"{}"}}}}"#, error_type, message);
+    let json = format!(
+        r#"{{"error":{{"type":"{}","message":"{}"}}}}"#,
+        error_type, message
+    );
     match env.new_string(json) {
         Ok(s) => s.into_raw(),
         Err(_) => std::ptr::null_mut(),
@@ -866,7 +925,11 @@ fn classify_spclient_error(err: &crate::spotify::error::SpotifyApiError) -> &'st
     let msg = err.to_string().to_lowercase();
     if msg.contains("unavailable") || msg.contains("service") {
         "service_unavailable"
-    } else if msg.contains("auth") || msg.contains("token") || msg.contains("credential") || msg.contains("unauthorized") {
+    } else if msg.contains("auth")
+        || msg.contains("token")
+        || msg.contains("credential")
+        || msg.contains("unauthorized")
+    {
         "authentication_error"
     } else if msg.contains("rate") {
         "rate_limit"
@@ -882,9 +945,7 @@ pub extern "system" fn logout(_env: JNIEnv, _class: JClass) -> jboolean {
         Ok(_) => {
             info!("Spotify Client credentials deleted!");
             1
-        },
-        Err(_) => {
-            0
-        },
+        }
+        Err(_) => 0,
     }
 }

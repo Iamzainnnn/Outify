@@ -14,11 +14,13 @@ import cc.tomko.outify.ui.GlobalPopupController
 import cc.tomko.outify.ui.PopupSpec
 import cc.tomko.outify.ui.components.bottomsheet.AddToPlaylistBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.AuthResultBottomSheet
+import cc.tomko.outify.ui.components.bottomsheet.CreatePlaylistBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.PlaybackDevicesBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.PlaylistInfoBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.TrackInfoBottomSheet
 import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.viewmodel.bottomsheet.AddToPlaylistViewModel
+import cc.tomko.outify.ui.viewmodel.bottomsheet.CreatePlaylistViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.PlaybackDevicesViewModel
 import kotlinx.coroutines.launch
 
@@ -33,6 +35,7 @@ fun GlobalPopupHost(
     toggleLike: (OutifyUri) -> Unit,
 
     addToPlaylistViewModel: AddToPlaylistViewModel,
+    createPlaylistViewModel: CreatePlaylistViewModel,
     playbackDevicesViewModel:  PlaybackDevicesViewModel,
 ) {
     val popups by GlobalPopupController.popups.collectAsState()
@@ -120,6 +123,18 @@ fun GlobalPopupHost(
                     onDismiss = {
                         GlobalPopupController.dismiss(popup.id)
                     }
+                )
+            }
+
+            is PopupSpec.CreatePlaylist -> {
+                CreatePlaylistBottomSheet(
+                    viewModel = createPlaylistViewModel,
+                    onDismiss = {
+                        GlobalPopupController.dismiss(popup.id)
+                    },
+                    onCreated = {
+
+                    },
                 )
             }
 
