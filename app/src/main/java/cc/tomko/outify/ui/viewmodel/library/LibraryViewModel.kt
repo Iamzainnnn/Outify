@@ -207,19 +207,4 @@ class LibraryViewModel @Inject constructor(
             settingsRepository.saveFolders(updated)
         }
     }
-
-    fun reorderPlaylistsInFolder(folderId: String, playlistIds: List<String>) {
-        viewModelScope.launch {
-            val current = settingsRepository.folders.first()
-            settingsRepository.saveFolders(current.map {
-                if (it.id == folderId) it.copy(playlistIds = playlistIds) else it
-            })
-        }
-    }
-
-    fun reorderFolders(folders: List<PlaylistFolder>) {
-        viewModelScope.launch {
-            settingsRepository.saveFolders(folders)
-        }
-    }
 }
