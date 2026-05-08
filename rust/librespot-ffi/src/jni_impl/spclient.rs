@@ -515,6 +515,70 @@ pub extern "system" fn create_playlist(
     }
 }
 
+#[unsafe(export_name = "Java_cc_tomko_outify_core_SpClient_modifyPlaylist")]
+pub extern "system" fn modify_playlist(
+    mut env: JNIEnv,
+    _class: JClass,
+    playlist_id: JString,
+    name: JString,
+    description: JString,
+    public: jboolean,
+    collaborative: jboolean,
+) -> jint {
+    let client = get_client();
+
+    let playlist_id: String = match env.get_string(&playlist_id) {
+        Ok(n) => n.into(),
+        Err(e) => {
+            error!("failed to get playlist_id: {e}");
+            throw_exception(&mut env, format!("Failed to get playlist_id: {e}"));
+            return 0;
+        }
+    };
+
+    let name: String = match env.get_string(&name) {
+        Ok(n) => n.into(),
+        Err(e) => {
+            error!("failed to get name: {e}");
+            throw_exception(&mut env, format!("Failed to get name: {e}"));
+            return 0;
+        }
+    };
+
+    let description = optionable_string(&mut env, description);
+
+    let rt = match crate::TOKIO_RUNTIME.get() {
+        Some(r) => r,
+        None => {
+            error!("failed to get Tokio runtime!");
+            return 0;
+        }
+    };
+
+    let result = rt.block_on(async {
+        client
+            .modify_playlist(
+                playlist_id,
+                name,
+                description,
+                public != 0,
+                collaborative != 0,
+            )
+            .await
+    });
+
+    match result {
+        Ok(status) => {
+            status.as_u16().into()
+        }
+        Err(e) => {
+            error!("modify_playlist failed: {e}");
+            throw_exception(&mut env, format!("modify_playlist failed: {e}"));
+            return 0;
+        }
+    }
+}
+
 // Searches for tracks using context
 #[unsafe(no_mangle)]
 #[deprecated]

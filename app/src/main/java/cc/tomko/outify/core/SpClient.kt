@@ -77,6 +77,14 @@ class SpClient @Inject constructor() {
     external fun createPlaylist(name: String, description: String = "", public: Boolean, collaborative: Boolean): String?
 
     /**
+     * Modifies playlist
+     * For it to be collaborative, public has to be false
+     *
+     * Returns status code
+     */
+    external fun modifyPlaylist(playlistId: String, name: String, description: String = "", public: Boolean, collaborative: Boolean): Int
+
+    /**
      * Retrieves the metadata for singular track by its ID
      */
     external fun getTrackData(id: String): String?

@@ -441,6 +441,47 @@ impl SpotifyClient {
         Ok(data)
     }
 
+    pub async fn modify_playlist(
+        &self,
+        id: String,
+        name: String,
+        description: Option<String>,
+        public: bool,
+        collaborative: bool,
+    ) -> Result<StatusCode, SpotifyApiError> {
+        let token = match self.load_token().await {
+            Ok(o) => match o {
+                Some(t) => t,
+                None => {
+                    return Err(SpotifyApiError::Generic(
+                        "No account token present!".to_string(),
+                    ));
+                }
+            },
+            Err(e) => {
+                return Err(e);
+            }
+        };
+
+        let body = CreatePlaylistRequest {
+            name,
+            public,
+            collaborative,
+            description,
+        };
+
+        let res = self
+            .client
+            .put(format!("{}/v1/playlists/{}", SPOTIFY_API_URL, id))
+            .json(&body)
+            .bearer_auth(token.access_token)
+            .timeout(REQUEST_TIMEOUT)
+            .send()
+            .await?;
+
+        Ok(res.status())
+    }
+
     pub async fn get_oauth_url(&self) -> String {
         format!("{}", SPOTIFY_OAUTH_CALLBACK_URI)
     }

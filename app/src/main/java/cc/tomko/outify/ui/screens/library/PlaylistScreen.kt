@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
@@ -66,6 +67,8 @@ import cc.tomko.outify.core.model.Artist
 import cc.tomko.outify.core.model.Profile
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.core.model.toSpotifyUri
+import cc.tomko.outify.ui.GlobalPopupController
+import cc.tomko.outify.ui.PopupSpec
 import cc.tomko.outify.ui.components.ArtworkBackground
 import cc.tomko.outify.ui.components.CollapsingHeader
 import cc.tomko.outify.ui.components.rememberCollapsingHeaderState
@@ -309,11 +312,28 @@ fun SharedTransitionScope.PlaylistScreen(
                         }
                     },
                     actionButtonContent = {
-                        FilledIconButton(onClick = { viewModel.toggleSave() }) {
-                            Icon(
-                                imageVector = if (isSaved) Icons.Rounded.Favorite else Icons.Filled.FavoriteBorder,
-                                contentDescription = if (isSaved) "Unfavorite" else "Favorite"
-                            )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FilledIconButton(onClick = {
+                                GlobalPopupController.show(
+                                    PopupSpec.ModifyPlaylist(
+                                        playlistId = playlist.id,
+                                        name = playlist.attributes.name,
+                                        description = playlist.attributes.description,
+                                        collaborative = playlist.attributes.isCollaborative,
+                                    )
+                                )
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit playlist"
+                                )
+                            }
+                            FilledIconButton(onClick = { viewModel.toggleSave() }) {
+                                Icon(
+                                    imageVector = if (isSaved) Icons.Rounded.Favorite else Icons.Filled.FavoriteBorder,
+                                    contentDescription = if (isSaved) "Unfavorite" else "Favorite"
+                                )
+                            }
                         }
                     }
                 )

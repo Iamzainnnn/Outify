@@ -62,6 +62,15 @@ sealed class PopupSpec(
         override val id: String = UUID.randomUUID().toString(),
     ) : PopupSpec(id)
 
+    data class ModifyPlaylist(
+        override val id: String = UUID.randomUUID().toString(),
+        val playlistId: String? = null,
+        val name: String = "",
+        val description: String = "",
+        val public: Boolean = true,
+        val collaborative: Boolean = false,
+    ) : PopupSpec(id)
+
     data class PlaybackDevices(
         override val id: String = UUID.randomUUID().toString(),
     ) : PopupSpec(id)

@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import cc.tomko.outify.ui.notifications.InAppNotificationController
 import cc.tomko.outify.ui.viewmodel.bottomsheet.CreatePlaylistViewModel
 import kotlinx.coroutines.launch
 
@@ -51,32 +52,44 @@ fun CreatePlaylistBottomSheet(
     onDismiss: () -> Unit,
     onCreated: (String) -> Unit,
     modifier: Modifier = Modifier,
+    playlistId: String? = null,
+    initialName: String = "",
+    initialDescription: String = "",
+    initialPublic: Boolean = true,
+    initialCollaborative: Boolean = false,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val coroutineScope = rememberCoroutineScope()
+    val isEditMode = playlistId != null
 
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var isPublic by remember { mutableStateOf(true) }
-    var isCollaborative by remember { mutableStateOf(false) }
-    var isCreating by remember { mutableStateOf(false) }
+    var name by remember(playlistId) { mutableStateOf(initialName) }
+    var description by remember(playlistId) { mutableStateOf(initialDescription) }
+    var isPublic by remember(playlistId) { mutableStateOf(initialPublic) }
+    var isCollaborative by remember(playlistId) { mutableStateOf(initialCollaborative) }
+    var isSaving by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.result.collect { result ->
-            isCreating = false
+            isSaving = false
             result.fold(
-                onSuccess = { playlistId ->
+                onSuccess = { id ->
+                    if (isEditMode) {
+                        InAppNotificationController.show("Playlist updated", durationMillis = 2000L)
+                    }
                     onDismiss()
-                    onCreated(playlistId)
+                    onCreated(id)
                 },
-                onFailure = { /* error state could be shown */ }
+                onFailure = { error ->
+                    val message = error.message ?: "Unknown error"
+                    InAppNotificationController.show(message, durationMillis = 3000L)
+                }
             )
         }
     }
 
     ModalBottomSheet(
         onDismissRequest = {
-            if (!isCreating) {
+            if (!isSaving) {
                 coroutineScope.launch {
                     sheetState.hide()
                     onDismiss()
@@ -112,7 +125,7 @@ fun CreatePlaylistBottomSheet(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Text(
-                    text = "Create Playlist",
+                    text = if (isEditMode) "Edit Playlist" else "Create Playlist",
                     style = MaterialTheme.typography.headlineMediumEmphasized,
                     fontWeight = FontWeight.Black,
                 )
@@ -202,25 +215,42 @@ fun CreatePlaylistBottomSheet(
                         }
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = !isCreating,
+                    enabled = !isSaving,
                 ) {
                     Text("Cancel")
                 }
 
                 Button(
                     onClick = {
-                        isCreating = true
-                        viewModel.createPlaylist(
-                            name = name.trim(),
-                            description = description.trim().ifEmpty { null },
-                            isPublic = isPublic,
-                            isCollaborative = isCollaborative,
-                        )
+                        isSaving = true
+                        if (isEditMode) {
+                            viewModel.modifyPlaylist(
+                                playlistId = playlistId,
+                                name = name.trim(),
+                                description = description.trim().ifEmpty { "" },
+                                isPublic = isPublic,
+                                isCollaborative = isCollaborative,
+                            )
+                        } else {
+                            viewModel.createPlaylist(
+                                name = name.trim(),
+                                description = description.trim().ifEmpty { "" },
+                                isPublic = isPublic,
+                                isCollaborative = isCollaborative,
+                            )
+                        }
                     },
                     modifier = Modifier.weight(1f),
-                    enabled = name.isNotBlank() && !isCreating,
+                    enabled = name.isNotBlank() && !isSaving,
                 ) {
-                    Text(if (isCreating) "Creating..." else "Create")
+                    Text(
+                        when {
+                            isSaving && isEditMode -> "Saving..."
+                            isSaving -> "Creating..."
+                            isEditMode -> "Save"
+                            else -> "Create"
+                        }
+                    )
                 }
             }
 
