@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LibraryMusic
@@ -421,7 +422,7 @@ private fun FolderHeaderContent(
                 .background(folderColor),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.CreateNewFolder, null, tint = Color.White, modifier = Modifier.size(24.dp))
+            Icon(Icons.Default.Folder, null, tint = Color.White, modifier = Modifier.size(24.dp))
         }
 
         Spacer(Modifier.width(12.dp))
