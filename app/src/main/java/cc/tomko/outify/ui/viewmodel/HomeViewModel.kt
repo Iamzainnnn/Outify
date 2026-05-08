@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.delay
@@ -53,6 +54,19 @@ enum class TopItemsDuration(val value: String, val label: String) {
     MEDIUM_TERM("medium_term", "Last 6 months"),
     LONG_TERM("long_term", "Last year"),
 }
+
+@Serializable
+private data class DurationTops(
+    val artists: List<TopArtist> = emptyList(),
+    val trackUris: List<String> = emptyList(),
+)
+
+@Serializable
+private data class TopsCacheData(
+    val shortTerm: DurationTops = DurationTops(),
+    val mediumTerm: DurationTops = DurationTops(),
+    val longTerm: DurationTops = DurationTops(),
+)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -136,9 +150,26 @@ class HomeViewModel @Inject constructor(
                     return@launch
                 }
 
-                val duration = _selectedDuration.value.value
+                val duration = _selectedDuration.value
 
-                val topArtistsJson = spClient.getUserTop("artists", duration) ?: ""
+                settingsRepository.cachedTops.first()?.let { raw ->
+                    try {
+                        val allCaches = json.decodeFromString<TopsCacheData>(raw)
+                        val hit = when (duration) {
+                            TopItemsDuration.SHORT_TERM -> allCaches.shortTerm
+                            TopItemsDuration.MEDIUM_TERM -> allCaches.mediumTerm
+                            TopItemsDuration.LONG_TERM -> allCaches.longTerm
+                        }
+                        if (hit.artists.isNotEmpty()) {
+                            val cachedTracks = trackMetadataHelper.getTrackMetadata(hit.trackUris)
+                            _uiState.value = HomeUiState.Success(hit.artists, cachedTracks)
+                        }
+                    } catch (_: Exception) { }
+                }
+
+                val durationValue = duration.value
+
+                val topArtistsJson = spClient.getUserTop("artists", durationValue) ?: ""
                 val topArtistsError = NativeErrorHandler.handleErrorJson(topArtistsJson, "top artists")
                 if (topArtistsError != null) {
                     _uiState.value = HomeUiState.NotAuthenticated
@@ -146,7 +177,7 @@ class HomeViewModel @Inject constructor(
                     return@launch
                 }
 
-                val topTracksJson = spClient.getUserTop("tracks", duration) ?: ""
+                val topTracksJson = spClient.getUserTop("tracks", durationValue) ?: ""
                 val topTracksError = NativeErrorHandler.handleErrorJson(topTracksJson, "top tracks")
                 if (topTracksError != null) {
                     _uiState.value = HomeUiState.NotAuthenticated
@@ -158,11 +189,27 @@ class HomeViewModel @Inject constructor(
                 val topTracks = fetchTrackMetadata(topTracksJson)
 
                 _uiState.value = HomeUiState.Success(topArtists, topTracks)
+                updateTopCache(duration, topArtists, topTracks)
                 loadUserProfile()
             } catch (e: Exception) {
                 _uiState.value = HomeUiState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+
+    private suspend fun updateTopCache(duration: TopItemsDuration, artists: List<TopArtist>, tracks: List<Track>) {
+        val trackUris = tracks.map { it.uri }
+        val cache = try {
+            settingsRepository.cachedTops.first()?.let { json.decodeFromString<TopsCacheData>(it) } ?: TopsCacheData()
+        } catch (_: Exception) { TopsCacheData() }
+
+        val durationCache = DurationTops(artists, trackUris)
+        val updated = when (duration) {
+            TopItemsDuration.SHORT_TERM -> cache.copy(shortTerm = durationCache)
+            TopItemsDuration.MEDIUM_TERM -> cache.copy(mediumTerm = durationCache)
+            TopItemsDuration.LONG_TERM -> cache.copy(longTerm = durationCache)
+        }
+        settingsRepository.saveCachedTops(json.encodeToString(updated))
     }
 
     private fun loadUserProfile() {

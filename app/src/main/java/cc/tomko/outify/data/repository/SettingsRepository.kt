@@ -97,6 +97,10 @@ class SettingsRepository @Inject constructor(
         object Library {
             val CACHED_URIS = stringPreferencesKey("cached_playlist_uris_v1")
         }
+
+        object Cached {
+            val CACHED_TOPS = stringPreferencesKey("cached_tops_v1")
+        }
     }
 
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -399,6 +403,14 @@ class SettingsRepository @Inject constructor(
         } catch (e: Exception) {
             emptyList()
         }
+    }
+
+    val cachedTops: Flow<String?> = dataStore.data.map { prefs ->
+        prefs[Keys.Cached.CACHED_TOPS]
+    }
+
+    suspend fun saveCachedTops(json: String) {
+        dataStore.edit { it[Keys.Cached.CACHED_TOPS] = json }
     }
 
     suspend fun resetSettings() {
