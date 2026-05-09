@@ -257,9 +257,16 @@ class Player @Inject constructor(
         return com.google.common.util.concurrent.Futures.immediateVoidFuture()
     }
 
+    override fun handlePrepare(): ListenableFuture<*> {
+        spirc.ensureUsable()
+
+        return super.handlePrepare()
+    }
+
     private fun determineCommands(): Player.Commands {
         val builder = Player.Commands.Builder()
             .add(COMMAND_PLAY_PAUSE)
+            .add(COMMAND_PREPARE)
             .add(COMMAND_GET_CURRENT_MEDIA_ITEM)
             .add(COMMAND_GET_METADATA)
             .add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
