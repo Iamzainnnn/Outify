@@ -14,6 +14,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -56,7 +57,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -172,12 +172,14 @@ fun SharedTransitionScope.MiniPlayer(
                 .offset(y = -TAB_HEIGHT, x = (-55).dp)
         ) {
             Surface(
-                tonalElevation = 2.dp,
-                shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp),
                 modifier = Modifier
-                    .clip(RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp))
                     .height(TAB_HEIGHT)
-                    .clickable { onExpand?.invoke() }
+                    .clickable { onExpand?.invoke() },
+                shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp),
+                tonalElevation = 0.dp,
+                shadowElevation = 8.dp,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f),
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -195,12 +197,15 @@ fun SharedTransitionScope.MiniPlayer(
 
         // Main card
         Surface(
-            tonalElevation = 3.dp,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .clickable { onClick?.invoke() }
+                .clickable { onClick?.invoke() },
+            shape = RoundedCornerShape(16.dp),
+            tonalElevation = 0.dp,
+            shadowElevation = 16.dp,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f),
+            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
