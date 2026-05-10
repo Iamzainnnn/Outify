@@ -1,6 +1,9 @@
 package cc.tomko.outify.ui.components.navigation
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,6 +41,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+private val ITEM_WIDTH = 56.dp
+private val ITEM_HEIGHT = 44.dp
+private val ROW_PADDING_H = 6.dp
+private val ROW_PADDING_V = 4.dp
+
 @Composable
 fun FloatingOutifyBottomNav(
     items: List<NavDestination>,
@@ -48,6 +57,8 @@ fun FloatingOutifyBottomNav(
     unselectedColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     showLabels: Boolean = false,
 ) {
+    val selectedIndex = items.indexOfFirst { it.id == selectedId }
+
     Surface(
         modifier = modifier
             .windowInsetsPadding(WindowInsets.navigationBars)
@@ -58,23 +69,44 @@ fun FloatingOutifyBottomNav(
         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f),
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
     ) {
-        Row(
-            modifier = Modifier
-                .padding(horizontal = 6.dp, vertical = 4.dp),
-            horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            items.forEach { item ->
-                val isSelected = item.id == selectedId
-                key(item.id) {
-                    FloatingNavItem(
-                        destination = item,
-                        selected = isSelected,
-                        onClick = { onItemSelected(item) },
-                        selectedColor = selectedColor,
-                        unselectedColor = unselectedColor,
-                        showLabel = showLabels,
-                    )
+        Box {
+            if (selectedIndex >= 0) {
+                val animatedOffsetX by animateDpAsState(
+                    targetValue = ROW_PADDING_H + ITEM_WIDTH * selectedIndex.toFloat(),
+                    animationSpec = tween(
+                        durationMillis = 350,
+                        easing = FastOutSlowInEasing,
+                    ),
+                    label = "indicator",
+                )
+
+                Box(
+                    modifier = Modifier
+                        .offset(x = animatedOffsetX, y = ROW_PADDING_V)
+                        .size(ITEM_WIDTH, ITEM_HEIGHT)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(selectedColor.copy(alpha = 0.15f)),
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = ROW_PADDING_H, vertical = ROW_PADDING_V),
+                horizontalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                items.forEach { item ->
+                    val isSelected = item.id == selectedId
+                    key(item.id) {
+                        FloatingNavItem(
+                            destination = item,
+                            selected = isSelected,
+                            onClick = { onItemSelected(item) },
+                            selectedColor = selectedColor,
+                            unselectedColor = unselectedColor,
+                            showLabel = showLabels,
+                        )
+                    }
                 }
             }
         }
@@ -90,10 +122,6 @@ private fun FloatingNavItem(
     unselectedColor: Color,
     showLabel: Boolean,
 ) {
-    val backgroundColor by animateColorAsState(
-        if (selected) selectedColor.copy(alpha = 0.15f) else Color.Transparent,
-        label = "navBg",
-    )
     val iconTint by animateColorAsState(
         if (selected) selectedColor else unselectedColor,
         label = "navIcon",
@@ -101,8 +129,6 @@ private fun FloatingNavItem(
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(backgroundColor)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
