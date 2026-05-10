@@ -117,7 +117,6 @@ private fun OutifyNavItem(
 
         if(showLabel){
             Spacer(modifier = Modifier.height(4.dp))
-
             Text(
                 text = destination.label,
                 fontSize = 11.sp,

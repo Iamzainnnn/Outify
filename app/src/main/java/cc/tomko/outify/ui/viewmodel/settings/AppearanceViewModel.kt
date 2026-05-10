@@ -94,4 +94,10 @@ class AppearanceViewModel @Inject constructor(
             settingsRepository.setFontScale(scale)
         }
     }
+
+    fun setExperimentalFloatingNav(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setExperimentalFloatingNav(enabled)
+        }
+    }
 }

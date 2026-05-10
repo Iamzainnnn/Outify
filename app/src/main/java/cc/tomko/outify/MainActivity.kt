@@ -56,6 +56,7 @@ import cc.tomko.outify.ui.GlobalPopupController
 import cc.tomko.outify.ui.components.GlobalPopupHost
 import cc.tomko.outify.ui.components.navigation.NavDestination
 import cc.tomko.outify.ui.components.navigation.NavigationRoot
+import cc.tomko.outify.ui.components.navigation.FloatingOutifyBottomNav
 import cc.tomko.outify.ui.components.navigation.OutifyBottomNav
 import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.components.player.MiniPlayer
@@ -187,7 +188,7 @@ class MainActivity : ComponentActivity() {
         val selectedId = when (currentRoute) {
             Route.HomeScreen -> "home"
             Route.SearchScreen -> "search"
-            Route.LikedScreen -> "liked"
+            is Route.LikedScreen -> "liked"
             Route.LibraryScreen -> "library"
             else -> null
         }
@@ -235,25 +236,7 @@ class MainActivity : ComponentActivity() {
                             LocalSwipeActionHandler provides viewModel.swipeActionHandler,
                             LocalUiSettings provides interfaceSettings,
                         ) {
-                            Scaffold(
-                                bottomBar = {
-                                    AnimatedVisibility(
-                                        visible = true,
-                                        enter = slideInVertically(
-                                            initialOffsetY = { fullHeight -> fullHeight }
-                                        ) + fadeIn(),
-                                        exit = slideOutVertically(
-                                            targetOffsetY = { fullHeight -> fullHeight }
-                                        ) + fadeOut(),
-                                    ) {
-                                        OutifyBottomNav(
-                                            items = routes,
-                                            selectedId = selectedId,
-                                            onItemSelected = { item -> backStack.add(item.route) }
-                                        )
-                                    }
-                                }
-                            ) { innerPadding ->
+                            Scaffold { innerPadding ->
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
@@ -262,7 +245,7 @@ class MainActivity : ComponentActivity() {
                                     NavigationRoot(
                                         backStack,
                                         modifier = Modifier.matchParentSize(),
-                                        bottomPadding = if (currentTrack != null) 88.dp else 0.dp
+                                        bottomPadding = if (currentTrack != null) (if (interfaceSettings.experimentalFloatingNav) 156.dp else 88.dp) else (if (interfaceSettings.experimentalFloatingNav) 60.dp else 0.dp)
                                     )
 
                                     InAppNotificationHost(
@@ -296,7 +279,9 @@ class MainActivity : ComponentActivity() {
                                         exit = slideOutVertically(
                                             targetOffsetY = { fullHeight -> fullHeight }
                                         ) + fadeOut(),
-                                        modifier = Modifier.align(Alignment.BottomCenter)
+                                        modifier = Modifier
+                                            .align(Alignment.BottomCenter)
+                                            .padding(bottom = 68.dp)
                                     ) {
                                         PlayerSheet(
                                             sheetState = playerSheetState,
@@ -345,6 +330,33 @@ class MainActivity : ComponentActivity() {
                                                 )
                                             }
                                         )
+                                    }
+
+                                    if (interfaceSettings.experimentalFloatingNav) {
+                                        AnimatedVisibility(
+                                            visible = currentTrack == null || !playerSheetState.isExpanded,
+                                            enter = slideInVertically(
+                                                initialOffsetY = { fullHeight -> fullHeight }
+                                            ) + fadeIn(),
+                                            exit = slideOutVertically(
+                                                targetOffsetY = { fullHeight -> fullHeight }
+                                            ) + fadeOut(),
+                                            modifier = Modifier.align(Alignment.BottomCenter),
+                                        ) {
+                                            FloatingOutifyBottomNav(
+                                                items = routes,
+                                                selectedId = selectedId,
+                                                onItemSelected = { item -> backStack.add(item.route) }
+                                            )
+                                        }
+                                    } else {
+                                        Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+                                            OutifyBottomNav(
+                                                items = routes,
+                                                selectedId = selectedId,
+                                                onItemSelected = { item -> backStack.add(item.route) }
+                                            )
+                                        }
                                     }
                                 }
                             }

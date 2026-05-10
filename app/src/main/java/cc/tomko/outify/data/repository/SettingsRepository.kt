@@ -77,6 +77,8 @@ class SettingsRepository @Inject constructor(
             val MONOCHROME_TRACKS = booleanPreferencesKey("monochrome_tracks")
             val MONOCHROME_PLAYER = booleanPreferencesKey("monochrome_player")
             val MONOCHROME_HEADERS = booleanPreferencesKey("monochrome_headers")
+
+            val EXPERIMENTAL_FLOATING_NAV = booleanPreferencesKey("experimental_floating_nav")
         }
 
         object Queue {
@@ -136,6 +138,7 @@ class SettingsRepository @Inject constructor(
             monochromeTracks = monochrome && prefs[Keys.Interface.MONOCHROME_TRACKS] ?: false,
             monochromePlayer = monochrome && prefs[Keys.Interface.MONOCHROME_PLAYER] ?: false,
             monochromeHeaders = monochrome && prefs[Keys.Interface.MONOCHROME_HEADERS] ?: false,
+            experimentalFloatingNav = prefs[Keys.Interface.EXPERIMENTAL_FLOATING_NAV] ?: true,
         )
     }
 
@@ -339,6 +342,10 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.Interface.MONOCHROME_HEADERS] = enabled }
     }
 
+    suspend fun setExperimentalFloatingNav(enabled: Boolean) {
+        dataStore.edit { it[Keys.Interface.EXPERIMENTAL_FLOATING_NAV] = enabled }
+    }
+
     suspend fun removeUserProfile() {
         dataStore.edit { prefs ->
             prefs.remove(Keys.USER_ID)
@@ -464,6 +471,9 @@ data class InterfaceSettings(
     val monochromeTracks: Boolean = false,
     val monochromePlayer: Boolean = false,
     val monochromeHeaders: Boolean = false,
+
+    // Experimental features
+    val experimentalFloatingNav: Boolean = true,
 )
 
 data class PlaybackSettings(

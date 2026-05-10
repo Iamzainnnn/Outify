@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DesignServices
+import androidx.compose.material.icons.filled.Houseboat
 import androidx.compose.material.icons.filled.MonochromePhotos
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
@@ -236,6 +237,20 @@ fun AppearanceSettingScreen(
                             )
                         },
                         onClick = { },
+                    )
+                }
+            }
+
+            item {
+                PreferenceSectionHeader("Experimental")
+
+                ElevatedCard {
+                    SwitchPreferenceEntry(
+                        title = { Text("Floating navbar") },
+                        description = "Instead of the standard static one",
+                        icon = { Icon(Icons.Default.Houseboat, contentDescription = null) },
+                        isChecked = settings.experimentalFloatingNav,
+                        onCheckedChange = { viewModel.setExperimentalFloatingNav(it) },
                     )
                 }
             }
