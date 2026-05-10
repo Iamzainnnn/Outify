@@ -245,7 +245,7 @@ class MainActivity : ComponentActivity() {
                                     NavigationRoot(
                                         backStack,
                                         modifier = Modifier.matchParentSize(),
-                                        bottomPadding = if (currentTrack != null) (if (interfaceSettings.experimentalFloatingNav) 156.dp else 88.dp) else (if (interfaceSettings.experimentalFloatingNav) 60.dp else 0.dp)
+                                        bottomPadding = if (currentTrack != null) 156.dp else if (interfaceSettings.experimentalFloatingNav) 60.dp else 56.dp
                                     )
 
                                     InAppNotificationHost(
