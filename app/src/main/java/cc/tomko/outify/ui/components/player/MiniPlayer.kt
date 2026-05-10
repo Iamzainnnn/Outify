@@ -211,13 +211,13 @@ fun SharedTransitionScope.MiniPlayer(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(end = 10.dp)
+                    .padding(start = 4.dp, end = 8.dp)
             ) {
                 // Album artwork
                 Box(
                     modifier = Modifier
                         .size(64.dp)
-                        .padding(start = 16.dp, top = 12.dp, bottom = 12.dp),
+                        .padding(start = 6.dp, top = 12.dp, bottom = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Surface(
@@ -253,62 +253,65 @@ fun SharedTransitionScope.MiniPlayer(
 
                 Column(
                     verticalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(imageSize)
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                    Text(
+                        text = currentTrack?.name ?: "-----",
+                        style = MaterialTheme.typography.bodyLargeEmphasized,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    Text(
+                        text = buildString {
+                            append(currentTrack?.artists?.joinToString { it.name } ?: "----")
+                            append(" · ")
+                            append(formatTime(currentTime))
+                            append(" / ")
+                            append(formatTime(totalTime))
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Default.Speaker,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .clickable {
+                                viewModel.openDevices()
+                            }
+                            .padding(6.dp)
+                            .size(20.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+
+                    IconButton(
+                        onClick = showQueue,
+                        modifier = Modifier.size(36.dp)
                     ) {
-                        Text(
-                            text = currentTrack?.name ?: "-----",
-                            style = MaterialTheme.typography.bodyLargeEmphasized,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        Text(
-                            text = currentTrack?.artists?.joinToString { it.name } ?: "----",
-                            style = MaterialTheme.typography.bodyMediumEmphasized,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = "See queue",
+                            modifier = Modifier.size(20.dp),
                         )
                     }
 
-                    Row {
-                        Text(
-                            text = "${formatTime(currentTime)} / ${formatTime(totalTime)}",
-                            style = MaterialTheme.typography.bodyMediumEmphasized,
-                            maxLines = 1,
-                        )
-                    }
-                }
-
-                Icon(
-                    Icons.Default.Speaker,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .clickable {
-                            viewModel.openDevices()
-                        }
-                )
-
-                IconButton(onClick = showQueue) {
-                    Icon(Icons.Default.Menu, contentDescription = "See queue")
-                }
-
-                Surface(
-                    tonalElevation = 10.dp,
-                    shape = MaterialShapes.Cookie4Sided.toShape()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
+                    Surface(
+                        tonalElevation = 10.dp,
+                        shape = MaterialShapes.Cookie4Sided.toShape()
                     ) {
-
                         IconButton(onClick = {
                             viewModel.setTrack(currentTrack)
                             spirc.playerPlayPause()
@@ -316,12 +319,14 @@ fun SharedTransitionScope.MiniPlayer(
                             if (isPlaying) {
                                 Icon(
                                     imageVector = Icons.Default.Pause,
-                                    contentDescription = null
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
                                 )
                             } else {
                                 Icon(
                                     imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp),
                                 )
                             }
                         }
