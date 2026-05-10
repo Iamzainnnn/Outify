@@ -14,7 +14,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -178,8 +177,7 @@ fun SharedTransitionScope.MiniPlayer(
                 shape = RoundedCornerShape(topStart = 10.dp, topEnd = 10.dp),
                 tonalElevation = 0.dp,
                 shadowElevation = 8.dp,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f),
-                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -204,8 +202,7 @@ fun SharedTransitionScope.MiniPlayer(
             shape = RoundedCornerShape(16.dp),
             tonalElevation = 0.dp,
             shadowElevation = 16.dp,
-            color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f),
-            border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

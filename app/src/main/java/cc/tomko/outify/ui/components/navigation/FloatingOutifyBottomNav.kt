@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -66,8 +65,7 @@ fun FloatingOutifyBottomNav(
         shape = RoundedCornerShape(28.dp),
         tonalElevation = 0.dp,
         shadowElevation = 16.dp,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f),
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Box {
             if (selectedIndex >= 0) {
