@@ -1,4 +1,5 @@
-<img src="app/src/main/ic_launcher-playstore.png" alt="Outify Logo" width="200"/>
+<img src="app/src/main/ic_launcher-playstore.png" alt="Outify Logo" width="150"/>
+
 # Outify
 
 [![Android Nightly](https://github.com/iTomKo/Outify/actions/workflows/nightly.yml/badge.svg)](https://github.com/iTomKo/Outify/actions/workflows/nightly.yml)
