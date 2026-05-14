@@ -110,7 +110,7 @@ fun PlayerScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
     ) {
-        val artworkTopSpacer = ((maxHeight - IMAGE_SIZE) / 3f - 48.dp).coerceIn(16.dp, 32.dp)
+        val artworkTopSpacer = ((maxHeight - IMAGE_SIZE) / 3f - 48.dp).coerceAtLeast(16.dp)
 
         LazyColumn(
             state = listState,
@@ -280,7 +280,7 @@ private fun BottomActionsBar(
                     )
                 )
             )
-            .padding(start = 32.dp, end = 32.dp, top = 32.dp, bottom = 24.dp),
+            .padding(start = 32.dp, end = 32.dp, top = 16.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
