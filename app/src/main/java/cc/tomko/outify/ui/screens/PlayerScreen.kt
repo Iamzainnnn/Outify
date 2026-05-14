@@ -34,8 +34,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowLeft
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
-import androidx.compose.material.icons.filled.ArrowLeft
-import androidx.compose.material.icons.filled.ArrowRight
 import androidx.compose.material.icons.filled.Explicit
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -44,8 +42,6 @@ import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.Shuffle
-import androidx.compose.material.icons.outlined.SkipNext
-import androidx.compose.material.icons.outlined.SkipPrevious
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
@@ -75,6 +71,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import cc.tomko.outify.ALBUM_COVER_URL
 import cc.tomko.outify.core.model.Artist
@@ -88,6 +85,8 @@ import cc.tomko.outify.ui.viewmodel.player.PlayerViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+private val IMAGE_SIZE = 400.dp
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PlayerScreen(
@@ -97,118 +96,52 @@ fun PlayerScreen(
     onMoreOptions: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val artworkUrl = uiState.albumArt?.let { ALBUM_COVER_URL + it }
     val positionMs by viewModel.positionMs.collectAsState()
     val currentTrack by viewModel.currentTrack.collectAsState(initial = null)
-
     val lyrics by viewModel.lyrics.collectAsState()
     val currentLyric by viewModel.currentLyric.collectAsState()
-
     val isShuffling by viewModel.isShuffling.collectAsState()
     val isRepeating by viewModel.isRepeating.collectAsState()
     val isFavorite by viewModel.isLiked.collectAsState()
-
-    val imageSize = 400.dp
+    val artworkUrl = uiState.albumArt?.let { ALBUM_COVER_URL + it }
 
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
     ) {
-        val screenHeight = maxHeight
-        val artworkTopSpacer = ((screenHeight - imageSize) / 3f - 48.dp)
-            .coerceAtLeast(16.dp)
+        val artworkTopSpacer = ((maxHeight - IMAGE_SIZE) / 3f - 48.dp).coerceIn(16.dp, 32.dp)
 
         LazyColumn(
             state = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .height(screenHeight - 56.dp),
+                .height(maxHeight - 56.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(
-                start = 24.dp,
-                end = 24.dp,
-                top = 24.dp,
-                bottom = 96.dp
-            )
+            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 132.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(artworkTopSpacer)) }
+            item { Spacer(Modifier.height(artworkTopSpacer)) }
 
-            // Album artwork
             item {
                 SmartImage(
                     url = artworkUrl,
-                    imageSize = imageSize,
+                    imageSize = IMAGE_SIZE,
                     monochrome = LocalUiSettings.current.monochromePlayer
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(16.dp)) }
+            item { Spacer(Modifier.height(16.dp)) }
 
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (uiState.isExplicit) {
-                            Icon(
-                                imageVector = Icons.Filled.Explicit,
-                                contentDescription = "Explicit",
-                                modifier = Modifier.size(32.dp),
-                            )
-                        }
-
-                        Text(
-                            text = uiState.title,
-                            overflow = TextOverflow.Ellipsis,
-                            maxLines = 2,
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    Row {
-                        uiState.artists.forEachIndexed { index, artist ->
-                            Text(
-                                text = artist.name,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.combinedClickable(
-                                    onClick = { onArtistClick(artist) },
-                                    onLongClick = {}
-                                )
-                            )
-                            if (index < uiState.artists.lastIndex) {
-                                Text(
-                                    text = ", ",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            item { TrackInfo(currentTrack, onArtistClick) }
 
             item { Spacer(Modifier.height(32.dp)) }
 
-            // Time seeker
             item {
                 TrackProgressBar(
                     durationMs = uiState.totalLengthMs,
                     positionMs = positionMs,
                     isPlaying = uiState.isPlaying,
-                    onSeek = { position ->
-                        viewModel.onAction(PlayerAction.SeekTo(position))
-                    }
+                    onSeek = { viewModel.onAction(PlayerAction.SeekTo(it)) }
                 )
             }
 
@@ -221,10 +154,10 @@ fun PlayerScreen(
                     isShuffling = isShuffling,
                     isRepeating = isRepeating,
                     onPlayPause = { viewModel.onAction(PlayerAction.PlayPause) },
-                    onNextTrack = { viewModel.onAction(PlayerAction.Next) },
-                    onPreviousTrack = { viewModel.onAction(PlayerAction.Previous) },
-                    onShuffleChange = { viewModel.onAction(PlayerAction.ShuffleToggle) },
-                    onRepeatMode = { viewModel.onAction(PlayerAction.RepeatToggle) },
+                    onNext = { viewModel.onAction(PlayerAction.Next) },
+                    onPrevious = { viewModel.onAction(PlayerAction.Previous) },
+                    onShuffle = { viewModel.onAction(PlayerAction.ShuffleToggle) },
+                    onRepeat = { viewModel.onAction(PlayerAction.RepeatToggle) },
                 )
             }
 
@@ -250,51 +183,80 @@ fun PlayerScreen(
                             seekTo = { viewModel.onAction(PlayerAction.SeekTo(it)) },
                             modifier = Modifier.fillMaxSize()
                         )
-
-                        // top gradient fade
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(32.dp)
-                                .background(
-                                    Brush.verticalGradient(
-                                        listOf(
-                                            MaterialTheme.colorScheme.surfaceContainerHigh,
-                                            Color.Transparent
-                                        )
-                                    )
-                                )
-                                .align(Alignment.TopCenter)
-                        )
-
-                        // bottom gradient fade
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(32.dp)
-                                .background(
-                                    Brush.verticalGradient(
-                                        listOf(
-                                            Color.Transparent,
-                                            MaterialTheme.colorScheme.surfaceContainerHigh
-                                        )
-                                    )
-                                )
-                                .align(Alignment.BottomCenter)
-                        )
+                        // Top and bottom gradient fades
+                        listOf(Alignment.TopCenter, Alignment.BottomCenter).forEach { alignment ->
+                            val colors = if (alignment == Alignment.TopCenter)
+                                listOf(MaterialTheme.colorScheme.surfaceContainerHigh, Color.Transparent)
+                            else
+                                listOf(Color.Transparent, MaterialTheme.colorScheme.surfaceContainerHigh)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(32.dp)
+                                    .background(Brush.verticalGradient(colors))
+                                    .align(alignment)
+                            )
+                        }
                     }
                 }
             }
         }
 
         BottomActionsBar(
-            modifier = Modifier.align(Alignment.BottomCenter),
             isFavorite = isFavorite,
-            onFavoriteToggle = {
-                viewModel.toggleFavorite()
-            },
-            onMoreOptions = onMoreOptions
+            onFavoriteToggle = { viewModel.toggleFavorite() },
+            onMoreOptions = onMoreOptions,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
+    }
+}
+
+@Composable
+private fun TrackInfo(track: Track?, onArtistClick: (Artist) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (track?.explicit ?: false) {
+                Icon(
+                    imageVector = Icons.Filled.Explicit,
+                    contentDescription = "Explicit",
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+            Text(
+                text = track?.name ?: "---",
+                overflow = TextOverflow.Ellipsis,
+                maxLines = 2,
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+        Row {
+            track?.artists?.forEachIndexed { index, artist ->
+                Text(
+                    text = artist.name,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.combinedClickable(
+                        onClick = { onArtistClick(artist) },
+                        onLongClick = {}
+                    )
+                )
+                if (index < track.artists.lastIndex) {
+                    Text(", ", style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
     }
 }
 
@@ -322,7 +284,6 @@ private fun BottomActionsBar(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Favorite toggle
         FilledTonalIconToggleButton(
             checked = isFavorite,
             onCheckedChange = { onFavoriteToggle() },
@@ -332,12 +293,8 @@ private fun BottomActionsBar(
             AnimatedContent(
                 targetState = isFavorite,
                 transitionSpec = {
-                    (scaleIn(
-                        spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        )
-                    ) + fadeIn()) togetherWith (scaleOut() + fadeOut())
+                    (scaleIn(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium)) + fadeIn()) togetherWith
+                            (scaleOut() + fadeOut())
                 },
                 label = "favoriteIcon"
             ) { fav ->
@@ -348,10 +305,7 @@ private fun BottomActionsBar(
             }
         }
 
-        IconButton(
-            onClick = onMoreOptions,
-            modifier = Modifier.size(52.dp)
-        ) {
+        IconButton(onClick = onMoreOptions, modifier = Modifier.size(52.dp)) {
             Icon(
                 imageVector = Icons.Outlined.MoreVert,
                 contentDescription = "More options",
@@ -360,23 +314,24 @@ private fun BottomActionsBar(
         }
     }
 }
+
 @Composable
 fun TrackProgressBar(
     durationMs: Long,
     positionMs: Long,
     isPlaying: Boolean,
-    onSeek: (Long) -> Unit = {}
+    onSeek: (Long) -> Unit = {},
 ) {
     var isDragging by remember { mutableStateOf(false) }
     var sliderValue by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(positionMs, durationMs, isDragging) {
         if (!isDragging && durationMs > 0) {
-            sliderValue = (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+            sliderValue = (positionMs.toFloat() / durationMs).coerceIn(0f, 1f)
         }
     }
 
-    val displayedPosition = (sliderValue * durationMs).toLong().coerceIn(0L, durationMs)
+    val displayedMs = (sliderValue * durationMs).toLong().coerceIn(0L, durationMs)
 
     Column(
         modifier = Modifier
@@ -384,19 +339,14 @@ fun TrackProgressBar(
             .padding(horizontal = 16.dp)
     ) {
         Text(
-            text = "${formatTime(displayedPosition)} / ${formatTime(durationMs)}",
+            text = "${formatTime(displayedMs)} / ${formatTime(durationMs)}",
             style = MaterialTheme.typography.bodyMedium
         )
-
         WavyMusicSlider(
             value = sliderValue,
-            onValueChange = { newValue ->
-                isDragging = true
-                sliderValue = newValue.coerceIn(0f, 1f)
-            },
+            onValueChange = { isDragging = true; sliderValue = it.coerceIn(0f, 1f) },
             onValueChangeFinished = {
-                val newPositionMs = (sliderValue * durationMs).toLong().coerceIn(0L, durationMs)
-                onSeek(newPositionMs)
+                onSeek((sliderValue * durationMs).toLong().coerceIn(0L, durationMs))
                 isDragging = false
             },
             isPlaying = isPlaying
@@ -405,10 +355,8 @@ fun TrackProgressBar(
 }
 
 private fun formatTime(ms: Long): String {
-    val totalSeconds = (ms / 1000).coerceAtLeast(0L)
-    val minutes = totalSeconds / 60
-    val seconds = totalSeconds % 60
-    return "%02d:%02d".format(minutes, seconds)
+    val s = (ms / 1000).coerceAtLeast(0L)
+    return "%02d:%02d".format(s / 60, s % 60)
 }
 
 private enum class PlaybackIconState { Buffering, Playing, Paused }
@@ -421,48 +369,41 @@ fun PlaybackControls(
     isShuffling: Boolean,
     isRepeating: Boolean,
     onPlayPause: () -> Unit,
-    onNextTrack: () -> Unit,
-    onPreviousTrack: () -> Unit,
-    onShuffleChange: () -> Unit,
-    onRepeatMode: () -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit,
+    onShuffle: () -> Unit,
+    onRepeat: () -> Unit,
 ) {
+    val iconState = when {
+        isBuffering -> PlaybackIconState.Buffering
+        isPlaying   -> PlaybackIconState.Playing
+        else        -> PlaybackIconState.Paused
+    }
+
+    // SpaceEvenly ensures buttons scale gracefully on narrow screens
     Row(
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
         FilledTonalIconToggleButton(
             checked = isShuffling,
-            onCheckedChange = { onShuffleChange() },
+            onCheckedChange = { onShuffle() },
             modifier = Modifier.size(42.dp),
             shape = MaterialShapes.Cookie6Sided.toShape(),
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Shuffle,
-                contentDescription = "Shuffle mode"
-            )
+            Icon(Icons.Outlined.Shuffle, contentDescription = "Shuffle")
         }
 
-        // Previous
-        IconButton(
-            onClick = onPreviousTrack,
-            modifier = Modifier.size(42.dp)
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowLeft, contentDescription = "Previous track", modifier = Modifier.size(42.dp))
-        }
-
-        val iconState = when {
-            isBuffering -> PlaybackIconState.Buffering
-            isPlaying   -> PlaybackIconState.Playing
-            else        -> PlaybackIconState.Paused
+        IconButton(onClick = onPrevious, modifier = Modifier.size(42.dp)) {
+            Icon(Icons.AutoMirrored.Filled.ArrowLeft, contentDescription = "Previous",
+                modifier = Modifier.size(42.dp))
         }
 
         FilledIconButton(
-            onClick = {
-                onPlayPause()
-            },
+            onClick = onPlayPause,
             shape = MaterialShapes.Cookie9Sided.toShape(),
-            modifier = Modifier
-                .size(96.dp),
+            modifier = Modifier.size(96.dp),
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -471,59 +412,40 @@ fun PlaybackControls(
             AnimatedContent(
                 targetState = iconState,
                 transitionSpec = {
-                    (scaleIn(
-                        spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMediumLow
-                        )
-                    ) + fadeIn()) togetherWith (scaleOut() + fadeOut())
+                    (scaleIn(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)) + fadeIn()) togetherWith
+                            (scaleOut() + fadeOut())
                 },
-                label = "playPauseBufferIcon"
+                label = "playPauseIcon"
             ) { state ->
                 when (state) {
                     PlaybackIconState.Buffering -> LoadingIndicator(
                         modifier = Modifier.size(36.dp),
                         color = MaterialTheme.colorScheme.onPrimary
                     )
-                    PlaybackIconState.Playing -> Icon(
-                        imageVector = Icons.Outlined.Pause,
-                        contentDescription = "Pause",
-                        modifier = Modifier
-                            .padding(12.dp)
-                            .size(42.dp)
-                    )
-                    PlaybackIconState.Paused -> Icon(
-                        imageVector = Icons.Outlined.PlayArrow,
-                        contentDescription = "Play",
-                        modifier = Modifier
-                            .padding(12.dp)
-                            .size(42.dp)
-                    )
+                    PlaybackIconState.Playing -> Icon(Icons.Outlined.Pause, "Pause",
+                        modifier = Modifier.padding(12.dp).size(42.dp))
+                    PlaybackIconState.Paused  -> Icon(Icons.Outlined.PlayArrow, "Play",
+                        modifier = Modifier.padding(12.dp).size(42.dp))
                 }
             }
         }
 
-        // Next
-        IconButton(
-            onClick = onNextTrack,
-            modifier = Modifier.size(42.dp)
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowRight, contentDescription = "Next track", modifier = Modifier.size(42.dp))
+        IconButton(onClick = onNext, modifier = Modifier.size(42.dp)) {
+            Icon(Icons.AutoMirrored.Filled.ArrowRight, contentDescription = "Next",
+                modifier = Modifier.size(42.dp))
         }
 
         FilledTonalIconToggleButton(
             checked = isRepeating,
-            onCheckedChange = { onRepeatMode() },
+            onCheckedChange = { onRepeat() },
             modifier = Modifier.size(42.dp),
             shape = MaterialShapes.Cookie6Sided.toShape(),
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Repeat,
-                contentDescription = "Repeat mode"
-            )
+            Icon(Icons.Outlined.Repeat, contentDescription = "Repeat")
         }
     }
 }
+
 @Composable
 fun Lyrics(
     loadLyrics: () -> Unit,
@@ -538,36 +460,26 @@ fun Lyrics(
     val activeIndex = lyrics.indexOf(currentLyric)
 
     fun scrollToActive(idx: Int) {
-        if (idx < 0) { scope.launch { listState.animateScrollToItem(0) }; return }
-        val offset = (listState.layoutInfo.viewportEndOffset * 0.38f).toInt().coerceAtLeast(0)
-        scope.launch { listState.animateScrollToItem(idx, scrollOffset = offset) }
+        val target = idx.coerceAtLeast(0)
+        val offset = if (idx >= 0) (listState.layoutInfo.viewportEndOffset * 0.38f).toInt() else 0
+        scope.launch { listState.animateScrollToItem(target, offset) }
     }
 
     LaunchedEffect(track?.id) {
         loadLyrics()
-        scrollToActive(lyrics.indexOf(currentLyric))
+        scrollToActive(activeIndex)
     }
-
     LaunchedEffect(currentLyric?.timeMs, lyrics.hashCode()) {
         scrollToActive(activeIndex)
     }
 
     if (lyrics.isEmpty()) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Text(
-                    text = "♪",
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.30f)
-                )
-                Text(
-                    text = "No lyrics available",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.50f)
-                )
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("♪", style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.30f))
+                Text("No lyrics available", style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.50f))
             }
         }
         return
@@ -576,20 +488,15 @@ fun Lyrics(
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxWidth(),
-        // Generous padding so the first and last lines can scroll to center
         contentPadding = PaddingValues(vertical = 140.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        itemsIndexed(
-            lyrics,
-            key = { index, item -> item.timeMs.hashCode() * 31 + index }
-        ) { index, line ->
-            val distance = if (activeIndex >= 0) kotlin.math.abs(index - activeIndex) else Int.MAX_VALUE
+        itemsIndexed(lyrics, key = { i, item -> item.timeMs.hashCode() * 31 + i }) { index, line ->
             LyricLine(
                 line = line,
                 isActive = index == activeIndex,
-                distance = distance,
-                onClick = { seekTo(line.timeMs) },
+                distance = if (activeIndex >= 0) kotlin.math.abs(index - activeIndex) else Int.MAX_VALUE,
+                onClick = { seekTo(line.timeMs) }
             )
         }
     }
@@ -604,18 +511,15 @@ private fun LyricLine(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val targetAlpha = when {
-        isActive      -> 1.00f
-        distance == 1 -> 0.65f
-        distance == 2 -> 0.38f
-        else          -> 0.18f
-    }
     val alpha by animateFloatAsState(
-        targetValue = targetAlpha,
-        animationSpec = tween(durationMillis = 280),
-        label = "lyricAlpha"
+        targetValue = when {
+            isActive      -> 1.00f
+            distance == 1 -> 0.65f
+            distance == 2 -> 0.38f
+            else          -> 0.18f
+        },
+        animationSpec = tween(280), label = "lyricAlpha"
     )
-
     val scale by animateFloatAsState(
         targetValue = when {
             isActive      -> 1.00f
@@ -623,88 +527,59 @@ private fun LyricLine(
             distance == 2 -> 0.93f
             else          -> 0.90f
         },
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMedium
-        ),
+        animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium),
         label = "lyricScale"
     )
-
     val pillAlpha by animateFloatAsState(
         targetValue = if (isActive) 1f else 0f,
-        animationSpec = tween(durationMillis = 250),
-        label = "lyricPillAlpha"
+        animationSpec = tween(250), label = "lyricPillAlpha"
+    )
+    val verticalPad by animateFloatAsState(
+        targetValue = if (isActive) 14f else 5f,
+        animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow),
+        label = "lyricVertPad"
     )
 
     var tapped by remember { mutableStateOf(false) }
     val tapScale by animateFloatAsState(
         targetValue = if (tapped) 1.06f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessHigh
-        ),
+        animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessHigh),
         label = "lyricTapScale"
     )
-    LaunchedEffect(tapped) {
-        if (tapped) { delay(80); tapped = false }
-    }
-
-    val verticalPadDp by animateFloatAsState(
-        targetValue = if (isActive) 14f else 5f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
-            stiffness = Spring.StiffnessMediumLow
-        ),
-        label = "lyricVertPad"
-    )
+    LaunchedEffect(tapped) { if (tapped) { delay(80); tapped = false } }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                this.alpha = alpha
-                scaleX = scale * tapScale
-                scaleY = scale * tapScale
-            }
+            .graphicsLayer { this.alpha = alpha; scaleX = scale * tapScale; scaleY = scale * tapScale }
             .padding(horizontal = 12.dp)
             .background(
-                color = MaterialTheme.colorScheme.secondaryContainer
-                    .copy(alpha = pillAlpha * 0.55f),
+                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = pillAlpha * 0.55f),
                 shape = RoundedCornerShape(20.dp)
             )
-            .clickable {
-                tapped = true
-                onClick()
-            }
-            .padding(horizontal = 20.dp, vertical = verticalPadDp.dp),
+            .clickable { tapped = true; onClick() }
+            .padding(horizontal = 20.dp, vertical = verticalPad.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = line.text,
-                style = when {
-                    isActive      -> MaterialTheme.typography.headlineSmall
-                    distance == 1 -> MaterialTheme.typography.titleLarge
-                    distance == 2 -> MaterialTheme.typography.titleMedium
-                    else          -> MaterialTheme.typography.bodyLarge
-                },
-                fontWeight = when {
-                    isActive      -> FontWeight.ExtraBold
-                    distance == 1 -> FontWeight.SemiBold
-                    distance == 2 -> FontWeight.Normal
-                    else          -> FontWeight.Light
-                },
-                color = if (isActive)
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = if (isActive) Int.MAX_VALUE else 2,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
-        }
+        Text(
+            text = line.text,
+            style = when {
+                isActive      -> MaterialTheme.typography.headlineSmall
+                distance == 1 -> MaterialTheme.typography.titleLarge
+                distance == 2 -> MaterialTheme.typography.titleMedium
+                else          -> MaterialTheme.typography.bodyLarge
+            },
+            fontWeight = when {
+                isActive      -> FontWeight.ExtraBold
+                distance == 1 -> FontWeight.SemiBold
+                distance == 2 -> FontWeight.Normal
+                else          -> FontWeight.Light
+            },
+            color = if (isActive) MaterialTheme.colorScheme.onSecondaryContainer
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = if (isActive) Int.MAX_VALUE else 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
     }
 }
