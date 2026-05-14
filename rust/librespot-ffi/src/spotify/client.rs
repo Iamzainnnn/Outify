@@ -312,15 +312,30 @@ impl SpotifyClient {
             }
         };
 
+        let url = format!("{}/v1/me/player/devices", SPOTIFY_API_URL);
+
         let res = self
             .client
-            .get(format!("{}/v1/me/player/devices", SPOTIFY_API_URL))
-            .bearer_auth(token.access_token)
+            .get(&url)
+            .bearer_auth(&token.access_token)
             .timeout(REQUEST_TIMEOUT)
             .send()
             .await?;
 
-        let data = res.json::<DevicesResponse>().await?;
+        if res.status() == StatusCode::UNAUTHORIZED {
+            let new_token = self.refresh_token(&token).await?;
+            let res = self
+                .client
+                .get(&url)
+                .bearer_auth(new_token.access_token)
+                .timeout(REQUEST_TIMEOUT)
+                .send()
+                .await?;
+            let data = res.error_for_status()?.json::<DevicesResponse>().await?;
+            return Ok(data);
+        }
+
+        let data = res.error_for_status()?.json::<DevicesResponse>().await?;
 
         Ok(data)
     }
@@ -383,18 +398,33 @@ impl SpotifyClient {
 
         let request_type = request_type.unwrap_or_else(|| "artists".to_string());
 
+        let url = format!(
+            "{}/v1/me/top/{}?time_range={}",
+            SPOTIFY_API_URL, request_type, time_range
+        );
+
         let res = self
             .client
-            .get(format!(
-                "{}/v1/me/top/{}?time_range={}",
-                SPOTIFY_API_URL, request_type, time_range
-            ))
-            .bearer_auth(token.access_token)
+            .get(&url)
+            .bearer_auth(&token.access_token)
             .timeout(REQUEST_TIMEOUT)
             .send()
             .await?;
 
-        let data = res.json::<ArtistsOrTracksPage>().await?;
+        if res.status() == StatusCode::UNAUTHORIZED {
+            let new_token = self.refresh_token(&token).await?;
+            let res = self
+                .client
+                .get(&url)
+                .bearer_auth(new_token.access_token)
+                .timeout(REQUEST_TIMEOUT)
+                .send()
+                .await?;
+            let data = res.error_for_status()?.json::<ArtistsOrTracksPage>().await?;
+            return Ok(data);
+        }
+
+        let data = res.error_for_status()?.json::<ArtistsOrTracksPage>().await?;
 
         Ok(data)
     }
@@ -427,16 +457,32 @@ impl SpotifyClient {
             description,
         };
 
+        let url = format!("{}/v1/me/playlists", SPOTIFY_API_URL);
+
         let res = self
             .client
-            .post(format!("{}/v1/me/playlists", SPOTIFY_API_URL))
+            .post(&url)
             .json(&body)
-            .bearer_auth(token.access_token)
+            .bearer_auth(&token.access_token)
             .timeout(REQUEST_TIMEOUT)
             .send()
             .await?;
 
-        let data = res.json::<CreatePlaylistResponse>().await?;
+        if res.status() == StatusCode::UNAUTHORIZED {
+            let new_token = self.refresh_token(&token).await?;
+            let res = self
+                .client
+                .post(&url)
+                .json(&body)
+                .bearer_auth(new_token.access_token)
+                .timeout(REQUEST_TIMEOUT)
+                .send()
+                .await?;
+            let data = res.error_for_status()?.json::<CreatePlaylistResponse>().await?;
+            return Ok(data);
+        }
+
+        let data = res.error_for_status()?.json::<CreatePlaylistResponse>().await?;
 
         Ok(data)
     }
@@ -667,7 +713,7 @@ impl SpotifyClient {
             .json::<TokenResponse>()
             .await?;
 
-        let new_token = WebApiToken::from(response);
+        let new_token = WebApiToken::from(response, Some(&token.refresh_token));
         self.save_token(&new_token).await?;
         Ok(new_token)
     }
