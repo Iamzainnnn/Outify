@@ -97,38 +97,10 @@ impl From<&Artist> for ArtistJson {
 }
 
 fn unique_albums_in_order(artist: &Artist) -> Vec<String> {
-    let mut seen = std::collections::HashSet::new();
     let mut result = Vec::new();
-
-    let mut push = |uri: &SpotifyUri| {
-        let s = uri.to_uri();
-        if seen.insert(s.clone()) {
-            result.push(s);
-        }
-    };
-
     for uri in artist.albums.0.iter().flat_map(|group| group.0.0.iter()) {
-        push(uri);
+        result.push(uri.to_uri());
     }
-
-    for uri in artist
-        .compilations
-        .0
-        .iter()
-        .flat_map(|group| group.0.0.iter())
-    {
-        push(uri);
-    }
-
-    for uri in artist
-        .appears_on_albums
-        .0
-        .iter()
-        .flat_map(|group| group.0.0.iter())
-    {
-        push(uri);
-    }
-
     result
 }
 
