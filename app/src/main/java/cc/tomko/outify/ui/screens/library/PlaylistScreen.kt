@@ -71,6 +71,7 @@ import cc.tomko.outify.ui.GlobalPopupController
 import cc.tomko.outify.ui.PopupSpec
 import cc.tomko.outify.ui.components.ArtworkBackground
 import cc.tomko.outify.ui.components.CollapsingHeader
+import cc.tomko.outify.ui.components.ErrorScreen
 import cc.tomko.outify.ui.components.rememberCollapsingHeaderState
 import cc.tomko.outify.ui.components.rows.SwipeableTrackRowConfigured
 import cc.tomko.outify.ui.components.user.UserChipAvatar
@@ -99,17 +100,10 @@ fun SharedTransitionScope.PlaylistScreen(
         }
 
         is PlaylistUiState.Error -> {
-            Box(modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = (uiState as PlaylistUiState.Error).error,
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
+            ErrorScreen(
+                message = (uiState as PlaylistUiState.Error).error,
+                onRetry = { viewModel.retry() },
+            )
         }
 
         is PlaylistUiState.Success -> {
@@ -202,6 +196,7 @@ fun SharedTransitionScope.PlaylistScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             MaterialSearchBar(
+                                query = searchQuery,
                                 onQueryChange = { searchQuery = it },
                                 isLoading = false,
                                 autoFocus = false,

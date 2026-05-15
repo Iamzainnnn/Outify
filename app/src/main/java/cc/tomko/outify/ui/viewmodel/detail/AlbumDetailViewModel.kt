@@ -94,6 +94,17 @@ class AlbumDetailViewModel @Inject constructor(
         }
     }
 
+    private var _lastAlbumUri: String? = null
+
+    fun retry() {
+        val uri = _lastAlbumUri ?: return
+        viewModelScope.launch {
+            spirc.restart()
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            loadAlbum(uri)
+        }
+    }
+
     private fun checkIsSaved(albumUri: String) {
         viewModelScope.launch {
             _isSaved.value = metadata.isLikedAlbum(albumUri)
@@ -105,6 +116,7 @@ class AlbumDetailViewModel @Inject constructor(
     }
 
     suspend fun loadAlbum(albumUri: String) {
+        _lastAlbumUri = albumUri
         try {
             val album = withContext(Dispatchers.IO) {
                 metadata.getAlbumMetadata(albumUri)

@@ -22,8 +22,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Shuffle
@@ -70,6 +72,7 @@ import cc.tomko.outify.core.model.toSpotifyUri
 import cc.tomko.outify.data.setting.LocalUiSettings
 import cc.tomko.outify.ui.components.ArtworkBackground
 import cc.tomko.outify.ui.components.CollapsingHeader
+import cc.tomko.outify.ui.components.ErrorScreen
 import cc.tomko.outify.ui.components.SmartImage
 import cc.tomko.outify.ui.components.bottomsheet.ArtistLikedTracksBottomSheet
 import cc.tomko.outify.ui.components.rememberCollapsingHeaderState
@@ -88,6 +91,7 @@ fun SharedTransitionScope.ArtistDetailScreen(
     onArtworkClick: (Track) -> Unit,
     onAlbumClick: (Album) -> Unit,
     onArtistClick: (Artist) -> Unit,
+    showAllTracks: () -> Unit,
     onBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -103,18 +107,10 @@ fun SharedTransitionScope.ArtistDetailScreen(
         }
 
         is ArtistUiState.Error -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = (uiState as ArtistUiState.Error).message,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
+            ErrorScreen(
+                message = (uiState as ArtistUiState.Error).message,
+                onRetry = { viewModel.retry() },
+            )
         }
 
         is ArtistUiState.Success -> {
@@ -216,6 +212,22 @@ fun SharedTransitionScope.ArtistDetailScreen(
                             onArtistClick = { onArtistClick(it) },
                             onArtworkClick = {onArtworkClick(track)},
                         )
+                    }
+
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showAllTracks()
+                                }
+                        ) {
+                            Text(
+                                text = "View all",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+                        }
                     }
 
                     if(albums.isNotEmpty()) {

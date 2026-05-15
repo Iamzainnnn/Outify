@@ -147,6 +147,16 @@ class PlaylistDetailViewModel @Inject constructor(
         }
     }
 
+    fun retry() {
+        val uri = savedStateHandle.get<String>(PLAYLIST_URI_KEY)
+        if (uri != null) {
+            viewModelScope.launch {
+                spirc.restart()
+                loadPlaylist(uri, true)
+            }
+        }
+    }
+
     fun refresh() {
         val currentPlaylistUri = when (val state = _uiState.value) {
             is PlaylistUiState.Success -> state.playlist?.uri

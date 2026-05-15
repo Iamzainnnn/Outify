@@ -171,12 +171,24 @@ class ArtistDetailViewModel @Inject constructor(
         initialValue = true
     )
 
+    private var _lastArtistUri: String? = null
+
+    fun retry() {
+        val uri = _lastArtistUri ?: return
+        viewModelScope.launch {
+            spirc.restart()
+            _uiState.value = ArtistUiState.Loading
+            loadArtist(uri)
+        }
+    }
+
     private fun saveState() {
         savedStateHandle[POPULAR_TRACKS_KEY] = popularTrackUris.value
         savedStateHandle[ALBUMS_KEY] = albumUris.value
     }
 
     suspend fun loadArtist(artistUri: String) {
+        _lastArtistUri = artistUri
         val artist = withContext(Dispatchers.IO) {
             metadata.getArtistMetadata(artistUri)
         }

@@ -130,6 +130,13 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun retry() {
+        viewModelScope.launch {
+            spirc.restart()
+            loadData()
+        }
+    }
+
     fun loadTrack(track: Track) {
         // TODO: set the context
         spirc.load(track.toOutifyUri())

@@ -44,6 +44,7 @@ import cc.tomko.outify.core.model.ProfilePlaylist
 import cc.tomko.outify.data.setting.LocalUiSettings
 import cc.tomko.outify.ui.components.ArtworkBackground
 import cc.tomko.outify.ui.components.CollapsingHeader
+import cc.tomko.outify.ui.components.ErrorScreen
 import cc.tomko.outify.ui.components.ProfileDetailSkeleton
 import cc.tomko.outify.ui.components.SmartImage
 import cc.tomko.outify.ui.components.rememberCollapsingHeaderState
@@ -71,18 +72,10 @@ fun ProfileDetailScreen(
         }
 
         is ProfileUiState.Error -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = state.message,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
+            ErrorScreen(
+                message = state.message,
+                onRetry = { viewModel.retry() },
+            )
         }
 
         is ProfileUiState.Success -> {

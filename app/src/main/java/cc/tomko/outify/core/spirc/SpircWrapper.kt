@@ -53,6 +53,13 @@ class SpircWrapper @Inject constructor(
 
     var isUsable = false
 
+    fun restart() {
+        isUsable = false
+        scope.launch {
+            restartCallback?.invoke()
+        }
+    }
+
     override fun shutdown() {
         isUsable = false
         Spirc.shutdown()

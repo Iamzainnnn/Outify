@@ -2,6 +2,7 @@ package cc.tomko.outify.ui.viewmodel.library
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import cc.tomko.outify.core.SpClient
 import cc.tomko.outify.core.Spirc.SpircWrapper
 import cc.tomko.outify.core.UserProfile
@@ -13,6 +14,7 @@ import cc.tomko.outify.playback.PlaybackStateHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -44,6 +46,17 @@ class ProfileDetailViewModel @Inject constructor(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
     val uiState: StateFlow<ProfileUiState> = _uiState
+
+    private var _lastProfileUri: String? = null
+
+    fun retry() {
+        val uri = _lastProfileUri ?: return
+        viewModelScope.launch {
+            spirc.restart()
+            _uiState.value = ProfileUiState.Loading
+            loadProfile(uri)
+        }
+    }
 
     private fun saveState(state: ProfileUiState) {
         savedStateHandle[PROFILE_STATE_KEY] = state.toString()
