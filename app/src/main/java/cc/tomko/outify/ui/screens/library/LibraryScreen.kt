@@ -75,6 +75,7 @@ import cc.tomko.outify.ui.GlobalPopupController
 import cc.tomko.outify.ui.PopupSpec
 import cc.tomko.outify.ui.components.ArtworkBackground
 import cc.tomko.outify.ui.components.CollapsingHeader
+import cc.tomko.outify.ui.components.ErrorScreen
 import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.components.rememberCollapsingHeaderState
 import cc.tomko.outify.ui.components.rows.PlaylistRow
@@ -104,6 +105,15 @@ fun SharedTransitionScope.LibraryScreen(
 ) {
     val libraryState by viewModel.libraryState.collectAsState()
     LaunchedEffect(Unit) { viewModel.loadPlaylistUris() }
+
+    if (libraryState.error != null && libraryState.playlists.isEmpty()) {
+        ErrorScreen(
+            message = libraryState.error!!,
+            onRetry = { viewModel.retry() },
+            modifier = modifier,
+        )
+        return
+    }
 
     val density = LocalDensity.current
     var searchQuery by remember { mutableStateOf("") }

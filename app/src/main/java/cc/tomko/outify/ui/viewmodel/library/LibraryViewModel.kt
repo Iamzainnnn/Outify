@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cc.tomko.outify.core.SpClient
+import cc.tomko.outify.core.Spirc.SpircWrapper
 import cc.tomko.outify.core.UserProfile
 import cc.tomko.outify.core.model.Playlist
 import cc.tomko.outify.core.model.PlaylistFolder
@@ -36,6 +38,7 @@ import kotlin.collections.plus
 data class LibraryState(
     val playlists: List<Playlist> = emptyList(),
     val folders: List<PlaylistFolder> = emptyList(),
+    val error: String? = null,
 )
 
 @HiltViewModel
@@ -44,6 +47,8 @@ class LibraryViewModel @Inject constructor(
     private val json: Json,
     private val userProfile: UserProfile,
     private val settingsRepository: SettingsRepository,
+    private val spClient: SpClient,
+    private val spirc: SpircWrapper,
 ) : ViewModel() {
 
     init {
@@ -66,6 +71,8 @@ class LibraryViewModel @Inject constructor(
 
     private val foldersFlow = settingsRepository.folders
 
+    private val _error = MutableStateFlow<String?>(null)
+
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val playlists: StateFlow<List<Playlist>> =
         playlistUris
@@ -86,10 +93,12 @@ class LibraryViewModel @Inject constructor(
     val libraryState: StateFlow<LibraryState> = combine(
         playlists,
         foldersFlow,
-    ) { playlists, folders ->
+        _error,
+    ) { playlists, folders, error ->
         LibraryState(
             playlists = playlists,
             folders = folders,
+            error = error,
         )
     }.stateIn(
         viewModelScope,
@@ -108,6 +117,7 @@ class LibraryViewModel @Inject constructor(
         if (!force && playlistsLoaded) return
         viewModelScope.launch {
             isRefreshing.value = true
+            _error.value = null
 
             val cached = settingsRepository.cachedUris.first()
             if (cached.isNotEmpty()) {
@@ -120,8 +130,9 @@ class LibraryViewModel @Inject constructor(
                 playlistUris.value = uris
                 settingsRepository.saveCachedUris(uris)
                 playlistsLoaded = true
-            }.onFailure {
-                Log.w("LibraryViewModel", "Failed to fetch playlist URIs", it)
+            }.onFailure { e ->
+                Log.w("LibraryViewModel", "Failed to fetch playlist URIs", e)
+                _error.value = e.message ?: "Failed to load library"
             }
 
             isRefreshing.value = false
@@ -171,6 +182,13 @@ class LibraryViewModel @Inject constructor(
 
         authorsCache[playlist.uri] = profiles
         profiles
+    }
+
+    fun retry() {
+        viewModelScope.launch {
+            spirc.restart()
+            refresh()
+        }
     }
 
     fun refresh(){
