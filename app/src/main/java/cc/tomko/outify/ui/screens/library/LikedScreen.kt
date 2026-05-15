@@ -135,6 +135,7 @@ fun SharedTransitionScope.LikedScreen(
     val fetchedCount by viewModel.fetchedCount.collectAsState(initial = 0)
     val totalCount by viewModel.totalCount.collectAsState(initial = 0)
 
+    var searchQuery by remember { mutableStateOf("") }
     var transitioningTrackUri by remember { mutableStateOf<String?>(null) }
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
@@ -200,7 +201,11 @@ fun SharedTransitionScope.LikedScreen(
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     MaterialSearchBar(
-                        onQueryChange = viewModel::onQueryChange,
+                        query = searchQuery,
+                        onQueryChange = { new ->
+                            searchQuery = new
+                            viewModel.onQueryChange(new)
+                        },
                         isLoading = false,
                         autoFocus = false,
                         placeholderText = "Search liked",

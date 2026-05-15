@@ -175,6 +175,7 @@ fun SharedTransitionScope.LibraryScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     MaterialSearchBar(
+                        query = searchQuery,
                         onQueryChange = { searchQuery = it },
                         isLoading = false,
                         autoFocus = false,

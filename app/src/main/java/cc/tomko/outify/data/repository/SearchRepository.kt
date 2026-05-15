@@ -15,8 +15,7 @@ class SearchRepository @Inject constructor(
      val json = Json { ignoreUnknownKeys = true }
 
      suspend fun search(query: String): List<SearchResult> = withContext(Dispatchers.IO) {
-         val encodedQuery = query.replace(" ", "+")
-         val uris = spClient.search(encodedQuery, "track,artist,album,playlist")
+         val uris = spClient.search(query, "track,artist,album,playlist")
 
          uris.mapNotNull { uri ->
              val type = when {
@@ -32,4 +31,20 @@ class SearchRepository @Inject constructor(
              type?.let { SearchResult(uri, it) }
          }
      }
-}
+
+     suspend fun searchByType(query: String, type: String): List<SearchResult> = withContext(Dispatchers.IO) {
+         val uris = spClient.search(query, type)
+         uris.mapNotNull { uri ->
+             val resultType = when {
+                 uri.startsWith("spotify:track:") -> SearchResultType.TRACK
+                 uri.startsWith("spotify:artist:") -> SearchResultType.ARTIST
+                 uri.startsWith("spotify:album:") -> SearchResultType.ALBUM
+                 uri.startsWith("spotify:playlist:") -> SearchResultType.PLAYLIST
+                 uri.startsWith("spotify:show:") -> SearchResultType.SHOW
+                 uri.startsWith("spotify:episode:") -> SearchResultType.EPISODE
+                 else -> null
+             }
+             resultType?.let { SearchResult(uri, it) }
+         }
+     }
+ }

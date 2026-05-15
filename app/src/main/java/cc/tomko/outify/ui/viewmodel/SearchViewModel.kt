@@ -19,8 +19,9 @@ import cc.tomko.outify.data.repository.SearchRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -87,107 +88,101 @@ class SearchViewModel @Inject constructor(
                     _isLoading.value = true
 
                     try {
-                        val searchResults = repository.search(query)
-
-                        val grouped = searchResults.groupBy { it.type }
-                        val sectionedList = mutableListOf<SearchUiModel>()
-
-                        fun <T> appendSectionIfPresent(
-                            type: SearchResultType,
-                            titleRes: Int,
-                            map: Map<String, T>,
-                            mapper: (String, T) -> SearchUiModel
-                        ) {
-                            val items = grouped[type] ?: return
-                            if (items.isEmpty()) return
-
-                            val mapped = items.mapNotNull { result ->
-                                map[result.uri]?.let { data ->
-                                    mapper(result.uri, data)
-                                }
-                            }
-
-                            if (mapped.isNotEmpty()) {
-                                sectionedList.add(SearchUiModel.SectionHeader(titleRes))
-                                sectionedList.addAll(mapped)
-                            }
-                        }
+                        _results.value = emptyList()
 
                         coroutineScope {
-                            val trackDeferred = async(Dispatchers.IO) {
-                                grouped[SearchResultType.TRACK]
-                                    ?.map { it.uri }
-                                    ?.let { metadata.getTrackMetadata(it).associateBy { t -> t.uri } }
-                                    ?: emptyMap()
-                            }
-
-                            val artistDeferred = async(Dispatchers.IO) {
-                                searchResults
-                                    .filter { it.type == SearchResultType.ARTIST }
-                                    .mapNotNull { result ->
-                                        runCatching {
-                                            metadata.getArtistMetadata(result.uri)
-                                        }.getOrNull()?.let {
-                                            result.uri to it
+                            launch {
+                                try {
+                                    val trackResults = repository.searchByType(query, "track")
+                                    if (trackResults.isNotEmpty()) {
+                                        val trackUris = trackResults.map { it.uri }
+                                        val trackMap = withContext(Dispatchers.IO) {
+                                            metadata.getTrackMetadata(trackUris).associateBy { t -> t.uri }
                                         }
-                                    }.toMap()
-                            }
-
-                            val albumDeferred = async(Dispatchers.IO) {
-                                searchResults
-                                    .filter { it.type == SearchResultType.ALBUM }
-                                    .mapNotNull { result ->
-                                        runCatching {
-                                            metadata.getAlbumMetadata(result.uri)
-                                        }.getOrNull()?.let {
-                                            result.uri to it
+                                        val items = trackResults.mapNotNull { result ->
+                                            trackMap[result.uri]?.let { track ->
+                                                SearchUiModel.TrackItem(result.uri, track)
+                                            }
                                         }
-                                    }.toMap()
-                            }
-
-                            val playlistDefered = async(Dispatchers.IO) {
-                                searchResults
-                                    .filter { it.type == SearchResultType.PLAYLIST }
-                                    .mapNotNull { result ->
-                                        runCatching {
-                                            metadata.getPlaylistMetadata(result.uri, true)
-                                        }.getOrNull()?.let {
-                                            result.uri to it
+                                        if (items.isNotEmpty()) {
+                                            _results.update { current ->
+                                                current + SearchUiModel.SectionHeader(R.string.search_section_tracks) + items
+                                            }
                                         }
-                                    }.toMap()
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w("SearchViewModel", "Track search failed", e)
+                                }
                             }
-
-                            val trackMap: Map<String, Track> = trackDeferred.await()
-                            appendSectionIfPresent(
-                                type = SearchResultType.TRACK,
-                                titleRes = R.string.search_section_tracks,
-                                map = trackMap
-                            ) { uri, track -> SearchUiModel.TrackItem(uri, track) }
-                            _results.value = sectionedList.toList()
-
-                            val artistMap: Map<String, Artist> = artistDeferred.await()
-                            appendSectionIfPresent(
-                                type = SearchResultType.ARTIST,
-                                titleRes = R.string.search_section_artists,
-                                map = artistMap
-                            ) { uri, artist -> SearchUiModel.ArtistItem(uri, artist) }
-                            _results.value = sectionedList.toList()
-
-                            val albumMap: Map<String, Album> = albumDeferred.await()
-                            appendSectionIfPresent(
-                                type = SearchResultType.ALBUM,
-                                titleRes = R.string.search_section_albums,
-                                map = albumMap
-                            ) { uri, album -> SearchUiModel.AlbumItem(uri, album) }
-                            _results.value = sectionedList.toList()
-
-                            val playlistMap: Map<String, Playlist> = playlistDefered.await()
-                            appendSectionIfPresent(
-                                type = SearchResultType.PLAYLIST,
-                                titleRes = R.string.search_section_playlists,
-                                map = playlistMap
-                            ) { uri, playlist -> SearchUiModel.PlaylistItem(uri, playlist) }
-                            _results.value = sectionedList.toList()
+                            launch {
+                                try {
+                                    val artistResults = repository.searchByType(query, "artist")
+                                    if (artistResults.isNotEmpty()) {
+                                        val items = withContext(Dispatchers.IO) {
+                                            artistResults.mapNotNull { result ->
+                                                runCatching {
+                                                    metadata.getArtistMetadata(result.uri)
+                                                }.getOrNull()?.let { artist ->
+                                                    SearchUiModel.ArtistItem(result.uri, artist)
+                                                }
+                                            }
+                                        }
+                                        if (items.isNotEmpty()) {
+                                            _results.update { current ->
+                                                current + SearchUiModel.SectionHeader(R.string.search_section_artists) + items
+                                            }
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w("SearchViewModel", "Artist search failed", e)
+                                }
+                            }
+                            launch {
+                                try {
+                                    val albumResults = repository.searchByType(query, "album")
+                                    if (albumResults.isNotEmpty()) {
+                                        val items = withContext(Dispatchers.IO) {
+                                            albumResults.mapNotNull { result ->
+                                                runCatching {
+                                                    metadata.getAlbumMetadata(result.uri)
+                                                }.getOrNull()?.let { album ->
+                                                    SearchUiModel.AlbumItem(result.uri, album)
+                                                }
+                                            }
+                                        }
+                                        if (items.isNotEmpty()) {
+                                            _results.update { current ->
+                                                current + SearchUiModel.SectionHeader(R.string.search_section_albums) + items
+                                            }
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w("SearchViewModel", "Album search failed", e)
+                                }
+                            }
+                            launch {
+                                try {
+                                    val playlistResults = repository.searchByType(query, "playlist")
+                                    if (playlistResults.isNotEmpty()) {
+                                        val items = withContext(Dispatchers.IO) {
+                                            playlistResults.mapNotNull { result ->
+                                                runCatching {
+                                                    metadata.getPlaylistMetadata(result.uri, true)
+                                                }.getOrNull()?.let { playlist ->
+                                                    SearchUiModel.PlaylistItem(result.uri, playlist)
+                                                }
+                                            }
+                                        }
+                                        if (items.isNotEmpty()) {
+                                            _results.update { current ->
+                                                current + SearchUiModel.SectionHeader(R.string.search_section_playlists) + items
+                                            }
+                                        }
+                                    }
+                                } catch (e: Exception) {
+                                    Log.w("SearchViewModel", "Playlist search failed", e)
+                                }
+                            }
                         }
 
                     } catch (e: Exception) {
