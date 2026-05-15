@@ -1,5 +1,6 @@
 package cc.tomko.outify.ui
 
+import cc.tomko.outify.core.model.Artist
 import cc.tomko.outify.core.model.Playlist
 import cc.tomko.outify.core.model.PlaylistFolder
 import cc.tomko.outify.core.model.Track
@@ -43,6 +44,13 @@ sealed class PopupSpec(
         val playlist: Playlist,
         val artworkUrl: String?,
         val action: (() -> Unit)? = null,
+        override val id: String = UUID.randomUUID().toString(),
+    ) : PopupSpec(id)
+
+    data class ArtistInfo(
+        val artist: Artist,
+        val isSaved: Boolean = false,
+        val onToggleSave: (() -> Unit)? = null,
         override val id: String = UUID.randomUUID().toString(),
     ) : PopupSpec(id)
 

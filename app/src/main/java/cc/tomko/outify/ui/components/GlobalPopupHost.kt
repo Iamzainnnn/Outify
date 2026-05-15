@@ -18,6 +18,7 @@ import cc.tomko.outify.ui.components.bottomsheet.AuthResultBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.CreateFolderBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.CreatePlaylistBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.PlaybackDevicesBottomSheet
+import cc.tomko.outify.ui.components.bottomsheet.ArtistInfoBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.PlaylistInfoBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.TrackInfoBottomSheet
 import cc.tomko.outify.ui.components.navigation.Route
@@ -103,6 +104,24 @@ fun GlobalPopupHost(
                     onAddToQueue = { addToQueue(popup.playlist.toOutifyUri()) },
                     onPlayNext = { playNext(popup.playlist.toOutifyUri()) },
                     onToggleLike = { toggleLike(popup.playlist.toOutifyUri()) },
+                )
+            }
+
+            is PopupSpec.ArtistInfo -> {
+                ArtistInfoBottomSheet(
+                    artist = popup.artist,
+                    isSaved = popup.isSaved,
+                    onDismiss = { GlobalPopupController.dismiss(popup.id) },
+                    onToggleSave = {
+                        popup.onToggleSave?.invoke()
+                        GlobalPopupController.dismiss(popup.id)
+                    },
+                    onAddToQueue = { addToQueue(popup.artist.toOutifyUri()) },
+                    onPlayNext = { playNext(popup.artist.toOutifyUri()) },
+                    onOpenArtist = {
+                        backStack.add(Route.ArtistScreen(popup.artist.uri))
+                        GlobalPopupController.dismiss(popup.id)
+                    },
                 )
             }
 

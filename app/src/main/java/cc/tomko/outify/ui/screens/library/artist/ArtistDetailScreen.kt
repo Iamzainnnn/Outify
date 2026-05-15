@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Shuffle
@@ -70,6 +71,8 @@ import cc.tomko.outify.core.model.getCover
 import cc.tomko.outify.core.model.sharedTransitionKey
 import cc.tomko.outify.core.model.toSpotifyUri
 import cc.tomko.outify.data.setting.LocalUiSettings
+import cc.tomko.outify.ui.GlobalPopupController
+import cc.tomko.outify.ui.PopupSpec
 import cc.tomko.outify.ui.components.ArtworkBackground
 import cc.tomko.outify.ui.components.CollapsingHeader
 import cc.tomko.outify.ui.components.ErrorScreen
@@ -310,6 +313,20 @@ fun SharedTransitionScope.ArtistDetailScreen(
                             Icon(
                                 imageVector = if (isSaved) Icons.Rounded.Favorite else Icons.Filled.FavoriteBorder,
                                 contentDescription = if (isSaved) "Unfollow" else "Follow"
+                            )
+                        }
+                        FilledIconButton(onClick = {
+                            GlobalPopupController.show(
+                                PopupSpec.ArtistInfo(
+                                    artist = artist,
+                                    isSaved = isSaved,
+                                    onToggleSave = { viewModel.toggleSave() },
+                                )
+                            )
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "More information"
                             )
                         }
                     }
