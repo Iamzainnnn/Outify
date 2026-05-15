@@ -24,6 +24,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,9 +40,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun Modifier.shimmerEffect(): Modifier {
     val shimmerColors = listOf(
-        Color.LightGray.copy(alpha = 0.6f),
-        Color.LightGray.copy(alpha = 0.2f),
-        Color.LightGray.copy(alpha = 0.6f)
+        Color.DarkGray.copy(alpha = 0.6f),
+        Color.DarkGray.copy(alpha = 0.2f),
+        Color.DarkGray.copy(alpha = 0.6f)
     )
     val transition = rememberInfiniteTransition(label = "shimmer")
     val translateAnim by transition.animateFloat(
@@ -111,7 +113,6 @@ fun SkeletonTrackRow(
                     modifier = Modifier
                         .fillMaxWidth(0.4f)
                         .height(12.dp),
-                    shape = RoundedCornerShape(4.dp)
                 )
             }
         }
@@ -236,13 +237,10 @@ fun ArtistDetailSkeleton(
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         item {
-            Box(
-                modifier = Modifier
-                    .padding(start = 16.dp, bottom = 8.dp)
-                    .fillMaxWidth(0.4f)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .shimmerEffect()
+            Text(
+                text = "Popular tracks",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
             )
         }
 
@@ -250,41 +248,33 @@ fun ArtistDetailSkeleton(
             SkeletonAlbumTracksHeader()
         }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            Box(
-                modifier = Modifier
-                    .padding(start = 16.dp, bottom = 8.dp)
-                    .fillMaxWidth(0.3f)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .shimmerEffect()
-            )
-        }
-
         items(trackCount) {
             SkeletonTrackRow()
         }
 
         item {
-            Spacer(modifier = Modifier.height(24.dp))
-        }
+            Spacer(modifier = Modifier.height(48.dp))
 
-        item {
-            Box(
+            Row(
                 modifier = Modifier
-                    .padding(start = 16.dp, bottom = 16.dp)
-                    .fillMaxWidth(0.25f)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .shimmerEffect()
-            )
-        }
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                SkeletonBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.25f)
+                        .height(20.dp),
+                    shape = RoundedCornerShape(4.dp)
+                )
 
-        item {
+                SkeletonBox(
+                    modifier = Modifier.size(24.dp),
+                    shape = CircleShape
+                )
+            }
+
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -293,6 +283,8 @@ fun ArtistDetailSkeleton(
                     SkeletonAlbumCard()
                 }
             }
+
+            Spacer(modifier = Modifier.height(48.dp))
         }
     }
 }
