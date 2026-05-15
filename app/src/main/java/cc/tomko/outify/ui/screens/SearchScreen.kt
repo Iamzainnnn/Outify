@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.NoAccounts
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -46,7 +48,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,6 +72,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -89,6 +97,7 @@ import cc.tomko.outify.ui.components.rows.SwipeableTrackRowConfigured
 import cc.tomko.outify.ui.viewmodel.SearchUiModel
 import cc.tomko.outify.ui.viewmodel.SearchViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SharedTransitionScope.SearchScreen(
     backStack: NavBackStack<NavKey>,
@@ -113,6 +122,10 @@ fun SharedTransitionScope.SearchScreen(
     }
     val showScrollToTop = isScrolled
 
+    var query by rememberSaveable { mutableStateOf("") }
+    var showAdvancedSheet by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     var showTracks by rememberSaveable { mutableStateOf(true) }
     var showArtists by rememberSaveable { mutableStateOf(true) }
     var showAlbums by rememberSaveable { mutableStateOf(true) }
@@ -132,18 +145,51 @@ fun SharedTransitionScope.SearchScreen(
         )
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        MaterialSearchBar(
-            onQueryChange = viewModel::onQueryChange,
-            isLoading = isLoading,
-            modifier = Modifier
-                .padding(12.dp)
-        )
-
+    Box(modifier = modifier
+        .fillMaxSize()
+        .systemBarsPadding()
+    ) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
         ) {
+            item {
+                Text(
+                    text = "Search",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .padding(start = 24.dp, end = 24.dp, top = 16.dp),
+                )
+            }
+
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MaterialSearchBar(
+                        query = query,
+                        onQueryChange = { newQuery ->
+                            query = newQuery
+                            viewModel.onQueryChange(newQuery)
+                        },
+                        isLoading = isLoading,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = { showAdvancedSheet = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Tune,
+                            contentDescription = "Advanced search",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
             item {
                 FiltersBar(
                     showTracks = showTracks,
@@ -352,21 +398,36 @@ fun SharedTransitionScope.SearchScreen(
             }
         }
     }
+
+    if (showAdvancedSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showAdvancedSheet = false },
+            sheetState = sheetState
+        ) {
+            AdvancedSearchContent(
+                onSearch = { advancedQuery ->
+                    query = advancedQuery
+                    viewModel.onQueryChange(advancedQuery)
+                    showAdvancedSheet = false
+                },
+                onDismiss = { showAdvancedSheet = false }
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MaterialSearchBar(
+    query: String,
     onQueryChange: (String) -> Unit,
     isLoading: Boolean,
     modifier: Modifier = Modifier,
     autoFocus: Boolean = true,
     placeholderText: String = "Search Spotify",
 ) {
-    var query by rememberSaveable { mutableStateOf("") }
     val expanded = false
 
-    // Auto focusing the searchbar
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -385,7 +446,6 @@ fun MaterialSearchBar(
                 modifier = Modifier.focusRequester(focusRequester),
                 query = query,
                 onQueryChange = { new ->
-                    query = new
                     onQueryChange(new)
                 },
                 onSearch = {
@@ -402,9 +462,7 @@ fun MaterialSearchBar(
                     if (isLoading) {
                         ContainedLoadingIndicator(modifier = Modifier.size(20.dp))
                     } else {
-                        // clear button
                         IconButton(onClick = {
-                            query = ""
                             onQueryChange("")
                         }) {
                             Icon(imageVector = Icons.Default.Close, contentDescription = "Clear query")
@@ -515,6 +573,159 @@ fun FiltersBar(
             selected = showEpisodes,
             onClick = { onToggleEpisodes(!showEpisodes) }
         ) { Text(stringResource(R.string.search_section_episodes)) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AdvancedSearchContent(
+    onSearch: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var artist by remember { mutableStateOf("") }
+    var album by remember { mutableStateOf("") }
+    var year by remember { mutableStateOf("") }
+    var genre by remember { mutableStateOf("") }
+    var label by remember { mutableStateOf("") }
+    var matchAll by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 16.dp)
+    ) {
+        Text(
+            text = "Advanced Search",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Title") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = artist,
+            onValueChange = { artist = it },
+            label = { Text("Artist") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = album,
+            onValueChange = { album = it },
+            label = { Text("Album") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = year,
+            onValueChange = { year = it },
+            label = { Text("Year (e.g. 1978 or 1980-1985)") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = genre,
+            onValueChange = { genre = it },
+            label = { Text("Genre") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = label,
+            onValueChange = { label = it },
+            label = { Text("Label") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+        Spacer(Modifier.height(16.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Match:")
+            Spacer(Modifier.width(12.dp))
+            FilterChip(
+                selected = matchAll,
+                onClick = { matchAll = true },
+                label = { Text("All (AND)") }
+            )
+            Spacer(Modifier.width(8.dp))
+            FilterChip(
+                selected = !matchAll,
+                onClick = { matchAll = false },
+                label = { Text("Any (OR)") }
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = {
+                title = ""; artist = ""; album = ""
+                year = ""; genre = ""; label = ""
+                matchAll = true
+            }) { Text("Clear") }
+            Spacer(Modifier.width(12.dp))
+            Button(onClick = {
+                val advancedQuery = buildAdvancedQuery(
+                    title, artist, album, year, genre, label, matchAll
+                )
+                onSearch(advancedQuery)
+            }) { Text("Search") }
+        }
+
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+private fun buildAdvancedQuery(
+    title: String,
+    artist: String,
+    album: String,
+    year: String,
+    genre: String,
+    label: String,
+    matchAll: Boolean
+): String {
+    val parts = mutableListOf<String>()
+
+    fun add(field: String, value: String) {
+        if (value.isNotBlank()) {
+            val quoted = if (value.contains(" ") && field != "year") "\"$value\"" else value
+            parts.add("$field:$quoted")
+        }
+    }
+
+    add("title", title)
+    add("artist", artist)
+    add("album", album)
+    add("year", year)
+    add("genre", genre)
+    add("label", label)
+
+    return when {
+        parts.isEmpty() -> ""
+        parts.size == 1 || matchAll -> parts.joinToString(" ")
+        else -> parts.joinToString(" OR ")
     }
 }
 
