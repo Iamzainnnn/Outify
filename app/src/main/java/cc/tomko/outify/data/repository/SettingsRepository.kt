@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import cc.tomko.outify.core.model.PlaylistFolder
 import cc.tomko.outify.data.setting.GestureAction
+import cc.tomko.outify.ui.model.search.SearchHistoryItem
 import cc.tomko.outify.data.setting.GestureSetting
 import cc.tomko.outify.data.setting.GestureTrigger
 import cc.tomko.outify.data.setting.Side
@@ -99,6 +100,10 @@ class SettingsRepository @Inject constructor(
 
         object Library {
             val CACHED_URIS = stringPreferencesKey("cached_playlist_uris_v1")
+        }
+
+        object Search {
+            val SEARCH_HISTORY = stringPreferencesKey("search_history_v2")
         }
 
         object Cached {
@@ -413,6 +418,46 @@ class SettingsRepository @Inject constructor(
     }
 
     private fun decodeUris(serialized: String?): List<String> {
+        if (serialized.isNullOrBlank()) return emptyList()
+        return try {
+            json.decodeFromString(serialized)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    val searchHistory: Flow<List<SearchHistoryItem>> = dataStore.data.map { prefs ->
+        decodeSearchHistory(prefs[Keys.Search.SEARCH_HISTORY])
+    }
+
+    suspend fun addSearchHistoryItems(items: List<SearchHistoryItem>) {
+        dataStore.edit { prefs ->
+            val history = decodeSearchHistory(prefs[Keys.Search.SEARCH_HISTORY]).toMutableList()
+            val newUris = items.map { it.uri }.toSet()
+            history.removeAll { it.uri in newUris }
+            history.addAll(0, items)
+            if (history.size > 100) {
+                history.subList(100, history.size).clear()
+            }
+            prefs[Keys.Search.SEARCH_HISTORY] = json.encodeToString(history)
+        }
+    }
+
+    suspend fun removeSearchHistoryItem(uri: String) {
+        dataStore.edit { prefs ->
+            val history = decodeSearchHistory(prefs[Keys.Search.SEARCH_HISTORY]).toMutableList()
+            history.removeAll { it.uri == uri }
+            prefs[Keys.Search.SEARCH_HISTORY] = json.encodeToString(history)
+        }
+    }
+
+    suspend fun clearSearchHistory() {
+        dataStore.edit { prefs ->
+            prefs.remove(Keys.Search.SEARCH_HISTORY)
+        }
+    }
+
+    private fun decodeSearchHistory(serialized: String?): List<SearchHistoryItem> {
         if (serialized.isNullOrBlank()) return emptyList()
         return try {
             json.decodeFromString(serialized)

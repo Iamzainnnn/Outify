@@ -14,8 +14,10 @@ import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.core.model.getCover
 import cc.tomko.outify.data.metadata.Metadata
 import cc.tomko.outify.playback.PlaybackStateHolder
+import cc.tomko.outify.ui.model.search.SearchHistoryItem
 import cc.tomko.outify.ui.model.search.SearchResultType
 import cc.tomko.outify.data.repository.SearchRepository
+import cc.tomko.outify.data.repository.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -41,6 +43,7 @@ class SearchViewModel @Inject constructor(
     val spClient: SpClient,
     private val repository: SearchRepository,
     private val playbackStateHolder: PlaybackStateHolder,
+    private val settingsRepository: SettingsRepository,
 ): ViewModel() {
     private val queryFlow = MutableStateFlow("")
 
@@ -70,6 +73,16 @@ class SearchViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = false
         )
+
+    val searchHistory: StateFlow<List<SearchHistoryItem>> = settingsRepository.searchHistory
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    private val _historyResults = MutableStateFlow<List<SearchUiModel>>(emptyList())
+    val historyResults: StateFlow<List<SearchUiModel>> = _historyResults
 
     init {
         _isLoggedIn.value = spClient.isOAuthAuthenticated()
@@ -192,6 +205,46 @@ class SearchViewModel @Inject constructor(
                     }
                 }
         }
+
+        viewModelScope.launch {
+            settingsRepository.searchHistory.collect { items ->
+                if (items.isEmpty()) {
+                    _historyResults.value = emptyList()
+                    return@collect
+                }
+                val results = withContext(Dispatchers.IO) {
+                    items.mapNotNull { item ->
+                        try {
+                            when (item.type) {
+                                SearchResultType.TRACK -> {
+                                    val tracks = metadata.getTrackMetadata(listOf(item.uri))
+                                    tracks.firstOrNull()?.let { track ->
+                                        SearchUiModel.TrackItem(item.uri, track)
+                                    }
+                                }
+                                SearchResultType.ARTIST -> {
+                                    val artist = metadata.getArtistMetadata(item.uri)
+                                    artist?.let { SearchUiModel.ArtistItem(item.uri, it) }
+                                }
+                                SearchResultType.ALBUM -> {
+                                    val album = metadata.getAlbumMetadata(item.uri)
+                                    album?.let { SearchUiModel.AlbumItem(item.uri, it) }
+                                }
+                                SearchResultType.PLAYLIST -> {
+                                    val playlist = metadata.getPlaylistMetadata(item.uri, true)
+                                    playlist?.let { SearchUiModel.PlaylistItem(item.uri, it) }
+                                }
+                                else -> null
+                            }
+                        } catch (e: Exception) {
+                            Log.w("SearchViewModel", "Failed to load history metadata for ${item.uri}", e)
+                            null
+                        }
+                    }
+                }
+                _historyResults.value = results
+            }
+        }
     }
 
     fun onQueryChange(query: String){
@@ -211,6 +264,31 @@ class SearchViewModel @Inject constructor(
     }
     fun setTrack(track: Track) {
         playbackStateHolder.setTrack(track)
+    }
+
+    fun addToHistory(item: SearchUiModel) {
+        val historyItem = when (item) {
+            is SearchUiModel.TrackItem -> SearchHistoryItem(item.uri, SearchResultType.TRACK)
+            is SearchUiModel.ArtistItem -> SearchHistoryItem(item.uri, SearchResultType.ARTIST)
+            is SearchUiModel.AlbumItem -> SearchHistoryItem(item.uri, SearchResultType.ALBUM)
+            is SearchUiModel.PlaylistItem -> SearchHistoryItem(item.uri, SearchResultType.PLAYLIST)
+            else -> return
+        }
+        viewModelScope.launch {
+            settingsRepository.addSearchHistoryItems(listOf(historyItem))
+        }
+    }
+
+    fun removeFromHistory(uri: String) {
+        viewModelScope.launch {
+            settingsRepository.removeSearchHistoryItem(uri)
+        }
+    }
+
+    fun clearHistory() {
+        viewModelScope.launch {
+            settingsRepository.clearSearchHistory()
+        }
     }
 }
 

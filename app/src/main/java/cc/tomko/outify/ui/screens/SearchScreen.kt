@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -107,6 +108,8 @@ fun SharedTransitionScope.SearchScreen(
     val results by viewModel.results.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
+    val searchHistory by viewModel.searchHistory.collectAsState()
+    val historyResults by viewModel.historyResults.collectAsState()
     val spirc = viewModel.spirc
 
     val listState = rememberLazyListState()
@@ -190,96 +193,238 @@ fun SharedTransitionScope.SearchScreen(
                 }
             }
 
-            item {
-                FiltersBar(
-                    showTracks = showTracks,
-                    showArtists = showArtists,
-                    showAlbums = showAlbums,
-                    showPlaylists = showPlaylists,
-                    showShows = showShows,
-                    showEpisodes = showEpisodes,
-                    onToggleTracks = { showTracks = it },
-                    onToggleArtists = { showArtists = it },
-                    onToggleAlbums = { showAlbums = it },
-                    onTogglePlaylists = { showPlaylists = it },
-                    onToggleShows = { showShows = it },
-                    onToggleEpisodes = { showEpisodes = it }
-                )
-            }
-
-            if(!isLoggedIn) {
+            if (query.isBlank() && searchHistory.isEmpty()) {
                 item {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 400.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Icon(
-                                imageVector = Icons.Default.NoAccounts,
-                                contentDescription = "Logged out",
-                                modifier = Modifier.size(64.dp)
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = "This feature is only available to logged in users",
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-
-                            Icon(
-                                Icons.AutoMirrored.Filled.Login,
+                                imageVector = Icons.Default.Search,
                                 contentDescription = null,
-                                modifier = Modifier
-                                    .clickable {
-                                        backStack.add(Route.AccountsScreen)
-                                    }
+                                modifier = Modifier.size(72.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                             )
-                        }
-                    }
-                }
-            }
-
-            else if (filteredResults.isEmpty()) {
-                item {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SearchOff,
-                                contentDescription = "Select filters",
-                                modifier = Modifier.size(64.dp)
-                            )
-
                             Spacer(modifier = Modifier.height(16.dp))
-
                             Text(
-                                text = "Nothing found..",
-                                overflow = TextOverflow.Ellipsis,
+                                text = "No history yet",
                                 style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Type the query and select filters",
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.titleMedium,
+                                text = "Tap search results to save them here",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                             )
                         }
                     }
                 }
+            } else if (query.isBlank()) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Search History",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        TextButton(onClick = { viewModel.clearHistory() }) {
+                            Text("Clear all")
+                        }
+                    }
+                }
+
+                items(
+                    items = historyResults,
+                    key = { it.uri }
+                ) { item ->
+                    val removeButton: @Composable () -> Unit = {
+                        IconButton(onClick = { viewModel.removeFromHistory(item.uri) }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Remove from history",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    when (item) {
+                        is SearchUiModel.TrackItem -> {
+                            val track = item.track
+                            SwipeableTrackRowConfigured(
+                                track = track,
+                                currentTrack = currentTrack,
+                                isPlaybackPlaying = isPlaybackPlaying,
+                                onRowClick = {
+                                    spirc.load(track.toSpotifyUri())
+                                    viewModel.setTrack(track)
+                                },
+                                onArtistClick = {
+                                    backStack.add(ArtistScreen(it.uri))
+                                },
+                                onArtworkClick = {
+                                    backStack.add(TrackScreen(item.uri))
+                                },
+                                trailingContent = removeButton,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+                        is SearchUiModel.AlbumItem -> {
+                            val album = item.album
+                            val artworkUrl = ALBUM_COVER_URL + album.getCover(CoverSize.MEDIUM)?.uri
+                            AlbumRow(
+                                album = album,
+                                artworkUrl = artworkUrl,
+                                onRowClick = {
+                                    backStack.add(Route.AlbumScreen(album.uri))
+                                },
+                                trailingContent = removeButton,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+                        is SearchUiModel.ArtistItem -> {
+                            val artist = item.artist
+                            ArtistRow(
+                                artist = artist,
+                                artworkUrl = ALBUM_COVER_URL + artist.getCover(CoverSize.MEDIUM)?.uri,
+                                onRowClick = {
+                                    backStack.add(ArtistScreen(artist.uri))
+                                },
+                                trailingContent = removeButton,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+                        is SearchUiModel.PlaylistItem -> {
+                            val playlist = item.playlist
+                            var artworkUrl by remember(playlist.uri) { mutableStateOf<String?>(null) }
+                            LaunchedEffect(playlist.uri) {
+                                artworkUrl = viewModel.getArtworkUrl(playlist)
+                            }
+                            PlaylistRow(
+                                playlist = playlist,
+                                artworkUrl = artworkUrl,
+                                onRowClick = {
+                                    backStack.add(PlaylistScreen(playlist.uri))
+                                },
+                                onRowLongClick = {
+                                    GlobalPopupController.show(PopupSpec.PlaylistInfo(playlist, artworkUrl))
+                                },
+                                onArtistClick = {
+                                    // TODO: Add author page
+                                },
+                                contentDescription = playlist.attributes.description,
+                                sharedTransitionScope = this@SearchScreen,
+                                trailingContent = removeButton,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+                        else -> {}
+                    }
+                }
             }
 
-            items(
-                items = filteredResults,
-                key = { it.uri }
-            ) { item ->
+            if (query.isNotBlank()) {
+                item {
+                    FiltersBar(
+                        showTracks = showTracks,
+                        showArtists = showArtists,
+                        showAlbums = showAlbums,
+                        showPlaylists = showPlaylists,
+                        showShows = showShows,
+                        showEpisodes = showEpisodes,
+                        onToggleTracks = { showTracks = it },
+                        onToggleArtists = { showArtists = it },
+                        onToggleAlbums = { showAlbums = it },
+                        onTogglePlaylists = { showPlaylists = it },
+                        onToggleShows = { showShows = it },
+                        onToggleEpisodes = { showEpisodes = it }
+                    )
+                }
+
+                if(!isLoggedIn) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.NoAccounts,
+                                    contentDescription = "Logged out",
+                                    modifier = Modifier.size(64.dp)
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Text(
+                                    text = "This feature is only available to logged in users",
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Login,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .clickable {
+                                            backStack.add(Route.AccountsScreen)
+                                        }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                else if (filteredResults.isEmpty()) {
+                    item {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SearchOff,
+                                    contentDescription = "Select filters",
+                                    modifier = Modifier.size(64.dp)
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                Text(
+                                    text = "Nothing found..",
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+
+                                Text(
+                                    text = "Type the query and select filters",
+                                    overflow = TextOverflow.Ellipsis,
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                            }
+                        }
+                    }
+                }
+
+                items(
+                    items = filteredResults,
+                    key = { it.uri }
+                ) { item ->
                 when (item) {
                     is SearchUiModel.SectionHeader -> {
                         Text(
@@ -301,6 +446,7 @@ fun SharedTransitionScope.SearchScreen(
                             isPlaybackPlaying = isPlaybackPlaying,
                             onRowClick = remember(track.uri) {
                                 {
+                                    viewModel.addToHistory(item)
                                     spirc.load(track.toSpotifyUri()) // TODO: make context be the search screen
                                     // Optimistic UI
                                     viewModel.setTrack(track)
@@ -323,6 +469,7 @@ fun SharedTransitionScope.SearchScreen(
                             album = album,
                             artworkUrl = artworkUrl,
                             onRowClick = {
+                                viewModel.addToHistory(item)
                                 backStack.add(Route.AlbumScreen(album.uri))
                             },
                             modifier = Modifier.animateItem()
@@ -335,6 +482,7 @@ fun SharedTransitionScope.SearchScreen(
                             artist = artist,
                             artworkUrl = ALBUM_COVER_URL + artist.getCover(CoverSize.MEDIUM)?.uri,
                             onRowClick = {
+                                viewModel.addToHistory(item)
                                 backStack.add(ArtistScreen(artist.uri))
                             },
                             modifier = Modifier.animateItem()
@@ -352,6 +500,7 @@ fun SharedTransitionScope.SearchScreen(
                             playlist = playlist,
                             artworkUrl = artworkUrl,
                             onRowClick = {
+                                viewModel.addToHistory(item)
                                 backStack.add(PlaylistScreen(playlist.uri))
                             },
                             onRowLongClick = {
@@ -365,6 +514,7 @@ fun SharedTransitionScope.SearchScreen(
                             modifier = Modifier.animateItem()
                         )
                     }
+                }
                 }
             }
         }
