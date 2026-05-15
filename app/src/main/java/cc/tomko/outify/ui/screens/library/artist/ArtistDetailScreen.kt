@@ -91,7 +91,6 @@ fun SharedTransitionScope.ArtistDetailScreen(
     onArtworkClick: (Track) -> Unit,
     onAlbumClick: (Album) -> Unit,
     onArtistClick: (Artist) -> Unit,
-    showAllTracks: () -> Unit,
     onBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -212,22 +211,6 @@ fun SharedTransitionScope.ArtistDetailScreen(
                             onArtistClick = { onArtistClick(it) },
                             onArtworkClick = {onArtworkClick(track)},
                         )
-                    }
-
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showAllTracks()
-                                }
-                        ) {
-                            Text(
-                                text = "View all",
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
-                        }
                     }
 
                     if(albums.isNotEmpty()) {
