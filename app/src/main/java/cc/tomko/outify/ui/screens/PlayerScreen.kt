@@ -79,6 +79,7 @@ import cc.tomko.outify.core.model.SyncedLyric
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.data.setting.LocalUiSettings
 import cc.tomko.outify.ui.components.SmartImage
+import cc.tomko.outify.utils.RomanizationUtil
 import cc.tomko.outify.ui.components.WavyMusicSlider
 import cc.tomko.outify.ui.model.player.PlayerAction
 import cc.tomko.outify.ui.viewmodel.player.PlayerViewModel
@@ -103,6 +104,7 @@ fun PlayerScreen(
     val isShuffling by viewModel.isShuffling.collectAsState()
     val isRepeating by viewModel.isRepeating.collectAsState()
     val isFavorite by viewModel.isLiked.collectAsState()
+    val romanizeLyrics by viewModel.romanizeLyrics.collectAsState()
     val artworkUrl = uiState.albumArt?.let { ALBUM_COVER_URL + it }
 
     BoxWithConstraints(
@@ -181,6 +183,7 @@ fun PlayerScreen(
                             lyrics = lyrics,
                             currentLyric = currentLyric,
                             seekTo = { viewModel.onAction(PlayerAction.SeekTo(it)) },
+                            romanize = romanizeLyrics,
                             modifier = Modifier.fillMaxSize()
                         )
                         // Top and bottom gradient fades
@@ -453,6 +456,7 @@ fun Lyrics(
     lyrics: List<SyncedLyric>,
     currentLyric: SyncedLyric?,
     seekTo: (Long) -> Unit,
+    romanize: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -496,7 +500,8 @@ fun Lyrics(
                 line = line,
                 isActive = index == activeIndex,
                 distance = if (activeIndex >= 0) kotlin.math.abs(index - activeIndex) else Int.MAX_VALUE,
-                onClick = { seekTo(line.timeMs) }
+                onClick = { seekTo(line.timeMs) },
+                romanize = romanize,
             )
         }
     }
@@ -509,6 +514,7 @@ private fun LyricLine(
     isActive: Boolean,
     distance: Int,
     onClick: () -> Unit,
+    romanize: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val alpha by animateFloatAsState(
@@ -561,25 +567,48 @@ private fun LyricLine(
             .padding(horizontal = 20.dp, vertical = verticalPad.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = line.text,
-            style = when {
-                isActive      -> MaterialTheme.typography.headlineSmall
-                distance == 1 -> MaterialTheme.typography.titleLarge
-                distance == 2 -> MaterialTheme.typography.titleMedium
-                else          -> MaterialTheme.typography.bodyLarge
-            },
-            fontWeight = when {
-                isActive      -> FontWeight.ExtraBold
-                distance == 1 -> FontWeight.SemiBold
-                distance == 2 -> FontWeight.Normal
-                else          -> FontWeight.Light
-            },
-            color = if (isActive) MaterialTheme.colorScheme.onSecondaryContainer
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = if (isActive) Int.MAX_VALUE else 2,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-        )
+        val romanizedText = remember(line.text, romanize) {
+            if (romanize) RomanizationUtil.romanize(line.text) else null
+        }
+
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = line.text,
+                style = when {
+                    isActive      -> MaterialTheme.typography.headlineSmall
+                    distance == 1 -> MaterialTheme.typography.titleLarge
+                    distance == 2 -> MaterialTheme.typography.titleMedium
+                    else          -> MaterialTheme.typography.bodyLarge
+                },
+                fontWeight = when {
+                    isActive      -> FontWeight.ExtraBold
+                    distance == 1 -> FontWeight.SemiBold
+                    distance == 2 -> FontWeight.Normal
+                    else          -> FontWeight.Light
+                },
+                color = if (isActive) MaterialTheme.colorScheme.onSecondaryContainer
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = if (isActive) Int.MAX_VALUE else 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+            )
+            if (romanizedText != null) {
+                Text(
+                    text = romanizedText,
+                    style = when {
+                        isActive      -> MaterialTheme.typography.titleSmall
+                        distance == 1 -> MaterialTheme.typography.labelLarge
+                        distance == 2 -> MaterialTheme.typography.labelMedium
+                        else          -> MaterialTheme.typography.labelSmall
+                    },
+                    fontWeight = FontWeight.Normal,
+                    color = if (isActive) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                    maxLines = if (isActive) Int.MAX_VALUE else 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
     }
 }

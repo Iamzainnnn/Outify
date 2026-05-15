@@ -24,6 +24,9 @@ class PlaybackSettingViewModel @Inject constructor(
     val settings: Flow<PlaybackSettings> =
         settingsRepository.playbackSettings
 
+    val romanizeLyrics: Flow<Boolean> =
+        settingsRepository.romanizeLyrics
+
     fun setGaplessPlayback(enabled: Boolean) {
         viewModelScope.launch {
             _needsRestart.value = true
@@ -55,6 +58,12 @@ class PlaybackSettingViewModel @Inject constructor(
     fun setAutoTransfer(transfer: Boolean) {
         viewModelScope.launch {
             settingsRepository.setAutoTransfer(transfer)
+        }
+    }
+
+    fun setRomanizeLyrics(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.setRomanizeLyrics(enabled)
         }
     }
 

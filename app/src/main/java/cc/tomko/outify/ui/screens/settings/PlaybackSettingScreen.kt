@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Badge
 import androidx.compose.material3.CardDefaults
@@ -69,6 +70,7 @@ fun PlaybackSettingScreen(
 ) {
     val settings by viewModel.settings.collectAsState(initial = PlaybackSettings.Default)
     val restartNeeded by viewModel.needsRestart.collectAsState()
+    val romanizeLyrics by viewModel.romanizeLyrics.collectAsState(initial = false)
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -154,6 +156,23 @@ fun PlaybackSettingScreen(
                             onValueChange = { viewModel.setBitrate(it) }
                         )
                     }
+                }
+            }
+
+            item {
+                PreferenceHeader("Lyrics")
+
+                ElevatedCard(
+                    modifier = modifier
+                        .fillMaxWidth()
+                ) {
+                    SwitchPreferenceEntry(
+                        title = { Text("Romanize lyrics") },
+                        description = "Show romanized text beneath original lyrics",
+                        icon = { Icon(Icons.Default.Translate, contentDescription = null) },
+                        onCheckedChange = { viewModel.setRomanizeLyrics(it) },
+                        isChecked = romanizeLyrics
+                    )
                 }
             }
 

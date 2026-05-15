@@ -60,6 +60,7 @@ class SettingsRepository @Inject constructor(
              * When false, show on manual trigger
              */
             val SHOW_LYRICS_ALWAYS = booleanPreferencesKey("always_show_lyrics")
+            val ROMANIZE_LYRICS = booleanPreferencesKey("romanize_lyrics")
         }
 
         object Interface {
@@ -235,6 +236,10 @@ class SettingsRepository @Inject constructor(
         it[Keys.Lyrics.SHOW_LYRICS_ALWAYS] ?: true
     }
 
+    val romanizeLyrics: Flow<Boolean> = dataStore.data.map {
+        it[Keys.Lyrics.ROMANIZE_LYRICS] ?: false
+    }
+
     val lastTrackUri = dataStore.data.map { it[Keys.Playback.LAST_TRACK_URI] }
     val lastContextUri = dataStore.data.map { it[Keys.Playback.LAST_CONTEXT_URI] }
     val lastPositionMs = dataStore.data.map { it[Keys.Playback.LAST_POSITION_MS]?.toLongOrNull() }
@@ -344,6 +349,10 @@ class SettingsRepository @Inject constructor(
 
     suspend fun setExperimentalFloatingNav(enabled: Boolean) {
         dataStore.edit { it[Keys.Interface.EXPERIMENTAL_FLOATING_NAV] = enabled }
+    }
+
+    suspend fun setRomanizeLyrics(enabled: Boolean) {
+        dataStore.edit { it[Keys.Lyrics.ROMANIZE_LYRICS] = enabled }
     }
 
     suspend fun removeUserProfile() {

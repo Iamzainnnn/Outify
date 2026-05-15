@@ -60,6 +60,9 @@ class PlayerViewModel @Inject constructor(
     val isShuffling = settingsRepository.shuffleEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
+    val romanizeLyrics: StateFlow<Boolean> = settingsRepository.romanizeLyrics
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
     val isRepeating = settingsRepository.repeatEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
