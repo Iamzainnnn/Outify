@@ -42,6 +42,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -82,6 +83,7 @@ fun SharedTransitionScope.HomeScreen(
     val isPlaybackLoggedIn by viewModel.isPlaybackLoggedIn.collectAsState(initial = false)
     val currentTrack by viewModel.currentTrack.collectAsState(initial = null)
     val isPlaybackPlaying by viewModel.isPlaying.collectAsState(initial = false)
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     var durationExpanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -99,12 +101,17 @@ fun SharedTransitionScope.HomeScreen(
                 modifier = Modifier.padding(top = innerPaddings.calculateTopPadding()),
             )
         } else {
-            LazyColumn(
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.refresh() },
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = innerPaddings.calculateTopPadding()),
-                contentPadding = PaddingValues(bottom = 24.dp)
             ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
                 item {
                     HeaderSection(
                         username = username,
@@ -218,6 +225,7 @@ fun SharedTransitionScope.HomeScreen(
             }
         }
     }
+}
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)

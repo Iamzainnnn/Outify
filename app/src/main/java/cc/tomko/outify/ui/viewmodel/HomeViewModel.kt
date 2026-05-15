@@ -90,6 +90,8 @@ class HomeViewModel @Inject constructor(
     val username: Flow<String?> = settingsRepository.username
     val userImageUrl: Flow<String?> = settingsRepository.userImageUrl
 
+    val isRefreshing = MutableStateFlow(false)
+
     private val _isPlaybackLoggedIn = MutableStateFlow(false)
     val isPlaybackLoggedIn: StateFlow<Boolean> = _isPlaybackLoggedIn.asStateFlow()
 
@@ -130,10 +132,20 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun refresh() {
+        viewModelScope.launch {
+            isRefreshing.value = true
+            loadData()
+            isRefreshing.value = false
+        }
+    }
+
     fun retry() {
         viewModelScope.launch {
+            isRefreshing.value = true
             spirc.restart()
             loadData()
+            isRefreshing.value = false
         }
     }
 
