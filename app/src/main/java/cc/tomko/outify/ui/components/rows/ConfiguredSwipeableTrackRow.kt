@@ -4,7 +4,15 @@ package cc.tomko.outify.ui.components.rows
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Icon
@@ -12,7 +20,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import cc.tomko.outify.ALBUM_COVER_URL
 import cc.tomko.outify.core.model.Artist
 import cc.tomko.outify.core.model.CoverSize
@@ -23,11 +33,12 @@ import cc.tomko.outify.data.setting.LocalSwipeActionHandler
 import cc.tomko.outify.data.setting.LocalSwipeGestureSettings
 import cc.tomko.outify.data.setting.buildLongPressAction
 import cc.tomko.outify.data.setting.buildSwipeGesturesForTrack
+import cc.tomko.outify.ui.components.SkeletonBox
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun SharedTransitionScope.SwipeableTrackRowConfigured(
-    track: Track,
+    track: Track?,
     modifier: Modifier = Modifier,
     currentTrack: Track? = null,
 
@@ -49,6 +60,38 @@ fun SharedTransitionScope.SwipeableTrackRowConfigured(
 
     trailingContent: @Composable (() -> Unit)? = null,
 ) {
+    if (track == null) {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            SkeletonBox(
+                modifier = Modifier.size(48.dp),
+                shape = RoundedCornerShape(6.dp)
+            )
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                SkeletonBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(16.dp),
+                    shape = RoundedCornerShape(4.dp)
+                )
+                SkeletonBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .height(12.dp),
+                )
+            }
+        }
+        return
+    }
+
     val artworkUrl = remember(track.uri) {
         val albumUrl = track.album?.getCover(CoverSize.SMALL)?.uri ?: ""
         if(albumUrl.startsWith("https://")) {

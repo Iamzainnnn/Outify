@@ -32,7 +32,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Shuffle
 import cc.tomko.outify.ui.components.PlaylistDetailSkeleton
-import cc.tomko.outify.ui.components.SkeletonTrackRow
+
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledIconButton
@@ -218,22 +218,21 @@ fun SharedTransitionScope.PlaylistScreen(
                             if (track == null) viewModel.getOrLoadTrack(row.trackUri)
                         }
 
-                        if (track != null) {
-                            SwipeableTrackRowConfigured(
-                                track = track!!,
+                        SwipeableTrackRowConfigured(
+                                track = track,
                                 currentTrack = currentTrack,
                                 isPlaybackPlaying = isPlaybackPlaying,
-                                isLiked = track!!.id in likedIds,
-                                onRowClick = remember(track!!.uri) {
-                                    {
-                                        spirc.load(playlistUri, track!!.toSpotifyUri())
-                                        // Optimistic UI
-                                        viewModel.setTrack(track!!)
+                                isLiked = track?.id in likedIds,
+                                onRowClick = track?.let { t ->
+                                    remember(t.uri) {
+                                        {
+                                            spirc.load(playlistUri, t.toSpotifyUri())
+                                            // Optimistic UI
+                                            viewModel.setTrack(t)
+                                        }
                                     }
                                 },
-                                onArtworkClick = {
-                                    onArtworkClick(track!!)
-                                },
+                                onArtworkClick = track?.let { { onArtworkClick(it) } },
                                 onArtistClick = onArtistClick,
                                 trailingContent = {
                                     val author = authorMap[row.addedBy]
@@ -249,9 +248,6 @@ fun SharedTransitionScope.PlaylistScreen(
                                     }
                                 }
                             )
-                        } else {
-                            SkeletonTrackRow(showSubtitle = false)
-                        }
                     }
                 }
 

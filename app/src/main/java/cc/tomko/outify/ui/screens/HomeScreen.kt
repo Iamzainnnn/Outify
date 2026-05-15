@@ -60,7 +60,6 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.ui.components.ErrorScreen
-import cc.tomko.outify.ui.components.SkeletonTrackRow
 import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.components.SmartImage
 import cc.tomko.outify.ui.components.rows.SwipeableTrackRowConfigured
@@ -147,7 +146,7 @@ fun SharedTransitionScope.HomeScreen(
                                 modifier = Modifier.padding(horizontal = 24.dp)
                             )
                         }
-                        items(10) { SkeletonTrackRow() }
+                        items(10) { SwipeableTrackRowConfigured(track = null) }
                     }
 
                     is HomeUiState.NotAuthenticated -> {
