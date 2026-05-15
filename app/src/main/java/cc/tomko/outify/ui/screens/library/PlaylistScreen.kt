@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Shuffle
@@ -323,6 +324,19 @@ fun SharedTransitionScope.PlaylistScreen(
                                 Icon(
                                     imageVector = if (isSaved) Icons.Rounded.Favorite else Icons.Filled.FavoriteBorder,
                                     contentDescription = if (isSaved) "Unfavorite" else "Favorite"
+                                )
+                            }
+                            FilledIconButton(onClick = {
+                                GlobalPopupController.show(
+                                    PopupSpec.PlaylistInfo(
+                                        playlist,
+                                        artworkUrl = artworkUrl
+                                    )
+                                )
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "More information"
                                 )
                             }
                         }
