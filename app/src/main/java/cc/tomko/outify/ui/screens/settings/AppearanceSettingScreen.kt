@@ -29,21 +29,16 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import cc.tomko.outify.ui.components.PreferenceSectionHeader
-import cc.tomko.outify.ui.components.PreferenceEntry
-import cc.tomko.outify.ui.components.SwitchPreferenceEntry
 import cc.tomko.outify.data.repository.InterfaceSettings
 import cc.tomko.outify.ui.components.ColorPreferenceEntry
+import cc.tomko.outify.ui.components.PreferenceEntry
+import cc.tomko.outify.ui.components.PreferenceSectionHeader
+import cc.tomko.outify.ui.components.SwitchPreferenceEntry
 import cc.tomko.outify.ui.viewmodel.settings.AppearanceViewModel
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

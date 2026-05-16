@@ -1,7 +1,6 @@
 package cc.tomko.outify.core.model
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import kotlinx.serialization.Serializable
 
 @Serializable

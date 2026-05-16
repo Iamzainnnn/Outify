@@ -1,7 +1,6 @@
 package cc.tomko.outify.ui.components.bottomsheet
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,12 +38,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import cc.tomko.outify.data.setting.DisplayIcon
 import cc.tomko.outify.data.setting.GestureAction
 import cc.tomko.outify.data.setting.GestureSetting
 import cc.tomko.outify.data.setting.GestureTrigger
 import cc.tomko.outify.data.setting.Side
 import cc.tomko.outify.data.setting.getDisplayName
-import cc.tomko.outify.data.setting.DisplayIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

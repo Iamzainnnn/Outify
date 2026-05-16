@@ -1,5 +1,4 @@
 package cc.tomko.outify.data.dao
-import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy

@@ -12,7 +12,6 @@ import cc.tomko.outify.data.dao.LikedItemsDao
 import cc.tomko.outify.data.database.LikedItemsEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton

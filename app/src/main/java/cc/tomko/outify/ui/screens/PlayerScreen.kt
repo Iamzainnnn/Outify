@@ -71,7 +71,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.coerceIn
 import androidx.compose.ui.unit.dp
 import cc.tomko.outify.ALBUM_COVER_URL
 import cc.tomko.outify.core.model.Artist
@@ -79,10 +78,10 @@ import cc.tomko.outify.core.model.SyncedLyric
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.data.setting.LocalUiSettings
 import cc.tomko.outify.ui.components.SmartImage
-import cc.tomko.outify.utils.RomanizationUtil
 import cc.tomko.outify.ui.components.WavyMusicSlider
 import cc.tomko.outify.ui.model.player.PlayerAction
 import cc.tomko.outify.ui.viewmodel.player.PlayerViewModel
+import cc.tomko.outify.utils.RomanizationUtil
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 

@@ -6,22 +6,22 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import cc.tomko.outify.data.database.album.AlbumArtistEntity
-import cc.tomko.outify.data.database.album.AlbumTrackCrossRef
 import cc.tomko.outify.data.dao.AlbumArtistDao
 import cc.tomko.outify.data.dao.AlbumDao
 import cc.tomko.outify.data.dao.AlbumTrackDao
 import cc.tomko.outify.data.dao.ArtistDao
 import cc.tomko.outify.data.dao.LikedDao
+import cc.tomko.outify.data.dao.LikedItemsDao
 import cc.tomko.outify.data.dao.PlaylistDao
 import cc.tomko.outify.data.dao.TrackArtistDao
 import cc.tomko.outify.data.dao.TrackDao
 import cc.tomko.outify.data.dao.TrackFileDao
-import cc.tomko.outify.data.database.track.LikedTrackEntity
-import cc.tomko.outify.data.database.track.PlaylistTrackEntity
+import cc.tomko.outify.data.database.album.AlbumArtistEntity
+import cc.tomko.outify.data.database.album.AlbumTrackCrossRef
 import cc.tomko.outify.data.database.playlist.PlaylistDiffEntity
 import cc.tomko.outify.data.database.playlist.PlaylistItemEntity
-import cc.tomko.outify.data.dao.LikedItemsDao
+import cc.tomko.outify.data.database.track.LikedTrackEntity
+import cc.tomko.outify.data.database.track.PlaylistTrackEntity
 
 @Database(
     entities = [

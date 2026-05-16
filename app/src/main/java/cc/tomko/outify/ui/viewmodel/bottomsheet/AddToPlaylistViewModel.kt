@@ -7,7 +7,6 @@ import cc.tomko.outify.core.model.CoverSize
 import cc.tomko.outify.core.model.Playlist
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.core.model.getCover
-import cc.tomko.outify.core.model.toOutifyUri
 import cc.tomko.outify.data.dao.PlaylistDao
 import cc.tomko.outify.data.database.playlist.PlaylistItemEntity
 import cc.tomko.outify.data.database.playlist.canModify

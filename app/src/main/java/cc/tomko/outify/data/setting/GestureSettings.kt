@@ -1,27 +1,21 @@
 package cc.tomko.outify.data.setting
 
-import android.R
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoveUp
 import androidx.compose.material.icons.filled.Queue
 import androidx.compose.material.icons.filled.Radio
-import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import cc.tomko.outify.MyIcons
-import cc.tomko.outify.core.model.Playlist
-import cc.tomko.outify.core.model.SpotifyUri
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.ui.components.rows.SwipeGesture
 import kotlinx.serialization.Serializable

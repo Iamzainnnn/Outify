@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Gesture
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.ElevatedCard
@@ -37,12 +36,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cc.tomko.outify.core.model.Track
-import cc.tomko.outify.data.setting.GestureAction
-import cc.tomko.outify.data.setting.GestureSetting
-import cc.tomko.outify.data.setting.GestureTrigger
-import cc.tomko.outify.data.setting.Side
-import cc.tomko.outify.data.setting.getDisplayName
 import cc.tomko.outify.data.setting.DisplayIcon
+import cc.tomko.outify.data.setting.GestureSetting
+import cc.tomko.outify.data.setting.getDisplayName
 import cc.tomko.outify.ui.components.PreferenceEntry
 import cc.tomko.outify.ui.components.SwitchPreferenceEntry
 import cc.tomko.outify.ui.components.bottomsheet.GestureCustomizeBottomSheet

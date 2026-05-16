@@ -4,7 +4,6 @@ import android.app.NotificationChannel
 import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Intent
-import android.media.AudioAttributes.USAGE_MEDIA
 import android.media.AudioManager
 import android.os.Binder
 import android.util.Log
@@ -18,7 +17,6 @@ import androidx.media3.common.Player.REPEAT_MODE_ALL
 import androidx.media3.common.Player.REPEAT_MODE_OFF
 import androidx.media3.common.Player.REPEAT_MODE_ONE
 import androidx.media3.common.Player.STATE_IDLE
-import androidx.media3.common.audio.AudioFocusManager
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
@@ -31,13 +29,12 @@ import cc.tomko.outify.MediaSessionConstants
 import cc.tomko.outify.R
 import cc.tomko.outify.core.SpClient
 import cc.tomko.outify.core.Spirc.SpircWrapper
-import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.core.model.SpotifyUri
 import cc.tomko.outify.data.dao.LikedDao
 import cc.tomko.outify.data.metadata.TrackMetadataHelper
+import cc.tomko.outify.data.repository.SettingsRepository
 import cc.tomko.outify.playback.PlaybackStateHolder
 import cc.tomko.outify.playback.Player
-import cc.tomko.outify.data.repository.SettingsRepository
 import cc.tomko.outify.utils.CoilBitmapLoader
 import com.google.common.util.concurrent.MoreExecutors
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,7 +42,6 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Singleton

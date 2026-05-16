@@ -11,11 +11,11 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import cc.tomko.outify.core.model.PlaylistFolder
 import cc.tomko.outify.data.setting.GestureAction
-import cc.tomko.outify.ui.model.search.SearchHistoryItem
 import cc.tomko.outify.data.setting.GestureSetting
 import cc.tomko.outify.data.setting.GestureTrigger
 import cc.tomko.outify.data.setting.Side
 import cc.tomko.outify.playback.model.Bitrate
+import cc.tomko.outify.ui.model.search.SearchHistoryItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

@@ -2,7 +2,6 @@ package cc.tomko.outify.ui.viewmodel.settings
 
 import android.content.Context
 import android.content.Intent
-import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,11 +11,9 @@ import cc.tomko.outify.core.AuthStateEventBus
 import cc.tomko.outify.core.SpClient
 import cc.tomko.outify.core.UserProfile
 import cc.tomko.outify.core.model.CurrentUserProfile
-import cc.tomko.outify.core.model.Profile
 import cc.tomko.outify.data.metadata.NativeErrorHandler
 import cc.tomko.outify.data.repository.SettingsRepository
 import cc.tomko.outify.services.OAuthService
-import cc.tomko.outify.services.PendingAuthHelper
 import cc.tomko.outify.ui.GlobalPopupController
 import cc.tomko.outify.ui.PopupSpec
 import dagger.hilt.android.lifecycle.HiltViewModel

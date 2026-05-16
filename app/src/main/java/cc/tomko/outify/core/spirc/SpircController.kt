@@ -5,11 +5,10 @@ import cc.tomko.outify.core.Session
 import cc.tomko.outify.core.SessionCallback
 import cc.tomko.outify.core.Spirc.SpircWrapper
 import cc.tomko.outify.core.model.OutifyUri
-import cc.tomko.outify.playback.PlaybackStateHolder
 import cc.tomko.outify.data.repository.SettingsRepository
+import cc.tomko.outify.playback.PlaybackStateHolder
 import cc.tomko.outify.playback.model.getSpeed
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
