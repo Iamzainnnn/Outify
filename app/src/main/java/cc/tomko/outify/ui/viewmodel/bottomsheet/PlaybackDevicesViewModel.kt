@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cc.tomko.outify.core.SpClient
+import cc.tomko.outify.core.Spirc.SpircWrapper
 import cc.tomko.outify.core.model.Device
 import cc.tomko.outify.core.model.DevicesResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +20,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PlaybackDevicesViewModel @Inject constructor(
     private val spClient: SpClient,
+    private val spircWrapper: SpircWrapper,
     private val json: Json,
 ) : ViewModel() {
     private val _devices = MutableStateFlow<List<Device>>(emptyList())
@@ -43,6 +45,11 @@ class PlaybackDevicesViewModel @Inject constructor(
                 _devices.value = previousState
             }
         }
+    }
+
+    suspend fun makeActive() {
+        spircWrapper.activate()
+        spircWrapper.transfer()
     }
 
     suspend fun loadDevices() = withContext(Dispatchers.IO){

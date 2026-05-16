@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.Speaker
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -117,6 +118,16 @@ fun PlaybackDevicesBottomSheet(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                }
+
+                IconButton(
+                    onClick = {
+                        scope.launch {
+                            viewModel.makeActive()
+                        }
+                    }
+                ) {
+                    Icon(Icons.Default.SwapHoriz, contentDescription = "Transfer playback")
                 }
 
                 IconButton(
