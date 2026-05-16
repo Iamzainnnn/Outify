@@ -56,6 +56,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -119,6 +120,13 @@ fun SharedTransitionScope.LibraryScreen(
 
     val lazyListState = rememberLazyListState()
     val collapsingState = rememberCollapsingHeaderState()
+    val atTop by remember {
+        derivedStateOf {
+            lazyListState.firstVisibleItemIndex == 0 &&
+            lazyListState.firstVisibleItemScrollOffset == 0
+        }
+    }
+    SideEffect { collapsingState.canExpand = atTop }
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val scope = rememberCoroutineScope()
 

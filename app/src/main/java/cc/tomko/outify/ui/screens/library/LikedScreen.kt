@@ -47,6 +47,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -136,6 +137,13 @@ fun SharedTransitionScope.LikedScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     val collapsingState = rememberCollapsingHeaderState()
+    val atTop by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex == 0 &&
+            listState.firstVisibleItemScrollOffset == 0
+        }
+    }
+    SideEffect { collapsingState.canExpand = atTop }
     val scope = rememberCoroutineScope()
 
     val isScrolled by remember {

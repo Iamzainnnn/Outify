@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -101,6 +102,13 @@ fun SharedTransitionScope.AlbumDetailScreen(
             val lazyList = rememberLazyListState()
 
             val collapsingState = rememberCollapsingHeaderState()
+            val atTop by remember {
+                derivedStateOf {
+                    lazyList.firstVisibleItemIndex == 0 &&
+                    lazyList.firstVisibleItemScrollOffset == 0
+                }
+            }
+            SideEffect { collapsingState.canExpand = atTop }
             val scope = rememberCoroutineScope()
 
             var highlightedUri by remember { mutableStateOf(highlightTrackUri) }

@@ -161,6 +161,8 @@ class CollapsingHeaderState(
                         (maxHeightPx - minHeightPx)
                 ).coerceIn(0f, 1f)
 
+    var canExpand: Boolean = false
+
     val nestedScrollConnection = object : NestedScrollConnection {
 
         override fun onPreScroll(
@@ -168,6 +170,10 @@ class CollapsingHeaderState(
             source: NestedScrollSource
         ): Offset {
             val delta = available.y
+
+            // Only expand when the list is scrolled all the way to the top
+            if (delta > 0 && !canExpand) return Offset.Zero
+
             val previous = height.value
 
             val newHeight = (previous + delta)
