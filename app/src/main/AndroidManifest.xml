@@ -44,6 +44,17 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name=".services.LikedTileService"
+            android:exported="true"
+            android:label="Play liked tracks"
+            android:icon="@drawable/media3_icon_heart_filled"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name="androidx.media.session.MediaButtonReceiver"
             android:exported="true">

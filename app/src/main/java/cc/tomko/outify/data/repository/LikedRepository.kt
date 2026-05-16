@@ -10,9 +10,12 @@ import cc.tomko.outify.data.database.album.AlbumWithArtists
 import cc.tomko.outify.data.database.track.LikedTrackEntity
 import cc.tomko.outify.data.metadata.Metadata
 import cc.tomko.outify.data.metadata.TrackMetadataHelper
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import javax.inject.Inject
@@ -27,6 +30,8 @@ class LikedRepository @Inject constructor(
     private val trackMetadataHelper: TrackMetadataHelper,
     private val metadata: Metadata,
 ) {
+    private val scope = CoroutineScope(Dispatchers.IO)
+
     companion object {
         private const val TAG = "LikedRepository"
         private const val SUBSTRING_OFFSET = "spotify:track:".length
@@ -152,6 +157,9 @@ class LikedRepository @Inject constructor(
         likedDao.observeSearchLikedTracks(query)
 
     fun observeCount(): Flow<Int> = likedDao.observeCount()
+
+    val likedCountState = likedDao.observeCount()
+        .stateIn(scope, SharingStarted.Eagerly, 0)
 
     suspend fun isLiked(trackId: String): Boolean = likedDao.containsTrack(trackId)
 
