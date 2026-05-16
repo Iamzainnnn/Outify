@@ -567,7 +567,10 @@ private fun LyricLine(
         contentAlignment = Alignment.Center
     ) {
         val romanizedText = remember(line.text, romanize) {
-            if (romanize) RomanizationUtil.romanize(line.text) else null
+            if (romanize) {
+                val result = RomanizationUtil.romanize(line.text)
+                if (result != line.text) result else null
+            } else null
         }
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

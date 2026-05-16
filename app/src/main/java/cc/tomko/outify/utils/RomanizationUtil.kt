@@ -8,6 +8,10 @@ object RomanizationUtil {
     }
 
     fun romanize(text: String): String {
+        val hasNonLatin = text.any { c ->
+            c.isLetter() && Character.UnicodeScript.of(c.code) != Character.UnicodeScript.LATIN
+        }
+        if (!hasNonLatin) return text
         return transliterator.transliterate(text)
     }
 }
