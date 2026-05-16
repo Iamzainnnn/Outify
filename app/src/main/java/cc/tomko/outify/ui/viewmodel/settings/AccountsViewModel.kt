@@ -9,6 +9,7 @@ import cc.tomko.outify.core.AuthCallbackServer
 import cc.tomko.outify.core.AuthManager
 import cc.tomko.outify.core.AuthStateEventBus
 import cc.tomko.outify.core.SpClient
+import cc.tomko.outify.core.spirc.SpircController
 import cc.tomko.outify.core.UserProfile
 import cc.tomko.outify.core.model.CurrentUserProfile
 import cc.tomko.outify.data.metadata.NativeErrorHandler
@@ -31,6 +32,7 @@ class AccountsViewModel @Inject constructor(
     val spClient: SpClient,
     val userProfile: UserProfile,
     val authManager: AuthManager,
+    private val spircController: SpircController,
     private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
     private var server: AuthCallbackServer? = null
@@ -85,6 +87,7 @@ class AccountsViewModel @Inject constructor(
             if (isSuccess) {
                 _isPlaybackLoggedIn.value = authManager.hasCachedCredentials()
                 AuthStateEventBus.tryEmitPlaybackLoggedIn()
+                spircController.restart()
             }
         })
         server?.start()
