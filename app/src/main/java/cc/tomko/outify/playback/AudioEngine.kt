@@ -44,165 +44,170 @@ class AudioEngine(
         registerPlayerEventListener(eventCallback)
     }
 
-    @Synchronized
     private fun ensureAudioTrack(sampleRate: Int, channels: Int, format: PcmFormat): Boolean {
-        val existing = audioTrack
-        if (existing != null
-            && sampleRate == currentSampleRate
-            && channels == currentChannels
-            && format == currentFormat
-            && existing.state == AudioTrack.STATE_INITIALIZED
-        ) {
-            return true
-        }
-
-        // Otherwise recreate
-        releaseAudioTrack()
-
-        val channelMask = when (channels) {
-            1 -> AudioFormat.CHANNEL_OUT_MONO
-            2 -> AudioFormat.CHANNEL_OUT_STEREO
-            else -> {
-                // fallback to stereo for unknown channel counts
-                Log.w(TAG, "Unsupported channel count $channels, falling back to stereo")
-                AudioFormat.CHANNEL_OUT_STEREO
+        writeLock.withLock {
+            val existing = audioTrack
+            if (existing != null
+                && sampleRate == currentSampleRate
+                && channels == currentChannels
+                && format == currentFormat
+                && existing.state == AudioTrack.STATE_INITIALIZED
+            ) {
+                return true
             }
-        }
 
-        val encoding = when (format) {
-            PcmFormat.S16 -> AudioFormat.ENCODING_PCM_16BIT
-        }
+            // Otherwise recreate
+            releaseAudioTrack()
 
-        val minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelMask, encoding)
-        if (minBufferSize <= 0) {
-            Log.e(TAG, "Invalid min buffer size: $minBufferSize")
-            return false
-        }
+            val channelMask = when (channels) {
+                1 -> AudioFormat.CHANNEL_OUT_MONO
+                2 -> AudioFormat.CHANNEL_OUT_STEREO
+                else -> {
+                    // fallback to stereo for unknown channel counts
+                    Log.w(TAG, "Unsupported channel count $channels, falling back to stereo")
+                    AudioFormat.CHANNEL_OUT_STEREO
+                }
+            }
 
-        val bytesPerSample = when (encoding) {
-            AudioFormat.ENCODING_PCM_16BIT -> 2
-            AudioFormat.ENCODING_PCM_8BIT -> 1
-            AudioFormat.ENCODING_PCM_FLOAT -> 4
-            else -> 2
-        }
-        val frameSize = bytesPerSample * max(1, channels)
-        val bufferSize = max(minBufferSize, frameSize * 1024)
+            val encoding = when (format) {
+                PcmFormat.S16 -> AudioFormat.ENCODING_PCM_16BIT
+            }
 
-        try {
-            val attrs = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build()
-
-            val formatBuilder = AudioFormat.Builder()
-                .setSampleRate(sampleRate)
-                .setEncoding(encoding)
-                .setChannelMask(channelMask)
-                .build()
-
-            val newTrack = AudioTrack.Builder()
-                .setAudioAttributes(attrs)
-                .setAudioFormat(formatBuilder)
-                .setBufferSizeInBytes(bufferSize)
-                .setTransferMode(AudioTrack.MODE_STREAM)
-                .build()
-
-            if (newTrack.state != AudioTrack.STATE_INITIALIZED) {
-                Log.e(TAG, "Failed to initialize AudioTrack: state=${newTrack.state}")
-                newTrack.release()
+            val minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelMask, encoding)
+            if (minBufferSize <= 0) {
+                Log.e(TAG, "Invalid min buffer size: $minBufferSize")
                 return false
             }
 
-            newTrack.play()
+            val bytesPerSample = when (encoding) {
+                AudioFormat.ENCODING_PCM_16BIT -> 2
+                AudioFormat.ENCODING_PCM_8BIT -> 1
+                AudioFormat.ENCODING_PCM_FLOAT -> 4
+                else -> 2
+            }
+            val frameSize = bytesPerSample * max(1, channels)
+            val bufferSize = max(minBufferSize, frameSize * 1024)
 
-            audioTrack = newTrack
-            currentSampleRate = sampleRate
-            currentChannels = channels
-            currentFormat = format
+            try {
+                val attrs = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
 
-            Log.d(TAG, "AudioTrack created: sampleRate=$sampleRate, channels=$channels, encoding=$encoding, buffer=$bufferSize")
-            return true
-        } catch (t: Throwable) {
-            Log.e(TAG, "Exception while creating AudioTrack", t)
-            return false
+                val formatBuilder = AudioFormat.Builder()
+                    .setSampleRate(sampleRate)
+                    .setEncoding(encoding)
+                    .setChannelMask(channelMask)
+                    .build()
+
+                val newTrack = AudioTrack.Builder()
+                    .setAudioAttributes(attrs)
+                    .setAudioFormat(formatBuilder)
+                    .setBufferSizeInBytes(bufferSize)
+                    .setTransferMode(AudioTrack.MODE_STREAM)
+                    .build()
+
+                if (newTrack.state != AudioTrack.STATE_INITIALIZED) {
+                    Log.e(TAG, "Failed to initialize AudioTrack: state=${newTrack.state}")
+                    newTrack.release()
+                    return false
+                }
+
+                newTrack.play()
+
+                audioTrack = newTrack
+                currentSampleRate = sampleRate
+                currentChannels = channels
+                currentFormat = format
+
+                Log.d(TAG, "AudioTrack created: sampleRate=$sampleRate, channels=$channels, encoding=$encoding, buffer=$bufferSize")
+                return true
+            } catch (t: Throwable) {
+                Log.e(TAG, "Exception while creating AudioTrack", t)
+                return false
+            }
         }
     }
 
-    @Synchronized
     private fun writePcm(data: ByteArray, format: PcmFormat) {
-        val t = audioTrack ?: run {
-            Log.w(TAG, "writePcm called with no audio track")
-            return
-        }
+        writeLock.withLock {
+            val t = audioTrack ?: run {
+                Log.w(TAG, "writePcm called with no audio track")
+                return
+            }
 
-        when (format) {
-            PcmFormat.S16 -> {
-                try {
-                    var offset = 0
-                    var remaining = data.size
-                    while (remaining > 0) {
-                        val written = t.write(data, offset, remaining)
-                        if (written < 0) {
-                            Log.e(TAG, "AudioTrack.write returned error: $written")
-                            break
+            when (format) {
+                PcmFormat.S16 -> {
+                    try {
+                        var offset = 0
+                        var remaining = data.size
+                        while (remaining > 0) {
+                            val written = t.write(data, offset, remaining)
+                            if (written < 0) {
+                                Log.e(TAG, "AudioTrack.write returned error: $written")
+                                break
+                            }
+                            offset += written
+                            remaining -= written
                         }
-                        offset += written
-                        remaining -= written
+                    } catch (e: IllegalStateException) {
+                        Log.e(TAG, "AudioTrack write failed", e)
                     }
-                } catch (e: IllegalStateException) {
-                    Log.e(TAG, "AudioTrack write failed", e)
                 }
             }
         }
     }
 
-    @Synchronized
     fun releaseAudioTrack() {
-        val t = audioTrack ?: return
-        try {
-            if (t.playState == AudioTrack.PLAYSTATE_PLAYING) {
-                try {
-                    t.stop()
-                } catch (ignored: IllegalStateException) {
-                    // ignore - may happen if already stopped
-                }
-            } else if (t.playState == AudioTrack.PLAYSTATE_PAUSED) {
-                try {
-                    t.stop()
-                } catch (ignored: IllegalStateException) {
-                }
-            }
-        } catch (ignored: Exception) {
-        } finally {
+        writeLock.withLock {
+            val t = audioTrack ?: return
             try {
-                t.release()
+                if (t.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                    try {
+                        t.stop()
+                    } catch (ignored: IllegalStateException) {
+                        // ignore - may happen if already stopped
+                    }
+                } else if (t.playState == AudioTrack.PLAYSTATE_PAUSED) {
+                    try {
+                        t.stop()
+                    } catch (ignored: IllegalStateException) {
+                    }
+                }
             } catch (ignored: Exception) {
+            } finally {
+                try {
+                    t.release()
+                } catch (ignored: Exception) {
+                }
+                audioTrack = null
+                currentSampleRate = -1
+                currentChannels = -1
+                currentFormat = null
             }
-            audioTrack = null
-            currentSampleRate = -1
-            currentChannels = -1
-            currentFormat = null
         }
     }
 
-    @Synchronized
     fun pause() {
-        audioTrack?.let {
-            try {
-                it.pause()
-            } catch (e: IllegalStateException) {
-                Log.w(TAG, "pause() failed", e)
+        writeLock.withLock {
+            audioTrack?.let {
+                try {
+                    it.pause()
+                } catch (e: IllegalStateException) {
+                    Log.w(TAG, "pause() failed", e)
+                }
             }
         }
     }
 
-    @Synchronized
     fun flush() {
-        audioTrack?.let {
-            try {
-                it.flush()
-            } catch (e: IllegalStateException) {
-                Log.w(TAG, "flush() failed", e)
+        writeLock.withLock {
+            audioTrack?.let {
+                try {
+                    it.flush()
+                } catch (e: IllegalStateException) {
+                    Log.w(TAG, "flush() failed", e)
+                }
             }
         }
     }
@@ -216,20 +221,20 @@ class AudioEngine(
      * Called from rust trampoline when the PCMBuffer is filled with PCM.
      */
     fun onPcmReady(size: Int, sampleRate: Int, channels: Int) {
-        pcmBuffer.order(ByteOrder.nativeOrder())
-
-        if(!ensureAudioTrack(sampleRate, channels, PcmFormat.S16)) {
-            Log.w(TAG, "ensureAudioTrack failed - dropping frame")
-            return
-        }
-
-        val cap = pcmBuffer.capacity()
-        if(size > cap) {
-            Log.w(TAG, "pcm size $size > buffer capacity $cap; dropping frame")
-            return
-        }
-
         writeLock.withLock {
+            pcmBuffer.order(ByteOrder.nativeOrder())
+
+            if(!ensureAudioTrack(sampleRate, channels, PcmFormat.S16)) {
+                Log.w(TAG, "ensureAudioTrack failed - dropping frame")
+                return
+            }
+
+            val cap = pcmBuffer.capacity()
+            if(size > cap) {
+                Log.w(TAG, "pcm size $size > buffer capacity $cap; dropping frame")
+                return
+            }
+
             pcmBuffer.position(0)
             pcmBuffer.limit(size)
 

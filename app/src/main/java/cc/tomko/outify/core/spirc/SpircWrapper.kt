@@ -18,6 +18,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.concurrent.Volatile
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -51,17 +52,23 @@ class SpircWrapper @Inject constructor(
         }
     }
 
+    @Volatile
     var isUsable = false
+        private set
+
+    fun setUsable(usable: Boolean) {
+        isUsable = usable
+    }
 
     fun restart() {
-        isUsable = false
+        setUsable(false)
         scope.launch {
             restartCallback?.invoke()
         }
     }
 
     override fun shutdown() {
-        isUsable = false
+        setUsable(false)
         Spirc.shutdown()
     }
 

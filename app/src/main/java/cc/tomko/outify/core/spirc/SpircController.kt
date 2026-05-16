@@ -126,7 +126,7 @@ class SpircController @Inject constructor(
             }
         }
 
-        spirc.isUsable = true
+        spirc.setUsable(true)
 
         spirc.scope.launch {
             val shuffle = settingsRepository.shuffleEnabled.first()
@@ -139,7 +139,7 @@ class SpircController @Inject constructor(
 
     private fun handleSessionShutdown() {
         Log.w("SpircController", "Session has shut down! Restarting..", );
-        spirc.isUsable = false
+        spirc.setUsable(false)
     }
 
     private fun handleSessionAutoRestart(){
@@ -149,6 +149,6 @@ class SpircController @Inject constructor(
     private fun handleSpircFailure() {
         // Retry?
         // Tear down session?
-        spirc.isUsable = false
+        spirc.setUsable(false)
     }
 }

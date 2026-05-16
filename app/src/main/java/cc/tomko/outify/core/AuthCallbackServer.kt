@@ -1,8 +1,12 @@
 package cc.tomko.outify.core
 
 import fi.iki.elonen.NanoHTTPD
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.net.SocketException
-import kotlin.concurrent.thread
 
 class AuthCallbackServer(
     port: Int = 5588,
@@ -10,6 +14,7 @@ class AuthCallbackServer(
     private val onCodeReceived: (code: String, state: String?) -> Unit
 ) : NanoHTTPD(port) {
 
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val stopDelayMs = 350L
 
     override fun serve(session: IHTTPSession): Response {
@@ -48,9 +53,9 @@ class AuthCallbackServer(
             return redirect("intent://$failure#Intent;scheme=outify;package=$packageName;end")
         }
 
-        thread {
+        scope.launch {
+            delay(stopDelayMs)
             try {
-                Thread.sleep(stopDelayMs)
                 onCodeReceived(code, state)
             } finally {
                 try { stop() } catch (_: Throwable) {}

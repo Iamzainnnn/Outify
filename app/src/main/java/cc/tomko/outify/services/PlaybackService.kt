@@ -41,6 +41,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import jakarta.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -253,7 +254,10 @@ class PlaybackService : MediaLibraryService(),
                     REPEAT_MODE_OFF -> CommandButton.ICON_SHUFFLE_OFF
                     REPEAT_MODE_ONE -> CommandButton.ICON_SHUFFLE_ON
                     REPEAT_MODE_ALL -> CommandButton.ICON_SHUFFLE_STAR
-                    else -> throw IllegalStateException()
+                    else -> {
+                        Log.w(TAG, "Unknown repeat mode: ${player.repeatMode}")
+                        CommandButton.ICON_SHUFFLE_OFF
+                    }
                 })
                     .setDisplayName(
                         getString(
@@ -261,7 +265,10 @@ class PlaybackService : MediaLibraryService(),
                                 REPEAT_MODE_OFF -> R.string.repeat_mode_off
                                 REPEAT_MODE_ONE -> R.string.repeat_mode_one
                                 REPEAT_MODE_ALL -> R.string.repeat_mode_all
-                                else -> throw IllegalStateException()
+                                else -> {
+                                    Log.w(TAG, "Unknown repeat mode for display name: ${player.repeatMode}")
+                                    R.string.repeat_mode_off
+                                }
                             }
                         )
                     )
@@ -329,6 +336,8 @@ class PlaybackService : MediaLibraryService(),
             release()
             mediaLibrarySession = null
         }
+        scope.cancel()
+        offloadScope.cancel()
         super.onDestroy()
 
         Log.i(TAG, "Terminated PlaybackService")
