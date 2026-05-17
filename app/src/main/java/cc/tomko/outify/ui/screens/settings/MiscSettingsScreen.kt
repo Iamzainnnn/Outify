@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Restore
@@ -51,6 +52,7 @@ import cc.tomko.outify.ui.viewmodel.settings.SyncStatus
 fun MiscSettingsScreen(
     viewModel: MiscSettingsViewModel,
     onNavigateBack: () -> Unit,
+    openDebugScreen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
@@ -339,6 +341,19 @@ fun MiscSettingsScreen(
                         icon = { Icon(Icons.Default.RestartAlt, contentDescription = null) },
                         onClick = {
                             viewModel.resetPreferences()
+                        }
+                    )
+                }
+            }
+
+            item {
+                ElevatedCard {
+                    PreferenceEntry(
+                        title = { Text("Debug") },
+                        description = "Show debug information",
+                        icon = { Icon(Icons.Default.BugReport, contentDescription = null) },
+                        onClick = {
+                            openDebugScreen()
                         }
                     )
                 }

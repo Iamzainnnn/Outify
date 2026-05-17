@@ -35,6 +35,7 @@ import cc.tomko.outify.ui.screens.library.artist.ArtistDetailScreen
 import cc.tomko.outify.ui.screens.settings.AboutScreen
 import cc.tomko.outify.ui.screens.settings.AccountsScreen
 import cc.tomko.outify.ui.screens.settings.AppearanceSettingScreen
+import cc.tomko.outify.ui.screens.settings.DebugScreen
 import cc.tomko.outify.ui.screens.settings.GestureSettingsScreen
 import cc.tomko.outify.ui.screens.settings.InterfaceSettingScreen
 import cc.tomko.outify.ui.screens.settings.MiscSettingsScreen
@@ -51,6 +52,7 @@ import cc.tomko.outify.ui.viewmodel.library.LikedViewModel
 import cc.tomko.outify.ui.viewmodel.library.ProfileDetailViewModel
 import cc.tomko.outify.ui.viewmodel.settings.AccountsViewModel
 import cc.tomko.outify.ui.viewmodel.settings.AppearanceViewModel
+import cc.tomko.outify.ui.viewmodel.settings.DebugViewModel
 import cc.tomko.outify.ui.viewmodel.settings.GestureSettingViewModel
 import cc.tomko.outify.ui.viewmodel.settings.InterfaceViewModel
 import cc.tomko.outify.ui.viewmodel.settings.MiscSettingsViewModel
@@ -322,7 +324,16 @@ fun SharedTransitionScope.NavigationRoot(
                 val viewModel: MiscSettingsViewModel = hiltViewModel()
                 MiscSettingsScreen(
                     viewModel = viewModel,
-                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) }
+                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
+                    openDebugScreen = { backStack.add(Route.DebugScreen) }
+                )
+            }
+
+            entry<Route.DebugScreen> {
+               val viewModel: DebugViewModel = hiltViewModel()
+                DebugScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = { backStack.removeAt(backStack.lastIndex) },
                 )
             }
         }

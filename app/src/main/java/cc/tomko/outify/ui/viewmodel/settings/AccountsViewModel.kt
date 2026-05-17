@@ -60,7 +60,6 @@ class AccountsViewModel @Inject constructor(
 
     fun checkAuthState() {
         _isAccountLoggedIn.value = spClient.isOAuthAuthenticated()
-        println(_isAccountLoggedIn.value)
         _isPlaybackLoggedIn.value = authManager.hasCachedCredentials()
     }
 
