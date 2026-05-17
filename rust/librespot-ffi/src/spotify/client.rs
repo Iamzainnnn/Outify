@@ -144,9 +144,12 @@ impl SpotifyClient {
             .await?;
 
         if !res.status().is_success() {
+            let status = res.status().as_str().to_string();
+            let body = res.text().await.unwrap_or_default();
             return Err(SpotifyApiError::Generic(format!(
-                "Request failed with status code: {}",
-                res.status().as_str()
+                "Request failed with status code: {}. Body: {}",
+                status,
+                body
             )));
         }
 
