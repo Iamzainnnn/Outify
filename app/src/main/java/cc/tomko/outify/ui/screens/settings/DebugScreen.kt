@@ -58,6 +58,15 @@ fun DebugScreen(
     val username by viewModel.username.collectAsState()
     val isPremium by viewModel.isPremium.collectAsState()
 
+    val isSpircUsable by viewModel.isSpircUsable.collectAsState()
+    val isPlaying by viewModel.isPlaying.collectAsState(initial = false)
+    val isBuffering by viewModel.isBuffering.collectAsState(initial = true)
+    val isActiveDevice by viewModel.isActiveDevice.collectAsState(initial = false)
+    val currentTrackName by viewModel.currentTrackName.collectAsState(initial = null)
+    val queueSize by viewModel.queueSize.collectAsState(initial = 0)
+    val preferences by viewModel.preferences.collectAsState()
+    val exceptions = viewModel.exceptionCollector.exceptions
+
     val runtime = Runtime.getRuntime()
     val memoryInfo = Debug.MemoryInfo()
     val threadCount = Thread.getAllStackTraces().size
@@ -107,10 +116,47 @@ fun DebugScreen(
             }
 
             item {
+                PreferenceHeader("Spirc")
+
+                Availability("Spirc usable", isSpircUsable)
+                Availability("Active device", isActiveDevice)
+            }
+
+            item {
+                PreferenceHeader("Playback")
+
+                Availability("Playing", isPlaying)
+                Availability("Buffering", isBuffering)
+                Information("Current track", currentTrackName)
+                Information("Queue size", queueSize.toString())
+            }
+
+            item {
+                PreferenceHeader("Preferences")
+
+                preferences.forEach { (key, value) ->
+                    Information(key, value)
+                }
+            }
+
+            item {
+                PreferenceHeader("Exceptions (${exceptions.size})")
+
+                if (exceptions.isEmpty()) {
+                    Information("No exceptions", null)
+                } else {
+                    exceptions.reversed().forEachIndexed { i, ex ->
+                        Information("#${exceptions.size - i} ${ex.timestamp}", ex.message)
+                        Information("Thread", ex.threadName)
+                    }
+                }
+            }
+
+            item {
                 PreferenceHeader("System")
 
-                val usedMemory = runtime.totalMemory() - runtime.freeMemory()
-                val maxMemory = runtime.maxMemory()
+                val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / 1048576
+                val maxMemory = runtime.maxMemory() / 1048576
 
                 Information("Used memory (MB)", usedMemory.toString())
                 Information("Max memory (MB)", maxMemory.toString())

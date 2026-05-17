@@ -7,6 +7,7 @@ import cc.tomko.outify.core.spirc.SpircController
 import cc.tomko.outify.data.database.AppDatabase
 import cc.tomko.outify.ui.viewmodel.detail.DetailViewModelStore
 import cc.tomko.outify.ui.viewmodel.detail.setDetailViewModelStore
+import cc.tomko.outify.utils.ExceptionCollector
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -26,9 +27,13 @@ class OutifyApplication : Application() {
     @Inject
     lateinit var detailViewModelStore: DetailViewModelStore
 
+    @Inject
+    lateinit var exceptionCollector: ExceptionCollector
+
     @UnstableApi
     override fun onCreate() {
         super.onCreate()
+        exceptionCollector.install()
         database = AppDatabase.getInstance(this)
 
         setDetailViewModelStore(detailViewModelStore)
