@@ -155,8 +155,6 @@ impl SpotifyClient {
 
         let text = res.text().await?;
 
-        info!("{}", text);
-
         let data: CurrentUserResponse = serde_json::from_str(&text)?;
 
         Ok(data)
