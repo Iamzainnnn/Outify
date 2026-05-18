@@ -31,8 +31,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.UUID
 import javax.inject.Inject
 
 @OptIn(FlowPreview::class)
@@ -98,111 +100,60 @@ class SearchViewModel @Inject constructor(
                         return@collectLatest
                     }
 
-                    _isLoading.value = true
+                    _results.value = listOf(
+                        SearchUiModel.SectionHeader(R.string.search_section_tracks),
+                        SearchUiModel.SkeletonItem(0),
+                        SearchUiModel.SectionHeader(R.string.search_section_artists),
+                        SearchUiModel.SkeletonItem(1),
+                        SearchUiModel.SectionHeader(R.string.search_section_albums),
+                        SearchUiModel.SkeletonItem(2),
+                        SearchUiModel.SectionHeader(R.string.search_section_playlists),
+                        SearchUiModel.SkeletonItem(3),
+                    )
 
-                    try {
-                        _results.value = emptyList()
+                    launch { searchSection("track", R.string.search_section_tracks) { uris ->
+                        withContext(Dispatchers.IO) {
+                            metadata.getTrackMetadata(uris).map { track ->
+                                SearchUiModel.TrackItem(track.uri, track)
+                            }
+                        }
+                    }}
 
-                        coroutineScope {
-                            launch {
-                                try {
-                                    val trackResults = repository.searchByType(query, "track")
-                                    if (trackResults.isNotEmpty()) {
-                                        val trackUris = trackResults.map { it.uri }
-                                        val trackMap = withContext(Dispatchers.IO) {
-                                            metadata.getTrackMetadata(trackUris).associateBy { t -> t.uri }
-                                        }
-                                        val items = trackResults.mapNotNull { result ->
-                                            trackMap[result.uri]?.let { track ->
-                                                SearchUiModel.TrackItem(result.uri, track)
-                                            }
-                                        }
-                                        if (items.isNotEmpty()) {
-                                            _results.update { current ->
-                                                current + SearchUiModel.SectionHeader(R.string.search_section_tracks) + items
-                                            }
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.w("SearchViewModel", "Track search failed", e)
-                                }
-                            }
-                            launch {
-                                try {
-                                    val artistResults = repository.searchByType(query, "artist")
-                                    if (artistResults.isNotEmpty()) {
-                                        val items = withContext(Dispatchers.IO) {
-                                            artistResults.mapNotNull { result ->
-                                                runCatching {
-                                                    metadata.getArtistMetadata(result.uri)
-                                                }.getOrNull()?.let { artist ->
-                                                    SearchUiModel.ArtistItem(result.uri, artist)
-                                                }
-                                            }
-                                        }
-                                        if (items.isNotEmpty()) {
-                                            _results.update { current ->
-                                                current + SearchUiModel.SectionHeader(R.string.search_section_artists) + items
-                                            }
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.w("SearchViewModel", "Artist search failed", e)
-                                }
-                            }
-                            launch {
-                                try {
-                                    val albumResults = repository.searchByType(query, "album")
-                                    if (albumResults.isNotEmpty()) {
-                                        val items = withContext(Dispatchers.IO) {
-                                            albumResults.mapNotNull { result ->
-                                                runCatching {
-                                                    metadata.getAlbumMetadata(result.uri)
-                                                }.getOrNull()?.let { album ->
-                                                    SearchUiModel.AlbumItem(result.uri, album)
-                                                }
-                                            }
-                                        }
-                                        if (items.isNotEmpty()) {
-                                            _results.update { current ->
-                                                current + SearchUiModel.SectionHeader(R.string.search_section_albums) + items
-                                            }
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.w("SearchViewModel", "Album search failed", e)
-                                }
-                            }
-                            launch {
-                                try {
-                                    val playlistResults = repository.searchByType(query, "playlist")
-                                    if (playlistResults.isNotEmpty()) {
-                                        val items = withContext(Dispatchers.IO) {
-                                            playlistResults.mapNotNull { result ->
-                                                runCatching {
-                                                    metadata.getPlaylistMetadata(result.uri, true)
-                                                }.getOrNull()?.let { playlist ->
-                                                    SearchUiModel.PlaylistItem(result.uri, playlist)
-                                                }
-                                            }
-                                        }
-                                        if (items.isNotEmpty()) {
-                                            _results.update { current ->
-                                                current + SearchUiModel.SectionHeader(R.string.search_section_playlists) + items
-                                            }
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.w("SearchViewModel", "Playlist search failed", e)
+                    launch { searchSection("artist", R.string.search_section_artists) { uris ->
+                        withContext(Dispatchers.IO) {
+                            uris.mapNotNull { uri ->
+                                runCatching {
+                                    metadata.getArtistMetadata(uri)
+                                }.getOrNull()?.let { artist ->
+                                    SearchUiModel.ArtistItem(uri, artist)
                                 }
                             }
                         }
+                    }}
 
-                    } catch (e: Exception) {
-                        _results.value = emptyList()
-                    } finally {
-                        _isLoading.value = false
-                    }
+                    launch { searchSection("album", R.string.search_section_albums) { uris ->
+                        withContext(Dispatchers.IO) {
+                            uris.mapNotNull { uri ->
+                                runCatching {
+                                    metadata.getAlbumMetadata(uri)
+                                }.getOrNull()?.let { album ->
+                                    SearchUiModel.AlbumItem(uri, album)
+                                }
+                            }
+                        }
+                    }}
+
+                    launch { searchSection("playlist", R.string.search_section_playlists) { uris ->
+                        withContext(Dispatchers.IO) {
+                            uris.mapNotNull { uri ->
+                                runCatching {
+                                    metadata.getPlaylistMetadata(uri, true)
+                                }.getOrNull()?.let { playlist ->
+                                    SearchUiModel.PlaylistItem(uri, playlist)
+                                }
+                            }
+                        }
+                    }}
                 }
         }
 
@@ -244,6 +195,42 @@ class SearchViewModel @Inject constructor(
                 }
                 _historyResults.value = results
             }
+        }
+    }
+
+    private suspend fun searchSection(
+        type: String,
+        headerRes: Int,
+        fetch: suspend (List<String>) -> List<SearchUiModel>,
+    ) {
+        try {
+            val results = repository.searchByType(queryFlow.value, type)
+            val items = if (results.isNotEmpty()) {
+                fetch(results.map { it.uri })
+            } else emptyList()
+            replaceSkeleton(headerRes, items)
+        } catch (e: Exception) {
+            Log.w("SearchViewModel", "$type search failed", e)
+            replaceSkeleton(headerRes, emptyList())
+        }
+    }
+
+    private fun replaceSkeleton(headerRes: Int, items: List<SearchUiModel>) {
+        _results.update { current ->
+            val out = current.toMutableList()
+            val headerIdx = out.indexOfLast { it is SearchUiModel.SectionHeader && it.titleRes == headerRes }
+            if (headerIdx < 0) return@update current
+            val skeletonIdx = headerIdx + 1
+            if (skeletonIdx >= out.size || out[skeletonIdx] !is SearchUiModel.SkeletonItem) return@update current
+
+            if (items.isEmpty()) {
+                out.removeAt(skeletonIdx)
+                out.removeAt(headerIdx)
+            } else {
+                out[skeletonIdx] = items.first()
+                out.addAll(skeletonIdx + 1, items.drop(1))
+            }
+            out
         }
     }
 
@@ -299,6 +286,12 @@ sealed class SearchUiModel {
         @StringRes val titleRes: Int
     ) : SearchUiModel() {
         override val uri: String = "header_$titleRes"
+    }
+
+    data class SkeletonItem(
+        val id: Int
+    ) : SearchUiModel() {
+        override val uri: String = "skeleton_$id"
     }
 
     data class TrackItem(

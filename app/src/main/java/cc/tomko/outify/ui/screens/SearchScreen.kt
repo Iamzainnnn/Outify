@@ -84,6 +84,7 @@ import cc.tomko.outify.core.model.getCover
 import cc.tomko.outify.core.model.toSpotifyUri
 import cc.tomko.outify.ui.GlobalPopupController
 import cc.tomko.outify.ui.PopupSpec
+import cc.tomko.outify.ui.components.SkeletonTrackRow
 import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.components.navigation.Route.ArtistScreen
 import cc.tomko.outify.ui.components.navigation.Route.PlaylistScreen
@@ -433,6 +434,10 @@ fun SharedTransitionScope.SearchScreen(
                                 vertical = 8.dp
                             )
                         )
+                    }
+
+                    is SearchUiModel.SkeletonItem -> {
+                        SkeletonTrackRow()
                     }
 
                     is SearchUiModel.TrackItem -> {
@@ -924,8 +929,8 @@ private fun applyFiltersToSectionedResults(
                 is SearchUiModel.ArtistItem -> showArtists
                 is SearchUiModel.AlbumItem -> showAlbums
                 is SearchUiModel.PlaylistItem -> showPlaylists
-//                is SearchUiModel.ShowItem -> showShows
-//                is SearchUiModel.EpisodeItem -> showEpisodes
+                is SearchUiModel.SkeletonItem -> true
+                is SearchUiModel.SectionHeader -> true
             }
             if (include) out.add(item)
             i++
