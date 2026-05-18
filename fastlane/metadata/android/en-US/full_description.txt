@@ -1,0 +1,1 @@
+Open source Material 3 Android Spotify Client. Stream your tracks, manage your profile. Large customization options - featuring swipe gestures, monochrome images, dynamic themes, ..
