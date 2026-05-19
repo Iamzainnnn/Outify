@@ -110,6 +110,14 @@ impl SpotifyClient {
             .send()
             .await?;
 
+        if !res.status().is_success() {
+            let status = res.status().as_str().to_string();
+            let body = res.text().await.unwrap_or_default();
+            return Err(SpotifyApiError::Generic(format!(
+                "search failed with status {status}, query '{query}': {body}"
+            )));
+        }
+
         let text = res.text().await?;
 
         let parsed: crate::spotify::search::SearchResponse = serde_json::from_str(&text)?;
@@ -188,6 +196,14 @@ impl SpotifyClient {
             .send()
             .await?;
 
+        if !res.status().is_success() {
+            let status = res.status().as_str().to_string();
+            let body = res.text().await.unwrap_or_default();
+            return Err(SpotifyApiError::Generic(format!(
+                "save_items failed with status {status}: {body}"
+            )));
+        }
+
         Ok(res.status())
     }
 
@@ -227,6 +243,14 @@ impl SpotifyClient {
             .send()
             .await?;
 
+        if !res.status().is_success() {
+            let status = res.status().as_str().to_string();
+            let body = res.text().await.unwrap_or_default();
+            return Err(SpotifyApiError::Generic(format!(
+                "add_to_playlist failed with status {status}: {body}"
+            )));
+        }
+
         Ok(res.status())
     }
 
@@ -257,6 +281,15 @@ impl SpotifyClient {
             .timeout(REQUEST_TIMEOUT)
             .send()
             .await?;
+
+        if !res.status().is_success() {
+            let status = res.status().as_str().to_string();
+            let body = res.text().await.unwrap_or_default();
+            return Err(SpotifyApiError::Generic(format!(
+                "delete_items failed with status {status}: {body}"
+            )));
+        }
+
         Ok(res.status())
     }
 
@@ -295,6 +328,14 @@ impl SpotifyClient {
             .send()
             .await?;
 
+        if !res.status().is_success() {
+            let status = res.status().as_str().to_string();
+            let body = res.text().await.unwrap_or_default();
+            return Err(SpotifyApiError::Generic(format!(
+                "delete_from_playlist failed with status {status}: {body}"
+            )));
+        }
+
         Ok(res.status())
     }
 
@@ -332,11 +373,11 @@ impl SpotifyClient {
                 .timeout(REQUEST_TIMEOUT)
                 .send()
                 .await?;
-            let data = res.error_for_status()?.json::<DevicesResponse>().await?;
+            let data = check_response_json::<DevicesResponse>("get_devices", res).await?;
             return Ok(data);
         }
 
-        let data = res.error_for_status()?.json::<DevicesResponse>().await?;
+        let data = check_response_json::<DevicesResponse>("get_devices", res).await?;
 
         Ok(data)
     }
@@ -371,6 +412,14 @@ impl SpotifyClient {
             .json(&body)
             .send()
             .await?;
+
+        if !res.status().is_success() {
+            let status = res.status().as_str().to_string();
+            let body = res.text().await.unwrap_or_default();
+            return Err(SpotifyApiError::Generic(format!(
+                "transfer_playback failed with status {status}: {body}"
+            )));
+        }
 
         Ok(res.status())
     }
@@ -421,11 +470,11 @@ impl SpotifyClient {
                 .timeout(REQUEST_TIMEOUT)
                 .send()
                 .await?;
-            let data = res.error_for_status()?.json::<ArtistsOrTracksPage>().await?;
+            let data = check_response_json::<ArtistsOrTracksPage>("get_top", res).await?;
             return Ok(data);
         }
 
-        let data = res.error_for_status()?.json::<ArtistsOrTracksPage>().await?;
+        let data = check_response_json::<ArtistsOrTracksPage>("get_top", res).await?;
 
         Ok(data)
     }
@@ -479,11 +528,11 @@ impl SpotifyClient {
                 .timeout(REQUEST_TIMEOUT)
                 .send()
                 .await?;
-            let data = res.error_for_status()?.json::<CreatePlaylistResponse>().await?;
+            let data = check_response_json::<CreatePlaylistResponse>("create_playlist", res).await?;
             return Ok(data);
         }
 
-        let data = res.error_for_status()?.json::<CreatePlaylistResponse>().await?;
+        let data = check_response_json::<CreatePlaylistResponse>("create_playlist", res).await?;
 
         Ok(data)
     }
@@ -525,6 +574,14 @@ impl SpotifyClient {
             .timeout(REQUEST_TIMEOUT)
             .send()
             .await?;
+
+        if !res.status().is_success() {
+            let status = res.status().as_str().to_string();
+            let body = res.text().await.unwrap_or_default();
+            return Err(SpotifyApiError::Generic(format!(
+                "modify_playlist failed with status {status}: {body}"
+            )));
+        }
 
         Ok(res.status())
     }
@@ -709,15 +766,30 @@ impl SpotifyClient {
             .post("https://accounts.spotify.com/api/token")
             .form(&form)
             .send()
-            .await?
-            .error_for_status()?
-            .json::<TokenResponse>()
             .await?;
+
+        let response = check_response_json::<TokenResponse>("refresh_token", response).await?;
 
         let new_token = WebApiToken::from(response, Some(&token.refresh_token));
         self.save_token(&new_token).await?;
         Ok(new_token)
     }
+}
+
+async fn check_response_json<T: serde::de::DeserializeOwned>(
+    method: &str,
+    res: reqwest::Response,
+) -> Result<T, SpotifyApiError> {
+    if !res.status().is_success() {
+        let status = res.status().as_str().to_string();
+        let body = res.text().await.unwrap_or_default();
+        return Err(SpotifyApiError::Generic(format!(
+            "{method} failed with status {status}: {body}"
+        )));
+    }
+    let text = res.text().await?;
+    let data = serde_json::from_str(&text)?;
+    Ok(data)
 }
 
 pub fn init_client(client_id: String, client_secret: String) {
