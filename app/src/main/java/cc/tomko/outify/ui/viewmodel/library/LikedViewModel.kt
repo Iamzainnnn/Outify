@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -54,8 +55,9 @@ class LikedViewModel @Inject constructor(
     private val syncNotificationManager: SyncNotificationManager,
 ) : ViewModel() {
     val isRefreshing = MutableStateFlow(false)
-    private val query = MutableStateFlow("")
-    
+    private val _query = MutableStateFlow("")
+    val query: StateFlow<String> = _query.asStateFlow()
+
     // Filter and sort states
     val filterExplicit = MutableStateFlow(ExplicitFilter.BOTH)
     val filterArtistName = MutableStateFlow("")
@@ -80,7 +82,7 @@ class LikedViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     val likedTracks: StateFlow<List<Track>> =
-        query
+        _query
             .debounce(250)
             .mapLatest { q ->
                 if (q.isBlank()) {
@@ -194,7 +196,7 @@ class LikedViewModel @Inject constructor(
     }
 
     fun onQueryChange(newQuery: String) {
-        query.value = newQuery
+        _query.value = newQuery
     }
 
     fun setFilterExplicit(value: ExplicitFilter) {
