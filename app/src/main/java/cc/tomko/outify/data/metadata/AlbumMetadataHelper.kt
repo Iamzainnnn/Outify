@@ -19,9 +19,11 @@ import cc.tomko.outify.data.database.album.AlbumWithArtists
 import cc.tomko.outify.data.database.album.toDomain
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.supervisorScope
 import kotlinx.serialization.json.Json
@@ -56,6 +58,7 @@ class AlbumMetadataHelper @Inject constructor(
                 uris.mapNotNull { uri -> byUri[uri] }
             }
             .distinctUntilChanged()
+            .flowOn(Dispatchers.IO)
     }
 
     /**

@@ -30,7 +30,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -130,7 +132,7 @@ class TrackMetadataHelper @Inject constructor(
                         }
                 }
             )
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     private suspend fun fetchAndPersist(uris: List<String>): Map<String, TrackFull> {
