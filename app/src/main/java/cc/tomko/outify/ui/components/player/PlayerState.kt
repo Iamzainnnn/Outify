@@ -1,5 +1,7 @@
 package cc.tomko.outify.ui.components.player
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.animateTo
@@ -91,8 +93,8 @@ fun PlayerSheet(
 
                     if (midDrag || fastFlingDown) {
                         val target = when {
-                            available.y > 300f  -> PlayerSheetValue.Collapsed
-                            available.y < -300f -> PlayerSheetValue.Expanded
+                            available.y > 1200f  -> PlayerSheetValue.Collapsed
+                            available.y < -1200f -> PlayerSheetValue.Expanded
                             sheetState.progress >= 0.5f -> PlayerSheetValue.Expanded
                             else                -> PlayerSheetValue.Collapsed
                         }
@@ -146,7 +148,10 @@ fun PlayerSheet(
                                             PlayerSheetValue.Expanded
                                         else
                                             PlayerSheetValue.Collapsed
-                                        sheetState.draggableState.animateTo(target)
+                                        sheetState.draggableState.animateTo(target, animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioNoBouncy,
+                                            stiffness = Spring.StiffnessMedium
+                                        ))
                                     }
                                 },
                                 onDragCancel = {
