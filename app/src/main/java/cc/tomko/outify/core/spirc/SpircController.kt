@@ -40,9 +40,11 @@ class SpircController @Inject constructor(
 
     fun restart() {
         Log.w("SpircController", "Restarting session...")
+        spirc.setUsable(false)
         session.shutdown()
-        spirc.shutdown()
-        start()
+        // Don't call spirc.shutdown() or start() here —
+        // the Rust shutdown listener's auto-restart handles cleanup and re-initialization.
+        // handleSessionAutoRestart() will set usable=true when it completes.
     }
 
     private suspend fun initializeSpirc(){
@@ -143,7 +145,7 @@ class SpircController @Inject constructor(
     }
 
     private fun handleSessionAutoRestart(){
-        // TODO: show some toast
+        spirc.setUsable(true)
     }
 
     private fun handleSpircFailure() {

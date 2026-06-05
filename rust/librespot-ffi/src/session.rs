@@ -1,4 +1,11 @@
-use std::{path::PathBuf, pin::Pin, sync::RwLock};
+use std::{
+    path::PathBuf,
+    pin::Pin,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        RwLock,
+    },
+};
 
 use crate::{CACHE_DIR, FILES_DIR, TOKIO_RUNTIME};
 use jni::objects::GlobalRef;
@@ -7,6 +14,7 @@ use once_cell::sync::OnceCell;
 
 pub static SESSION: OnceCell<RwLock<Option<Session>>> = OnceCell::new();
 pub static SESSION_CALLBACK: OnceCell<RwLock<Option<GlobalRef>>> = OnceCell::new();
+static IS_AUTO_RESTARTING: AtomicBool = AtomicBool::new(false);
 
 pub fn init_session_container() {
     SESSION.get_or_init(|| RwLock::new(None));
@@ -105,6 +113,13 @@ fn start_shutdown_listener(session: Session) {
     rt.handle().spawn(async move {
         let mut shutdown_rx = session.subscribe_shutdown();
         shutdown_rx.changed().await.ok();
+
+        // Prevent concurrent auto-restarts from multiple session shutdowns
+        if IS_AUTO_RESTARTING.swap(true, Ordering::Acquire) {
+            warn!("Auto-restart already in progress, skipping");
+            return;
+        }
+
         notify_callback("onShutdown".to_string());
 
         cleanup();
@@ -126,6 +141,7 @@ fn start_shutdown_listener(session: Session) {
         if let Err(e) =
             crate::spirc::initialize_spirc(device_name, gapless, normalise, bitrate).await
         {
+            IS_AUTO_RESTARTING.store(false, Ordering::Release);
             error!("Failed to initialize spirc: {}", e);
             return;
         }
@@ -136,6 +152,8 @@ fn start_shutdown_listener(session: Session) {
         });
 
         notify_callback("onAutoRestart".to_string());
+
+        IS_AUTO_RESTARTING.store(false, Ordering::Release);
     });
 }
 
