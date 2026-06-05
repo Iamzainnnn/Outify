@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct AddItemRequest {
@@ -23,9 +23,4 @@ pub struct CreatePlaylistRequest {
     // Public has to be set to false for collaborative to work
     pub collaborative: bool,
     pub description: Option<String>,
-}
-
-#[derive(Deserialize)]
-pub struct CreatePlaylistResponse {
-    pub id: String,
 }

@@ -14,9 +14,11 @@ use tokio::sync::RwLock;
 use crate::spotify::{
     error::SpotifyApiError,
     requests::{
-        AddItemRequest, ArtistsOrTracksPage, CreatePlaylistRequest, CreatePlaylistResponse,
-        CurrentUserResponse, DevicesResponse, RemoveItem, RemoveItemRequest,
+        AddItemRequest, CreatePlaylistRequest, RemoveItem, RemoveItemRequest,
         TransferPlaybackRequest,
+    },
+    responses::{
+        ArtistsOrTracksPage, CreatePlaylistResponse, CurrentUserResponse, DevicesResponse,
     },
     search::extract_all_uris,
     token::{TokenResponse, WebApiToken},
