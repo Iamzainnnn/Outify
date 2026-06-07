@@ -203,11 +203,20 @@ class PlayerViewModel @Inject constructor(
             initialValue = false
         )
 
+    private val lyricsCache = mutableMapOf<String, List<SyncedLyric>>()
+
     fun loadLyrics(){
+        val track = playbackStateHolder.state.value.currentTrack
+        val trackId = track?.id ?: return
+        val cached = lyricsCache[trackId]
+        if (cached != null) {
+            _lyrics.value = cached
+            return
+        }
         viewModelScope.launch {
-            val track = playbackStateHolder.state.value.currentTrack
             val result = playerRepository.getLyrics(track)
             _lyrics.value = result
+            lyricsCache[trackId] = result
         }
     }
 
