@@ -14,6 +14,8 @@ interface ISpircWrapper {
     fun setQueue(uris: Array<String>, playingTrackUri: String? = null): Boolean
     fun activate(): Boolean
     fun transfer(): Boolean
+    fun smartTransfer(): Boolean
+    suspend fun hasActiveDevice(): Boolean
     suspend fun seekTo(positionMs: Long): Boolean
     fun playerPlay(): Boolean
     fun playerPause(): Boolean

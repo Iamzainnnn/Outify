@@ -146,6 +146,7 @@ fn start_shutdown_listener(session: Session) {
             return;
         }
         let _ = crate::spirc::with_spirc(|spirc| {
+            info!("Auto Transfering session");
             let _ = spirc.activate();
             let _ = spirc.transfer();
             spirc.resume_playback();

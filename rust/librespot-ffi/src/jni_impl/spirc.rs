@@ -351,6 +351,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_transfer(
     _env: JNIEnv,
     _this: JClass,
 ) -> jboolean {
+    info!("JNI Transfering session");
     match with_spirc(|runtime| runtime.transfer()) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {

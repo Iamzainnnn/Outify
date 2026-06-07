@@ -8,6 +8,7 @@ import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.data.repository.SettingsRepository
 import cc.tomko.outify.playback.PlaybackStateHolder
 import cc.tomko.outify.playback.model.getSpeed
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,9 +21,12 @@ class SpircController @Inject constructor(
     private val playbackStateHolder: PlaybackStateHolder,
     private val settingsRepository: SettingsRepository,
 ) {
+    private var spircReady = false
+
     fun start() {
         session.initializeSession(object : SessionCallback {
             override fun onInitialized() {
+                println("Session initialized")
                 spirc.scope.launch {
                     initializeSpirc()
                 }
@@ -55,6 +59,9 @@ class SpircController @Inject constructor(
 
         Spirc.initializeSpirc(object : SpircInitializationCallback {
             override fun initialized() {
+                if(spircReady) return
+                spircReady = true
+
                 Spirc.bufferCallback(object : SpircBufferCallback {
                     override fun started() {
                         playbackStateHolder.setBuffering(true)
@@ -80,7 +87,7 @@ class SpircController @Inject constructor(
 
                 spirc.scope.launch {
                     activateAndTransfer()
-                    restoreLastPlayback()
+//                    restoreLastPlayback()
                 }
             }
 
@@ -112,23 +119,25 @@ class SpircController @Inject constructor(
         }
     }
 
-    private fun activateAndTransfer(){
+    private suspend fun activateAndTransfer(){
         if (!spirc.activate()) {
             Log.e("SpircController", "Failed to activate Spirc session!")
             return
         }
 
+        spirc.setUsable(true)
+
         spirc.scope.launch {
             if(settingsRepository.autoTransfer.first()) {
-                if (!spirc.transfer()) {
-                    Log.e("SpircController", "Failed to transfer Spirc session!")
+                if (!spirc.smartTransfer()) {
+                    Log.w("SpircController", "Spirc session did not transfer!")
+                    playbackStateHolder.setActiveDevice(false)
+                    return@launch
                 }
 
                 playbackStateHolder.setActiveDevice(true)
             }
         }
-
-        spirc.setUsable(true)
 
         spirc.scope.launch {
             val shuffle = settingsRepository.shuffleEnabled.first()

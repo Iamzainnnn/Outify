@@ -225,6 +225,7 @@ impl SpircRuntime {
     }
 
     pub fn transfer(&self) -> Result<(), librespot_core::Error> {
+        info!("Transfering session");
         // TODO: Make configurable from Java?
         let options = librespot_core::dealer::protocol::TransferOptions {
             ..Default::default()
@@ -329,6 +330,8 @@ impl SpircRuntime {
 
 // Handles each player event accordingly
 fn handle_event(event: PlayerEvent) {
+    info!("handling event: {:#?}", event);
+
     match event {
         PlayerEvent::Playing {
             play_request_id: _,
@@ -391,7 +394,7 @@ fn handle_event(event: PlayerEvent) {
         } => {
             info!("User {} connected session {}", user_name, connection_id);
             IS_DEVICE_ACTIVE.store(true, std::sync::atomic::Ordering::Relaxed);
-            notify_device_state(true);
+            // notify_device_state(true);
         }
         PlayerEvent::SessionDisconnected {
             connection_id,

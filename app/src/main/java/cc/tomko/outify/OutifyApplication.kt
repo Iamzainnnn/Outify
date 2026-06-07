@@ -1,10 +1,13 @@
 package cc.tomko.outify
 
 import android.app.Application
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
 import cc.tomko.outify.core.Spirc.SpircWrapper
 import cc.tomko.outify.core.spirc.SpircController
 import cc.tomko.outify.data.database.AppDatabase
+import cc.tomko.outify.services.PlaybackService
 import cc.tomko.outify.ui.viewmodel.detail.DetailViewModelStore
 import cc.tomko.outify.ui.viewmodel.detail.setDetailViewModelStore
 import cc.tomko.outify.utils.ExceptionCollector
@@ -41,9 +44,11 @@ class OutifyApplication : Application() {
         System.loadLibrary("librespot_ffi")
         LibrespotFfi.libInit(applicationContext)
 
+        // Starting playback service
+        val intent = Intent(this, PlaybackService::class.java)
+        ContextCompat.startForegroundService(this, intent)
+
         spircController.start()
         spircWrapper.setRestartCallback { spircController.restart() }
-
-//        AeadConfig.register()
     }
 }

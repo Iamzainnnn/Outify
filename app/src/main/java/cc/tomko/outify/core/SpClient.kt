@@ -1,8 +1,11 @@
 package cc.tomko.outify.core
 
+import cc.tomko.outify.core.model.DevicesResponse
 import cc.tomko.outify.data.metadata.NativeError
 import cc.tomko.outify.data.metadata.NativeErrorHandler
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -46,6 +49,12 @@ class SpClient @Inject constructor() {
      * In format of [cc.tomko.outify.core.model.DevicesResponse]
      */
     external fun getDevices(): String?
+
+    /**
+     * Gets the count of available devices to stream playback from.
+     */
+    fun getDeviceCount(): Int =
+        getDevices()?.let { Json.decodeFromString<DevicesResponse>(it).devices.size } ?: 0
 
     /**
      * Transfers current playback device to the one with given ID

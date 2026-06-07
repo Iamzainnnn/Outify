@@ -7,6 +7,8 @@ import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
 import cc.tomko.outify.core.RadioResult
 import cc.tomko.outify.core.SpClient
+import cc.tomko.outify.core.model.Device
+import cc.tomko.outify.core.model.DevicesResponse
 import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.core.spirc.ISpircWrapper
 import cc.tomko.outify.core.spirc.Spirc
@@ -17,7 +19,9 @@ import cc.tomko.outify.services.PlaybackService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.concurrent.Volatile
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
@@ -202,6 +206,42 @@ class SpircWrapper @Inject constructor(
      */
     override fun transfer(): Boolean {
         return Spirc.transfer()
+    }
+
+    /**
+     * Transfers current Spirc session only if no other session is streaming.
+     */
+    override fun smartTransfer(): Boolean {
+        println("sum1")
+        val json = spClient.getDevices() ?: return false
+        println("sum2")
+        val devices = Json.decodeFromString<DevicesResponse>(json)
+        println("sum3")
+
+        for (device in devices.devices) {
+            if(device.isActive) return false
+        }
+        println("sum4")
+
+        return Spirc.transfer()
+    }
+
+    /**
+     * Checks if any other device is actively playing.
+     * Retries up to 3 times since SpClient may not be ready immediately at startup.
+     */
+    override suspend fun hasActiveDevice(): Boolean = withContext(Dispatchers.IO) {
+        repeat(3) {
+            try {
+                val json = spClient.getDevices()
+                if (json != null) {
+                    val devices = Json.decodeFromString<DevicesResponse>(json)
+                    return@withContext devices.devices.any { it.isActive }
+                }
+            } catch (_: Exception) { }
+            delay(500)
+        }
+        false
     }
 
     /**
