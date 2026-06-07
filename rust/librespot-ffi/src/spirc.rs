@@ -388,23 +388,6 @@ fn handle_event(event: PlayerEvent) {
             update_current_track(track_id.clone());
             crate::jni_utils::playback::on_player_position_update(position_ms, track_id.clone());
         }
-
-        PlayerEvent::SessionConnected {
-            connection_id,
-            user_name,
-        } => {
-            info!("User {} connected session {}", user_name, connection_id);
-            IS_DEVICE_ACTIVE.store(true, std::sync::atomic::Ordering::Relaxed);
-            // notify_device_state(true);
-        }
-        PlayerEvent::SessionDisconnected {
-            connection_id,
-            user_name,
-        } => {
-            info!("User {} disconnected session {}", user_name, connection_id);
-            IS_DEVICE_ACTIVE.store(false, std::sync::atomic::Ordering::Relaxed);
-            notify_device_state(false);
-        }
         PlayerEvent::TimeToPreloadNextTrack {
             play_request_id: _,
             track_id,
@@ -441,15 +424,17 @@ fn handle_event(event: PlayerEvent) {
             };
 
             let our_device_id = session.device_id();
-            let is_now_active = client_id == our_device_id;
+            let is_now_active = client_id == our_device_id || client_brand_name.is_empty();
 
-            if is_now_active {
-                IS_DEVICE_ACTIVE.store(true, std::sync::atomic::Ordering::Relaxed);
-                notify_device_state(true);
-            } else {
-                IS_DEVICE_ACTIVE.store(false, std::sync::atomic::Ordering::Relaxed);
-                notify_device_state(false);
-            }
+            IS_DEVICE_ACTIVE.store(is_now_active, std::sync::atomic::Ordering::Relaxed);
+            notify_device_state(is_now_active);
+        }
+
+        PlayerEvent::SessionConnected { connection_id, user_name } => {
+            notify_device_state(true);
+        }
+        PlayerEvent::SessionDisconnected { connection_id, user_name } => {
+            notify_device_state(false);
         }
         PlayerEvent::VolumeChanged { volume } => {
             notify_device_volume(volume);

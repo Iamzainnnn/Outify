@@ -25,9 +25,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PhoneIphone
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material3.ContainedLoadingIndicator
@@ -268,8 +270,10 @@ fun SharedTransitionScope.MiniPlayer(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    val icon = if(isActiveDevice) Icons.Default.PhoneIphone else Icons.Default.Cast
+
                     Icon(
-                        Icons.Default.Speaker,
+                        icon,
                         contentDescription = null,
                         modifier = Modifier
                             .clickable {
