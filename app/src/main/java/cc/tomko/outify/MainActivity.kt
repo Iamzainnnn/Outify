@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.view.KeyEvent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -48,6 +49,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import cc.tomko.outify.MainActivity.MainActivity.LocalSharedTransitionScope
 import cc.tomko.outify.core.AuthManager
+import cc.tomko.outify.core.spirc.VolumeController
 import cc.tomko.outify.data.repository.InterfaceSettings
 import cc.tomko.outify.data.repository.PendingBackupImport
 import cc.tomko.outify.data.setting.LocalSwipeActionHandler
@@ -88,7 +90,20 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var authManager: AuthManager
 
+    @Inject
+    lateinit var volumeController: VolumeController
+
     private val deepLinkFlow = MutableSharedFlow<Uri>(extraBufferCapacity = 1)
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        return if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            val handled = super.onKeyDown(keyCode, event)
+            volumeController.onAndroidVolumeChanged()
+            handled
+        } else {
+            super.onKeyDown(keyCode, event)
+        }
+    }
 
     data object MainActivity {
         val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope> { error("No scope provided") }
@@ -109,6 +124,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         requestNotificationPermission()
+
+        volumeController.start()
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 

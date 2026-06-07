@@ -37,6 +37,12 @@ interface SpircDeviceCallback {
      * Called when another device becomes the active playback device
      */
     fun becameInactive()
+
+    /**
+     * Called when the stream volume level is changed.
+     * u16 volume
+     */
+    fun volumeChanged(volume: Int)
 }
 
 object Spirc {
@@ -110,6 +116,14 @@ object Spirc {
      */
     @JvmStatic
     external fun transfer(): Boolean
+
+    /**
+     * Sets the volume for the current Spotify Connect session
+     * @param volume 0-65535 (u16 range)
+     * @return `true` if success
+     */
+    @JvmStatic
+    external fun setVolume(volume: Int): Boolean
 
     /**
      * Seeks the current track to given position

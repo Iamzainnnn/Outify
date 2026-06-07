@@ -326,6 +326,26 @@ pub extern "system" fn set_queue(
     }
 }
 
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_setVolume(
+    _env: JNIEnv,
+    _this: JClass,
+    jvolume: jint,
+) -> jboolean {
+    let volume = jvolume as u16;
+    match with_spirc(|runtime| runtime.set_volume(volume)) {
+        Ok(Ok(())) => 1,
+        Ok(Err(e)) => {
+            warn!("Failed to set volume: {:?}", e);
+            0
+        }
+        Err(e) => {
+            warn!("Failed to set volume: {:?}", e);
+            0
+        }
+    }
+}
+
 // Activates the Spirc session
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_activate(

@@ -3,6 +3,7 @@ use std::sync::{
     atomic::{AtomicBool, AtomicU32},
 };
 
+use jni::objects::JValue;
 use librespot_connect::{
     ConnectConfig, LoadContextOptions, LoadRequest, LoadRequestOptions, Options, PlayingTrack,
     Spirc,
@@ -450,6 +451,9 @@ fn handle_event(event: PlayerEvent) {
                 notify_device_state(false);
             }
         }
+        PlayerEvent::VolumeChanged { volume } => {
+            notify_device_volume(volume);
+        }
         _ => {
             // Not yet implemented
         }
@@ -517,9 +521,16 @@ pub async fn initialize_spirc(
         *name_mutex.lock().unwrap() = device_name.clone();
     }
 
-    let runtime = SpircRuntime::new(&session, credentials, device_name, gapless, normalisation, bitrate)
-        .await
-        .map_err(|e| SpircError::Other(e.to_string()))?;
+    let runtime = SpircRuntime::new(
+        &session,
+        credentials,
+        device_name,
+        gapless,
+        normalisation,
+        bitrate,
+    )
+    .await
+    .map_err(|e| SpircError::Other(e.to_string()))?;
 
     let mut guard = lock.write().unwrap();
     *guard = Some(runtime);
@@ -593,6 +604,37 @@ pub fn notify_device_state(is_active: bool) {
 
             if let Err(e) = env.call_method(callback.as_obj(), method, "()V", &[]) {
                 log::error!("Failed to call device callback {}: {e}", method);
+            }
+        });
+    }
+}
+
+pub fn notify_device_volume(volume: u16) {
+    let jvm = match crate::JVM.get() {
+        Some(j) => j,
+        None => {
+            error!("cannot notify device state as JVM is none!");
+            return;
+        }
+    };
+
+    let callback_opt = {
+        let lock = crate::jni_impl::spirc::DEVICE_CALLBACK.lock().unwrap();
+        lock.clone()
+    };
+
+    if let Some(callback) = callback_opt {
+        std::thread::spawn(move || {
+            let mut env = match jvm.attach_current_thread() {
+                Ok(env) => env,
+                Err(e) => {
+                    error!("failed to attach env for device callback: {e}");
+                    return;
+                }
+            };
+
+            if let Err(e) = env.call_method(callback.as_obj(), "volumeChanged", "(I)V", &[JValue::Int(volume as i32)]) {
+                log::error!("Failed to call device callback volumeChanged: {e}");
             }
         });
     }

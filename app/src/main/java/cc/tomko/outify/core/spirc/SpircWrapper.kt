@@ -227,6 +227,13 @@ class SpircWrapper @Inject constructor(
     }
 
     /**
+     * Sets the volume for the current Spotify Connect session.
+     */
+    override fun setVolume(volume: Int): Boolean {
+        return Spirc.setVolume(volume)
+    }
+
+    /**
      * Checks if any other device is actively playing.
      * Retries up to 3 times since SpClient may not be ready immediately at startup.
      */

@@ -20,6 +20,7 @@ class SpircController @Inject constructor(
     private val spirc: SpircWrapper,
     private val playbackStateHolder: PlaybackStateHolder,
     private val settingsRepository: SettingsRepository,
+    private val volumeController: VolumeController,
 ) {
     private var spircReady = false
 
@@ -82,6 +83,10 @@ class SpircController @Inject constructor(
                     override fun becameInactive() {
                         println("we are inactive")
                         playbackStateHolder.setActiveDevice(false)
+                    }
+
+                    override fun volumeChanged(volume: Int) {
+                        volumeController.onRemoteVolumeChanged(volume)
                     }
                 })
 

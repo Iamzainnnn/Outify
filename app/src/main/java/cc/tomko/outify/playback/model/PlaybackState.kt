@@ -17,4 +17,5 @@ data class PlaybackState(
     val isPlaying: Boolean = false,
     val isBuffering: Boolean = true,
     val isActiveDevice: Boolean = false,
+    val volume: Int = 65_535,
 )

@@ -108,6 +108,10 @@ class PlaybackStateHolder @Inject constructor() {
         _state.value = _state.value.copy(isActiveDevice = active)
     }
 
+    fun setVolume(volume: Int) {
+        _state.value = _state.value.copy(volume = volume)
+    }
+
     private fun computePositionLocked(): Duration {
         val cur = _state.value
         if (!cur.isPlaying) return cur.position.active
