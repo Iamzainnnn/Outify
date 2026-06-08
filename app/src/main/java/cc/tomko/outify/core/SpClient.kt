@@ -68,6 +68,12 @@ class SpClient @Inject constructor() {
     external fun isOAuthAuthenticated(): Boolean
 
     /**
+     * Returns oauth scopes (if any) separated by space
+     * May throw exception when error occurs
+     */
+    external fun getOAuthScope(): String?
+
+    /**
      * Adds tracks in array into the playlist by given id
      */
     external fun addToPlaylist(playlist_id: String, track_uris: Array<String>): Boolean

@@ -53,6 +53,9 @@ class AccountsViewModel @Inject constructor(
     private val _isPremium = MutableStateFlow(true)
     val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
 
+    private val _scopes = MutableStateFlow<List<String>>(emptyList())
+    val scopes: StateFlow<List<String>> = _scopes.asStateFlow()
+
     init {
         checkAuthState()
         loadSavedUserProfile()
@@ -61,6 +64,8 @@ class AccountsViewModel @Inject constructor(
     fun checkAuthState() {
         _isAccountLoggedIn.value = spClient.isOAuthAuthenticated()
         _isPlaybackLoggedIn.value = authManager.hasCachedCredentials()
+
+        _scopes.value = spClient.getOAuthScope()?.split(" ") ?: emptyList()
     }
 
     private fun loadSavedUserProfile() {

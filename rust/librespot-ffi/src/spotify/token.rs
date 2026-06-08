@@ -7,10 +7,11 @@ pub struct WebApiToken {
     pub access_token: String,
     pub refresh_token: String,
     pub expires_at: u64,
+    pub scope: String,
 }
 
 impl WebApiToken {
-    pub fn new(access_token: String, refresh_token: String, expires_in: u64) -> Self {
+    pub fn new(access_token: String, refresh_token: String, expires_in: u64, scope: String) -> Self {
         let now = SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .expect("Time went backwards")
@@ -19,6 +20,7 @@ impl WebApiToken {
             access_token,
             refresh_token,
             expires_at: now + expires_in,
+            scope,
         }
     }
 
@@ -45,6 +47,7 @@ impl WebApiToken {
             access_token: token.access_token,
             refresh_token,
             expires_at: now + token.expires_in,
+            scope: token.scope,
         }
     }
 }
@@ -56,4 +59,6 @@ pub(crate) struct TokenResponse {
     pub expires_in: u64,
     #[serde(default)]
     pub refresh_token: Option<String>,
+    #[serde(default)]
+    pub scope: String,
 }

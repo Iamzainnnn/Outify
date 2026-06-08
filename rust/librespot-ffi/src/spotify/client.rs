@@ -158,8 +158,7 @@ impl SpotifyClient {
             let body = res.text().await.unwrap_or_default();
             return Err(SpotifyApiError::Generic(format!(
                 "Request failed with status code: {}. Body: {}",
-                status,
-                body
+                status, body
             )));
         }
 
@@ -530,7 +529,8 @@ impl SpotifyClient {
                 .timeout(REQUEST_TIMEOUT)
                 .send()
                 .await?;
-            let data = check_response_json::<CreatePlaylistResponse>("create_playlist", res).await?;
+            let data =
+                check_response_json::<CreatePlaylistResponse>("create_playlist", res).await?;
             return Ok(data);
         }
 
@@ -661,6 +661,7 @@ impl SpotifyClient {
             token_response.access_token,
             token_response.refresh_token,
             expires_in,
+            token_response.scopes.join(" "),
         );
 
         let mut token_guard = self.token.write().await;
@@ -729,6 +730,14 @@ impl SpotifyClient {
         match self.load_token().await {
             Ok(Some(_)) => true,
             _ => false,
+        }
+    }
+
+    // Returns scopes seperated by space
+    pub async fn get_scope(&self) -> Option<String> {
+        match self.load_token().await {
+            Ok(Some(t)) => Some(t.scope),
+            _ => None,
         }
     }
 

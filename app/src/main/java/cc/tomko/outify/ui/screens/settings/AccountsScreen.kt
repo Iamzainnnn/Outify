@@ -63,6 +63,8 @@ fun AccountsScreen(
 
     val isPlaybackLoggedIn by viewModel.isPlaybackLoggedIn.collectAsStateWithLifecycle()
     val isAccountLoggedIn by viewModel.isAccountLoggedIn.collectAsStateWithLifecycle()
+    val scopes by viewModel.scopes.collectAsStateWithLifecycle()
+
     val isPremium by viewModel.isPremium.collectAsStateWithLifecycle()
     val username by viewModel.username.collectAsStateWithLifecycle()
     val userImageUrl by viewModel.userImageUrl.collectAsStateWithLifecycle()
@@ -302,15 +304,30 @@ fun AccountsScreen(
                         Spacer(Modifier.height(16.dp))
 
                         FeatureAvailability("Stream tracks from Outify", isPlaybackLoggedIn && isPremium)
-                        FeatureAvailability("Sync your liked tracks and playlists", isPlaybackLoggedIn)
-                        FeatureAvailability("View artists, albums, playlists", isPlaybackLoggedIn)
+                        FeatureAvailability("Sync your liked tracks and playlists", isPlaybackLoggedIn && isPremium)
+                        FeatureAvailability("View artists, albums, playlists", isPlaybackLoggedIn && isPremium)
 
                         Spacer(Modifier.height(12.dp))
 
                         FeatureAvailability("Search Spotify", isAccountLoggedIn)
-                        FeatureAvailability("Modify playlists", isAccountLoggedIn)
-                        FeatureAvailability("Liking and unliking tracks", isAccountLoggedIn)
-                        FeatureAvailability("Viewing user profiles", isAccountLoggedIn)
+                        FeatureAvailability("Modify playlists", isAccountLoggedIn && scopes.containsAll(listOf("playlist-modify-public", "playlist-modify-private")))
+                        FeatureAvailability("Create playlists", isAccountLoggedIn && scopes.containsAll(listOf("playlist-modify-public", "playlist-modify-private")))
+                        FeatureAvailability("Liking and unliking tracks, playlists, artists, ..", isAccountLoggedIn && scopes.containsAll(listOf("user-library-modify", "user-follow-modify", "playlist-modify-public")))
+                        FeatureAvailability("Viewing user profiles", isPlaybackLoggedIn)
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Text(
+                            text = "Available scopes:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+
+                        Text(
+                            text = scopes.joinToString(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
             }

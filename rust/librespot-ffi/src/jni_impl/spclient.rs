@@ -349,9 +349,36 @@ pub extern "system" fn is_oauth_authenticated(_env: JNIEnv, _class: JClass) -> j
     };
 
     let result = rt.block_on(async { client.is_oauth_authenticated().await });
-    info!("is authenticated: {result}");
 
     result as jboolean
+}
+
+#[unsafe(export_name = "Java_cc_tomko_outify_core_SpClient_getOAuthScope")]
+pub extern "system" fn get_oauth_scope(mut env: JNIEnv, _class: JClass) -> jstring {
+    let client = get_client();
+
+    let rt = match crate::TOKIO_RUNTIME.get() {
+        Some(r) => r,
+        None => {
+            error!("failed to get Tokio runtime!");
+            throw_exception(&mut env, "failed to get Tokio runtime!".to_string());
+            return std::ptr::null_mut();
+        }
+    };
+
+    let result = rt.block_on(async { client.get_scope().await });
+    match result {
+        Some(scope) => {
+            match env.new_string(&scope) {
+                Ok(s) => s.into_raw(),
+                Err(e) => {
+                    error!("failed to get jni getOAuthScope string: {e}");
+                    return std::ptr::null_mut();
+                },
+            }
+        },
+        None => std::ptr::null_mut(),
+    }
 }
 
 #[unsafe(export_name = "Java_cc_tomko_outify_core_SpClient_addToPlaylist")]
@@ -568,9 +595,7 @@ pub extern "system" fn modify_playlist(
     });
 
     match result {
-        Ok(status) => {
-            status.as_u16().into()
-        }
+        Ok(status) => status.as_u16().into(),
         Err(e) => {
             error!("modify_playlist failed: {e}");
             throw_exception(&mut env, format!("modify_playlist failed: {e}"));
