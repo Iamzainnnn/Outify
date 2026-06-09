@@ -1,9 +1,39 @@
-<img src="app/src/main/ic_launcher-playstore.png" alt="Outify Logo" width="150"/>
+<!-- markdownlint-disable -->
+<div align="center">
+  <a href="https://github.com/iTomKo/Outify">
+    <img src="./.github/logo.svg" alt="Outify" width="150">
+  </a>
+  <h1 align="center">
+    Outify
+  </h1>
+  <p>
+    <br />
+    <strong>
+      Implementation of 
+      <a href="https://github.com/librespot-org/librespot/">librespot</a>
+      for Spotify streaming 
+    </strong>
+  </p>
 
-# Outify
+  <p>
+    <a href="https://github.com/iTomKo/Outify/issues/new?assignees=&labels=bug&projects=&template=bug_report.yml">Report Bug</a>
+    ·
+    <a href="https://github.com/iTomKo/Outify/issues/new?template=feature_request.md">Request Feature</a>
+    ·
+    <a href="https://github.com/iTomKo/Outify/discussions/new?category=q-a">Ask Question</a>
+  </p>
 
-[![Android Nightly](https://github.com/iTomKo/Outify/actions/workflows/nightly.yml/badge.svg)](https://github.com/iTomKo/Outify/actions/workflows/nightly.yml)
+  <br />
 
+  ![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?&style=for-the-badge&logo=kotlin&logoColor=white)
+  ![Android](https://img.shields.io/badge/Android-34A853?style=for-the-badge&logo=android&logoColor=white)
+  ![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)
+
+  [![GitHub License](https://img.shields.io/github/license/iTomKo/Outify?style=for-the-badge&label=%20)](https://www.gnu.org/licenses/gpl-3.0)
+  [![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/iTomKo/Outify?style=for-the-badge)](https://github.com/iTomKo/Outify/issues)
+</div>
+
+### Information
 Third party open source Android Spotify client with Material 3 using librespot Rust
 
 > [!WARNING]
@@ -68,3 +98,4 @@ Outify is not affiliated with Spotify, Google or librespot in any way. Usage of 
 Use at your own risk.
 
 Made with ❤️ by TomKo
+
