@@ -12,7 +12,7 @@ pub async fn get_user_profile(username: Option<String>) -> Option<UserJson> {
     let session = match with_session(|s| s.clone()) {
         Ok(s) => s,
         Err(e) => {
-            error!("Session unavailable: {}", e);
+            error!("session unavailable for get_user_profile: {e}");
             return None;
         }
     };
@@ -63,7 +63,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_UserProfile_getUserProfile(
     let rt = match TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            warn!("Failed to initialize session as Tokio Runtime is not initialized!");
+            warn!("tokio runtime not available for get_user_profile");
             return std::ptr::null_mut();
         }
     };
@@ -74,7 +74,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_UserProfile_getUserProfile(
         match env.get_string(&username) {
             Ok(js) => Some(js.into()),
             Err(e) => {
-                error!("failed to get username: {}", e);
+                error!("jni get_string failed for profile username: {e}");
                 return std::ptr::null_mut();
             }
         }
@@ -83,7 +83,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_UserProfile_getUserProfile(
     let profile: UserJson = match rt.block_on(get_user_profile(username)) {
         Some(u) => u,
         None => {
-            log::error!("failed to get user profile");
+            warn!("get_user_profile returned none");
             return std::ptr::null_mut();
         }
     };
@@ -91,7 +91,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_UserProfile_getUserProfile(
     let json = match serde_json::to_string(&profile) {
         Ok(j) => j,
         Err(e) => {
-            log::error!("failed to serialize UserJson: {}", e);
+            error!("serde for user profile failed: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -100,7 +100,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_UserProfile_getUserProfile(
     match env.new_string(json) {
         Ok(j) => j.into_raw(),
         Err(e) => {
-            log::error!("failed to convert json to JNI string: {}", e);
+            error!("jni new_string failed for user profile: {e}");
             std::ptr::null_mut()
         }
     }

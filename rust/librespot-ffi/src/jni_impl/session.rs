@@ -33,7 +33,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_Session_initializeSession(
         let mut env = match jvm.attach_current_thread() {
             Ok(env) => env,
             Err(e) => {
-                error!("Failed to attach thread: {e}");
+                error!("jvm attach_current_thread failed for session init: {e}");
                 return;
             }
         };

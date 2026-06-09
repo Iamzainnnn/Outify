@@ -47,12 +47,12 @@ pub struct OAuthSession {
 impl OAuthSession {
     pub fn new(session: &Session, redirect_uri: &str, scopes: &[&str]) -> Result<Self, Error> {
         let client_id = session.client_id();
-        debug!("Creating OAuth session with client_id: {}, redirect_uri: {}", client_id, redirect_uri);
+        debug!("creating oauth session with client_id: {client_id}, redirect_uri: {redirect_uri}");
         let client = OAuthClientBuilder::new(client_id.as_str(), redirect_uri, scopes.to_vec())
             .build()
             .map_err(|e| Error::internal(format!("Unable to build OAuth client: {e}")))?;
         let (auth_url, pkce_verifier) = client.set_auth_url();
-        debug!("OAuth session created successfully, auth_url: {}", auth_url);
+        debug!("oauth session created with auth_url: {auth_url}");
 
         Ok(Self {
             client,
@@ -75,16 +75,16 @@ impl OAuthSession {
 
         let auth_code = AuthorizationCode::new(code);
 
-        debug!("Exchanging OAuth code for access token...");
+        debug!("exchanging oauth code for token");
         let token_response = self
             .client
             .get_access_token_with_verifier_async(pkce_verifier, auth_code)
             .await
             .map_err(|e| {
-                error!("OAuth token exchange failed: {}", e);
+                error!("oauth token exchange failed: {e}");
                 Error::unavailable(format!("Unable to get OAuth token: {e}"))
             })?;
-        debug!("OAuth token exchange successful!");
+        debug!("oauth token exchange succeeded");
 
         // Refreshing token to provide consistent TokenResponse that contains refresh token
         let refresh_token = token_response.refresh_token.clone();
@@ -99,23 +99,23 @@ impl OAuthSession {
 }
 
 pub fn setup_oauth_session(session: &Session) -> Option<&'static Mutex<OAuthSession>> {
-    debug!("Setting up OAuthSession");
+    debug!("setting up oauth session");
     if let Some(existing) = OAUTH_SESSION.get() {
-        debug!("OAuthSession already initialized!");
+        debug!("oauth session already initialized");
         return Some(existing);
     }
 
     let osession = match OAuthSession::new(&session, &SPOTIFY_CALLBACK_URI, OAUTH_SCOPES) {
         Ok(s) => s,
         Err(e) => {
-            error!("OAuth session setup failed with: {}", e);
+            error!("oauth session setup failed: {e}");
             return None;
         }
     };
 
     match OAUTH_SESSION.set(Mutex::new(osession)) {
-        Ok(_) => debug!("OAuthSession set successfully"),
-        Err(_) => warn!("Failed to set OAuth Session concurrently - may already be set!"),
+        Ok(_) => debug!("oauth session stored in global"),
+        Err(_) => warn!("oauth session already set by another thread"),
     }
 
     OAUTH_SESSION.get()

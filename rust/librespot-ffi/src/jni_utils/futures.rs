@@ -93,7 +93,7 @@ where
         let _ = h.spawn_blocking(move || job());
     } else {
         // fallback: spawn a thread so background work still runs
-        error!("Falling back to std::thread::spawn: tokio runtime not initialized");
+        error!("tokio runtime not available, falling back to std::thread::spawn");
         std::thread::spawn(move || job());
     }
 }

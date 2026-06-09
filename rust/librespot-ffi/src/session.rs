@@ -28,15 +28,14 @@ pub async fn initialize_session() {
     {
         let guard = container.read().unwrap();
         if guard.is_some() {
-            warn!("Session already exists!");
-            // return;
+            warn!("session container already has a session");
         }
     }
 
     let rt = match TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            warn!("Failed to initialize session as Tokio Runtime is not initialized!");
+            warn!("tokio runtime not available for session init");
             return;
         }
     };
@@ -45,19 +44,19 @@ pub async fn initialize_session() {
     let os_cache_dir = match CACHE_DIR.get() {
         Some(dir) => dir.to_path_buf(),
         None => {
-            error!("Cache Dir not initialized - make sure to call libInit first");
+            error!("cache dir not set, call libInit first");
             return;
         }
     };
     let os_files_dir = match FILES_DIR.get() {
         Some(dir) => dir.to_path_buf(),
         None => {
-            error!("Files Dir not initialized - make sure to call libInit first");
+            error!("files dir not set, call libInit first");
             return;
         }
     };
     let cache: Cache = Cache::new(Some(&os_files_dir), None, Some(&os_cache_dir), None).unwrap();
-    trace!("Initialized new cache!");
+    trace!("cache initialized");
 
     let handle = rt.handle().clone();
     let session_config = SessionConfig {
@@ -70,7 +69,7 @@ pub async fn initialize_session() {
     *guard = Some(session.clone());
 
     start_shutdown_listener(session);
-    debug!("Session initialized!");
+    debug!("session initialized");
 }
 
 // Connects the already initialized session
@@ -78,8 +77,8 @@ pub async fn connect() -> Result<Session, librespot_core::Error> {
     let session = match with_session(|s| s.clone()) {
         Ok(s) => s,
         Err(e) => {
-            error!("Failed to get session: {}", e);
-            return Err(librespot_core::Error::internal("Failed to get session"));
+            error!("failed to clone session for connect: {e}");
+            return Err(librespot_core::Error::internal("failed to clone session for connect"));
         }
     };
 
@@ -87,16 +86,16 @@ pub async fn connect() -> Result<Session, librespot_core::Error> {
         .cache()
         .and_then(|cache| cache.credentials())
         .ok_or_else(|| {
-            warn!("No cached credentials available for session");
+            warn!("no cached credentials for connect");
             librespot_core::Error::unauthenticated("No cached credentials available".to_string())
         })?;
 
     session.connect(credentials, false).await.map_err(|e| {
-        error!("Session failed to connect: {e}");
+        error!("session connect failed: {e}");
         e
     })?;
 
-    debug!("Session connected!");
+    debug!("session connected");
     Ok(session.clone())
 }
 
@@ -105,7 +104,7 @@ fn start_shutdown_listener(session: Session) {
     let rt = match TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            warn!("Failed to start session shutdown listener as Tokio Runtime is not initialized!");
+            warn!("tokio runtime not available for shutdown listener");
             return;
         }
     };
@@ -114,9 +113,8 @@ fn start_shutdown_listener(session: Session) {
         let mut shutdown_rx = session.subscribe_shutdown();
         shutdown_rx.changed().await.ok();
 
-        // Prevent concurrent auto-restarts from multiple session shutdowns
         if IS_AUTO_RESTARTING.swap(true, Ordering::Acquire) {
-            warn!("Auto-restart already in progress, skipping");
+            warn!("auto-restart already in progress, skipping");
             return;
         }
 
@@ -124,7 +122,7 @@ fn start_shutdown_listener(session: Session) {
 
         cleanup();
 
-        warn!("Session shutdown! Auto-restarting..");
+        warn!("session disconnected, auto-restarting");
 
         let device_name = crate::spirc::DEVICE_NAME
             .get()
@@ -142,11 +140,11 @@ fn start_shutdown_listener(session: Session) {
             crate::spirc::initialize_spirc(device_name, gapless, normalise, bitrate).await
         {
             IS_AUTO_RESTARTING.store(false, Ordering::Release);
-            error!("Failed to initialize spirc: {}", e);
+            error!("spirc init after reconnect failed: {e}");
             return;
         }
         let _ = crate::spirc::with_spirc(|spirc| {
-            info!("Auto Transfering session");
+            info!("auto-transferring session after reconnect");
             let _ = spirc.activate();
             let _ = spirc.transfer();
             spirc.resume_playback();
@@ -162,7 +160,7 @@ fn notify_callback(method: String) {
     let jvm = match crate::JVM.get() {
         Some(j) => j,
         None => {
-            error!("Cannot call session callback: JVM not initialized");
+            error!("jvm not available for session callback");
             return;
         }
     };
@@ -170,7 +168,7 @@ fn notify_callback(method: String) {
     let mut env = match jvm.attach_current_thread() {
         Ok(e) => e,
         Err(e) => {
-            error!("Failed to attach current thread: {e}");
+            error!("thread attach for session callback failed: {e}");
             return;
         }
     };

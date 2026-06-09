@@ -67,18 +67,17 @@ pub extern "system" fn Java_cc_tomko_outify_LibrespotFfi_libInit(
         std::env::set_var("RUST_BACKTRACE", "1");
     }
     std::panic::set_hook(Box::new(|info| {
-        log::error!("panic: {}", info);
+        log::error!("panic: {info}");
     }));
 
-    // Setting up directory
     let files_dir = crate::jni_utils::folders::get_android_dir(&mut env, &context, "getFilesDir");
     let cache_dir = crate::jni_utils::folders::get_android_dir(&mut env, &context, "getCacheDir");
 
     if FILES_DIR.set(files_dir).is_err() {
-        error!("Failed to set files dir concurrently!");
+        error!("files dir already set");
     }
     if CACHE_DIR.set(cache_dir).is_err() {
-        error!("Failed to set cache dir concurrently!");
+        error!("cache dir already set");
     }
 
     session::init_session_container();
@@ -88,7 +87,7 @@ pub extern "system" fn Java_cc_tomko_outify_LibrespotFfi_libInit(
     let client_id: String = match env.get_string(&client_id) {
         Ok(i) => i.into(),
         Err(e) => {
-            error!("Failed to get client_id: {e}");
+            error!("failed to read client_id from jni: {e}");
             return;
         },
     };
@@ -96,7 +95,7 @@ pub extern "system" fn Java_cc_tomko_outify_LibrespotFfi_libInit(
     let client_secret: String = match env.get_string(&client_secret) {
         Ok(i) => i.into(),
         Err(e) => {
-            error!("Failed to get client_secret: {e}");
+            error!("failed to read client_secret from jni: {e}");
             return;
         },
     };

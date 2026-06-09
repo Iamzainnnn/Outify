@@ -19,7 +19,7 @@ pub extern "system" fn username(env: JNIEnv, _class: JClass) -> jstring {
     let username = match crate::spclient::get_username() {
         Ok(u) => u,
         Err(e) => {
-            error!("failed to get username: {e}");
+            error!("failed to get username from session: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -27,7 +27,7 @@ pub extern "system" fn username(env: JNIEnv, _class: JClass) -> jstring {
     match env.new_string(username) {
         Ok(u) => u.into_raw(),
         Err(e) => {
-            error!("Failed to convert JString: {e}");
+            error!("jni new_string failed for username: {e}");
             return std::ptr::null_mut();
         }
     }
@@ -40,7 +40,7 @@ pub extern "system" fn get_current_user(env: JNIEnv, _class: JClass) -> jstring 
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for get_current_user");
             return std::ptr::null_mut();
         }
     };
@@ -49,12 +49,12 @@ pub extern "system" fn get_current_user(env: JNIEnv, _class: JClass) -> jstring 
         Ok(r) => match serde_json::to_string(&r) {
             Ok(j) => j,
             Err(e) => {
-                error!("failed to convert struct to json: {e}");
+                error!("serde for current user failed: {e}");
                 return std::ptr::null_mut();
             }
         },
         Err(e) => {
-            error!("failed to get current user: {e}");
+            error!("get_current_user api call failed: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -62,7 +62,7 @@ pub extern "system" fn get_current_user(env: JNIEnv, _class: JClass) -> jstring 
     match env.new_string(&result) {
         Ok(s) => s.into_raw(),
         Err(e) => {
-            error!("failed to convert JString: {e}");
+            error!("jni new_string failed for current user result: {e}");
             return std::ptr::null_mut();
         }
     }
@@ -82,7 +82,7 @@ pub extern "system" fn spotify_search(
     let query: String = match env.get_string(&query) {
         Ok(q) => q.into(),
         Err(e) => {
-            error!("failed to get query as string: {}", e);
+            error!("jni get_string failed for search query: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -90,7 +90,7 @@ pub extern "system" fn spotify_search(
     let jtype: String = match env.get_string(&jtype) {
         Ok(q) => q.into(),
         Err(e) => {
-            error!("failed to get jtype as string: {}", e);
+            error!("jni get_string failed for search type: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -98,7 +98,7 @@ pub extern "system" fn spotify_search(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for search");
             return std::ptr::null_mut();
         }
     };
@@ -111,7 +111,7 @@ pub extern "system" fn spotify_search(
     let uris = match uris_res {
         Ok(u) => u,
         Err(e) => {
-            error!("failed to search spotify: {e}");
+            error!("spotify search api failed: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -136,7 +136,7 @@ pub extern "system" fn save_item(mut env: JNIEnv, _class: JClass, uris: JObjectA
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for save_items");
             return 0;
         }
     };
@@ -147,13 +147,13 @@ pub extern "system" fn save_item(mut env: JNIEnv, _class: JClass, uris: JObjectA
         Ok(status) => {
             let success = status.is_success();
             if !success {
-                warn!("failed to save items with status: {}", status.as_str());
+                warn!("save_items returned {}", status.as_str());
             }
 
             success as jboolean
         }
         Err(e) => {
-            error!("save_items failed: {e}");
+            error!("save_items api call failed: {e}");
             0
         }
     }
@@ -180,7 +180,7 @@ pub extern "system" fn delete_items(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for delete_items");
             return 0;
         }
     };
@@ -191,13 +191,13 @@ pub extern "system" fn delete_items(
         Ok(status) => {
             let success = status.is_success();
             if !success {
-                warn!("failed to delee items with status: {}", status.as_str());
+                warn!("delete_items returned {}", status.as_str());
             }
 
             success as jboolean
         }
         Err(e) => {
-            error!("delete_items failed: {e}");
+            error!("delete_items api call failed: {e}");
             0
         }
     }
@@ -218,7 +218,7 @@ pub extern "system" fn get_user_top(
         match env.get_string(&r#type) {
             Ok(t) => Some(t.into()),
             Err(e) => {
-                error!("failed to get request type: {e}");
+                error!("jni get_string failed for top request type: {e}");
                 return std::ptr::null_mut();
             }
         }
@@ -227,7 +227,7 @@ pub extern "system" fn get_user_top(
     let time_range: String = match env.get_string(&time_range) {
         Ok(t) => t.into(),
         Err(e) => {
-            error!("failed to get time range: {e}");
+            error!("jni get_string failed for top time range: {e}");
             let _ = env.throw_new(
                 "java/lang/IllegalArgumentException",
                 format!("Invalid time_range: {}", e),
@@ -239,7 +239,7 @@ pub extern "system" fn get_user_top(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for get_user_top");
             return std::ptr::null_mut();
         }
     };
@@ -251,17 +251,17 @@ pub extern "system" fn get_user_top(
             Ok(json) => match env.new_string(&json) {
                 Ok(r) => r.into_raw(),
                 Err(e) => {
-                    error!("failed to create new jstring: {e}");
+                    error!("jni new_string failed for top result: {e}");
                     std::ptr::null_mut()
                 }
             },
             Err(e) => {
-                error!("failed to serialize result: {e}");
+                error!("serde for top result failed: {e}");
                 std::ptr::null_mut()
             }
         },
         Err(e) => {
-            error!("get_user_top failed: {e}");
+            error!("get_user_top api call failed: {e}");
             std::ptr::null_mut()
         }
     }
@@ -278,7 +278,7 @@ pub extern "system" fn transfer_playback_device(
     let device_id: String = match env.get_string(&device_id) {
         Ok(t) => t.into(),
         Err(e) => {
-            error!("failed to get device id: {e}");
+            error!("jni get_string failed for device id: {e}");
             return 0;
         }
     };
@@ -286,7 +286,7 @@ pub extern "system" fn transfer_playback_device(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for transfer_playback");
             return 0;
         }
     };
@@ -296,7 +296,7 @@ pub extern "system" fn transfer_playback_device(
     match result {
         Ok(result) => result.is_success() as jboolean,
         Err(e) => {
-            error!("get_user_top failed: {e}");
+            error!("transfer_playback api call failed: {e}");
             0
         }
     }
@@ -309,7 +309,7 @@ pub extern "system" fn get_devices(env: JNIEnv, _class: JClass) -> jstring {
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for get_devices");
             return std::ptr::null_mut();
         }
     };
@@ -320,17 +320,17 @@ pub extern "system" fn get_devices(env: JNIEnv, _class: JClass) -> jstring {
             Ok(json) => match env.new_string(&json) {
                 Ok(r) => r.into_raw(),
                 Err(e) => {
-                    error!("failed to create new jstring: {e}");
+                    error!("jni new_string failed for devices result: {e}");
                     std::ptr::null_mut()
                 }
             },
             Err(e) => {
-                error!("failed to serialize result: {e}");
+                error!("serde for devices result failed: {e}");
                 std::ptr::null_mut()
             }
         },
         Err(e) => {
-            error!("failed to get devices: {e}");
+            error!("get_devices api call failed: {e}");
             return std::ptr::null_mut();
         }
     }
@@ -343,7 +343,7 @@ pub extern "system" fn is_oauth_authenticated(_env: JNIEnv, _class: JClass) -> j
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for is_oauth_authenticated");
             return 0 as jboolean;
         }
     };
@@ -360,8 +360,8 @@ pub extern "system" fn get_oauth_scope(mut env: JNIEnv, _class: JClass) -> jstri
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
-            throw_exception(&mut env, "failed to get Tokio runtime!".to_string());
+            error!("tokio runtime not available for get_oauth_scope");
+            throw_exception(&mut env, "tokio runtime not available".to_string());
             return std::ptr::null_mut();
         }
     };
@@ -372,7 +372,7 @@ pub extern "system" fn get_oauth_scope(mut env: JNIEnv, _class: JClass) -> jstri
             match env.new_string(&scope) {
                 Ok(s) => s.into_raw(),
                 Err(e) => {
-                    error!("failed to get jni getOAuthScope string: {e}");
+                    error!("jni new_string failed for oauth scope: {e}");
                     return std::ptr::null_mut();
                 },
             }
@@ -393,7 +393,7 @@ pub extern "system" fn add_to_playlist(
     let playlist_id: String = match env.get_string(&playlist_id) {
         Ok(p) => p.into(),
         Err(e) => {
-            error!("failed to get playlist_id: {e}");
+            error!("jni get_string failed for add_to_playlist id: {e}");
             return 0 as jboolean;
         }
     };
@@ -411,7 +411,7 @@ pub extern "system" fn add_to_playlist(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for add_to_playlist");
             return 0;
         }
     };
@@ -422,13 +422,13 @@ pub extern "system" fn add_to_playlist(
         Ok(status) => {
             let success = status.is_success();
             if !success {
-                warn!("failed to add to playlist with status: {}", status.as_str());
+                warn!("add_to_playlist returned {}", status.as_str());
             }
 
             success as jboolean
         }
         Err(e) => {
-            error!("add_to_playlist failed: {e}");
+            error!("add_to_playlist api call failed: {e}");
             0
         }
     }
@@ -446,7 +446,7 @@ pub extern "system" fn delete_from_playlist(
     let playlist_id: String = match env.get_string(&playlist_id) {
         Ok(p) => p.into(),
         Err(e) => {
-            error!("failed to get playlist_id: {e}");
+            error!("jni get_string failed for delete_from_playlist id: {e}");
             return 0 as jboolean;
         }
     };
@@ -464,7 +464,7 @@ pub extern "system" fn delete_from_playlist(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for delete_from_playlist");
             return 0;
         }
     };
@@ -476,7 +476,7 @@ pub extern "system" fn delete_from_playlist(
             let success = status.is_success();
             if !success {
                 warn!(
-                    "failed to delete from playlist with status: {}",
+                    "delete_from_playlist returned {}",
                     status.as_str()
                 );
             }
@@ -484,7 +484,7 @@ pub extern "system" fn delete_from_playlist(
             success as jboolean
         }
         Err(e) => {
-            error!("delete_from_playlist failed: {e}");
+            error!("delete_from_playlist api call failed: {e}");
             0
         }
     }
@@ -504,8 +504,8 @@ pub extern "system" fn create_playlist(
     let name: String = match env.get_string(&name) {
         Ok(n) => n.into(),
         Err(e) => {
-            error!("failed to get name: {e}");
-            throw_exception(&mut env, format!("Failed to get name: {e}"));
+            error!("jni get_string failed for create_playlist name: {e}");
+            throw_exception(&mut env, format!("failed to get playlist name: {e}"));
             return std::ptr::null_mut();
         }
     };
@@ -515,7 +515,7 @@ pub extern "system" fn create_playlist(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for create_playlist");
             return std::ptr::null_mut();
         }
     };
@@ -535,7 +535,7 @@ pub extern "system" fn create_playlist(
             }
         },
         Err(e) => {
-            error!("create_playlist failed: {e}");
+            error!("create_playlist api call failed: {e}");
             throw_exception(&mut env, format!("create_playlist failed: {e}"));
             return std::ptr::null_mut();
         }
@@ -557,8 +557,8 @@ pub extern "system" fn modify_playlist(
     let playlist_id: String = match env.get_string(&playlist_id) {
         Ok(n) => n.into(),
         Err(e) => {
-            error!("failed to get playlist_id: {e}");
-            throw_exception(&mut env, format!("Failed to get playlist_id: {e}"));
+            error!("jni get_string failed for modify_playlist id: {e}");
+            throw_exception(&mut env, format!("failed to get playlist id: {e}"));
             return 0;
         }
     };
@@ -566,8 +566,8 @@ pub extern "system" fn modify_playlist(
     let name: String = match env.get_string(&name) {
         Ok(n) => n.into(),
         Err(e) => {
-            error!("failed to get name: {e}");
-            throw_exception(&mut env, format!("Failed to get name: {e}"));
+            error!("jni get_string failed for modify_playlist name: {e}");
+            throw_exception(&mut env, format!("failed to get playlist name: {e}"));
             return 0;
         }
     };
@@ -577,7 +577,7 @@ pub extern "system" fn modify_playlist(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for modify_playlist");
             return 0;
         }
     };
@@ -597,7 +597,7 @@ pub extern "system" fn modify_playlist(
     match result {
         Ok(status) => status.as_u16().into(),
         Err(e) => {
-            error!("modify_playlist failed: {e}");
+            error!("modify_playlist api call failed: {e}");
             throw_exception(&mut env, format!("modify_playlist failed: {e}"));
             return 0;
         }
@@ -617,7 +617,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_searchContext(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for search_context");
             return std::ptr::null_mut();
         }
     };
@@ -625,7 +625,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_searchContext(
     let query: String = match env.get_string(&query) {
         Ok(q) => q.into(),
         Err(e) => {
-            error!("failed to get query as string: {}", e);
+            error!("jni get_string failed for search context query: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -648,13 +648,13 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_searchContext(
                 match serde_json::to_string(&uris) {
                     Ok(s) => Ok(s),
                     Err(e) => {
-                        error!("failed to serialize uris: {}", e);
+                        error!("serde for search context uris failed: {e}");
                         Err(())
                     }
                 }
             }
             Err(e) => {
-                error!("failed to get context: {}", e);
+                error!("get_context for search failed: {e}");
                 Err(())
             }
         }
@@ -668,7 +668,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_searchContext(
     match env.new_string(json) {
         Ok(jstr) => jstr.into_raw(),
         Err(e) => {
-            error!("JNI new_string failed: {:?}", e);
+            error!("jni new_string failed for search context: {e:?}");
             std::ptr::null_mut()
         }
     }
@@ -685,7 +685,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_getUserCollection(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for get_user_collection");
             return std::ptr::null_mut();
         }
     };
@@ -696,7 +696,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_getUserCollection(
         match env.get_string(&query) {
             Ok(js) => Some(js.into()),
             Err(e) => {
-                error!("failed to get query uri: {}", e);
+                error!("jni get_string failed for collection query: {e}");
                 return std::ptr::null_mut();
             }
         }
@@ -705,7 +705,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_getUserCollection(
     let user_id = match with_session(|session| session.username()) {
         Ok(u) => u,
         Err(e) => {
-            error!("Failed to get user_id: {e}");
+            error!("with_session failed for collection user_id: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -728,13 +728,13 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_getUserCollection(
                 match serde_json::to_string(&uris) {
                     Ok(s) => Ok(s),
                     Err(e) => {
-                        error!("failed to serialize uris: {}", e);
+                        error!("serde for collection uris failed: {e}");
                         Err(())
                     }
                 }
             }
             Err(e) => {
-                error!("failed to get context: {}", e);
+                error!("get_context for collection failed: {e}");
                 Err(())
             }
         }
@@ -748,7 +748,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_getUserCollection(
     match env.new_string(json) {
         Ok(jstr) => jstr.into_raw(),
         Err(e) => {
-            error!("JNI new_string failed: {:?}", e);
+            error!("jni new_string failed for collection result: {e:?}");
             std::ptr::null_mut()
         }
     }
@@ -762,7 +762,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_SpClient_getRootlist(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for get_rootlist");
             return std::ptr::null_mut();
         }
     };
@@ -807,7 +807,7 @@ pub extern "system" fn get_radio_for_track(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for get_radio");
             return std::ptr::null_mut();
         }
     };
@@ -815,7 +815,7 @@ pub extern "system" fn get_radio_for_track(
     let track_uri_raw: String = match env.get_string(&track_uri) {
         Ok(js) => js.into(),
         Err(e) => {
-            error!("failed to get track_uri: {}", e);
+            error!("jni get_string failed for radio track_uri: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -826,7 +826,7 @@ pub extern "system" fn get_radio_for_track(
     let track_uri = match SpotifyUri::from_uri(&uri_string.as_str()) {
         Ok(u) => u,
         Err(e) => {
-            error!("failed to convert uri: {e}");
+            error!("SpotifyUri::from_uri failed for radio track: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -836,12 +836,12 @@ pub extern "system" fn get_radio_for_track(
             Ok(bytes) => match String::from_utf8(bytes.to_vec()) {
                 Ok(s) => Some(s),
                 Err(e) => {
-                    error!("failed to convert to string: {}", e);
+                    error!("utf8 conversion for radio response failed: {e}");
                     None
                 }
             },
             Err(e) => {
-                error!("request failed: {}", e);
+                error!("get_radio_for_track request failed: {e}");
                 None
             }
         }
@@ -855,7 +855,7 @@ pub extern "system" fn get_radio_for_track(
     match env.new_string(json) {
         Ok(j) => j.into_raw(),
         Err(e) => {
-            error!("failed to convert to jstring: {}", e);
+            error!("jni new_string failed for radio result: {e}");
             std::ptr::null_mut()
         }
     }
@@ -870,7 +870,7 @@ pub extern "system" fn get_lyrics_for_track(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for get_lyrics");
             return std::ptr::null_mut();
         }
     };
@@ -878,7 +878,7 @@ pub extern "system" fn get_lyrics_for_track(
     let track_id_raw: String = match env.get_string(&track_id) {
         Ok(js) => js.into(),
         Err(e) => {
-            error!("failed to get track_id: {}", e);
+            error!("jni get_string failed for lyrics track_id: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -886,7 +886,7 @@ pub extern "system" fn get_lyrics_for_track(
     let track_id = match SpotifyId::from_base62(&track_id_raw.as_str()) {
         Ok(u) => u,
         Err(e) => {
-            error!("failed to convert uri: {e}");
+            error!("SpotifyId::from_base62 failed for lyrics track: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -896,12 +896,12 @@ pub extern "system" fn get_lyrics_for_track(
             Ok(bytes) => match String::from_utf8(bytes.to_vec()) {
                 Ok(s) => Some(s),
                 Err(e) => {
-                    error!("failed to convert to string: {}", e);
+                    error!("utf8 conversion for lyrics response failed: {e}");
                     None
                 }
             },
             Err(e) => {
-                error!("request failed: {}", e);
+                error!("get_lyrics request failed: {e}");
                 None
             }
         }
@@ -915,7 +915,7 @@ pub extern "system" fn get_lyrics_for_track(
     match env.new_string(json) {
         Ok(j) => j.into_raw(),
         Err(e) => {
-            error!("failed to convert to jstring: {}", e);
+            error!("jni new_string failed for lyrics result: {e}");
             std::ptr::null_mut()
         }
     }
@@ -929,7 +929,7 @@ pub extern "system" fn start_oauth_flow(env: JNIEnv, _class: JClass) -> jstring 
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for start_oauth_flow");
             return std::ptr::null_mut();
         }
     };
@@ -939,7 +939,7 @@ pub extern "system" fn start_oauth_flow(env: JNIEnv, _class: JClass) -> jstring 
     let auth_url = match auth_url_result {
         Ok(url) => url,
         Err(e) => {
-            error!("Failed to start OAuth flow: {e}");
+            error!("start_oauth_flow api call failed: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -947,7 +947,7 @@ pub extern "system" fn start_oauth_flow(env: JNIEnv, _class: JClass) -> jstring 
     match env.new_string(auth_url) {
         Ok(java_str) => java_str.into_raw(),
         Err(e) => {
-            error!("Failed to create Java string: {:?}", e);
+            error!("jni new_string failed for oauth url: {e:?}");
             std::ptr::null_mut()
         }
     }
@@ -964,7 +964,7 @@ pub extern "system" fn complete_oauth_flow(
     let code: String = match env.get_string(&code) {
         Ok(js) => js.into(),
         Err(e) => {
-            error!("JNI failed to read code: {}", e);
+            error!("jni get_string failed for oauth code: {e}");
             return spclient_make_error_json(&env, "authentication", "Failed to read OAuth code");
         }
     };
@@ -972,7 +972,7 @@ pub extern "system" fn complete_oauth_flow(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for complete_oauth_flow");
             return spclient_make_error_json(&env, "unknown", "Tokio runtime not initialized");
         }
     };
@@ -981,11 +981,11 @@ pub extern "system" fn complete_oauth_flow(
 
     match result {
         Ok(token) => {
-            debug!("OAuth flow completed successfully");
+            debug!("oauth flow completed via jni");
             spclient_make_success_json(&env)
         }
         Err(e) => {
-            error!("OAuth flow completion failed: {e}");
+            error!("complete_oauth_flow api call failed: {e}");
             let err_type = classify_spclient_error(&e);
             spclient_make_error_json(&env, err_type, &e.to_string())
         }
@@ -1032,7 +1032,7 @@ pub extern "system" fn logout(_env: JNIEnv, _class: JClass) -> jboolean {
     let client = get_client();
     match client.remove_token() {
         Ok(_) => {
-            info!("Spotify Client credentials deleted!");
+            info!("spotify oauth token removed");
             1
         }
         Err(_) => 0,

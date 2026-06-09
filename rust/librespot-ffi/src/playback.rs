@@ -39,7 +39,7 @@ extern "C" fn rust_pcm_trampoline(
     };
 
     if len > buffer_capacity {
-        warn!("PCM frame is larger than buffer capacity!");
+        warn!("pcm frame exceeds buffer capacity");
         return;
     }
 
@@ -99,7 +99,7 @@ pub extern "system" fn Java_cc_tomko_outify_playback_AudioEngine_registerPcmCall
             let _ = JAVA_VM.set(jvm);
         }
         Err(e) => {
-            error!("Failed to get JavaVM in registerPcmCallback: {e}");
+            error!("jni get_java_vm failed in register_pcm_callback: {e}");
             return;
         }
     }
@@ -107,7 +107,7 @@ pub extern "system" fn Java_cc_tomko_outify_playback_AudioEngine_registerPcmCall
     let global_ref = match env.new_global_ref(callback) {
         Ok(g) => g,
         Err(e) => {
-            error!("Failed to create GlobalRef for callback: {e}");
+            error!("jni new_global_ref failed for pcm callback: {e}");
             return;
         }
     };
@@ -119,7 +119,7 @@ pub extern "system" fn Java_cc_tomko_outify_playback_AudioEngine_registerPcmCall
                 *guard = Some(global_ref);
             }
             Err(e) => {
-                error!("Failed to lock PCM_CALLBACK mutex: {e}");
+                error!("lock of pcm_callback mutex failed: {e}");
                 return;
             }
         }
@@ -128,7 +128,7 @@ pub extern "system" fn Java_cc_tomko_outify_playback_AudioEngine_registerPcmCall
     let ptr = match env.get_direct_buffer_address(&buffer) {
         Ok(p) => p,
         Err(e) => {
-            error!("Failed to get ByteBuffer pointer: {e}");
+            error!("jni get_direct_buffer_address failed for pcm: {e}");
             return;
         }
     };
@@ -136,7 +136,7 @@ pub extern "system" fn Java_cc_tomko_outify_playback_AudioEngine_registerPcmCall
     let buffer_capacity = match env.get_direct_buffer_capacity(&buffer) {
         Ok(c) => c,
         Err(e) => {
-            error!("Failed to get ByteBuffer capacity: {e}");
+            error!("jni get_direct_buffer_capacity failed for pcm: {e}");
             return;
         }
     };
@@ -145,7 +145,7 @@ pub extern "system" fn Java_cc_tomko_outify_playback_AudioEngine_registerPcmCall
     let buf_global = match env.new_global_ref(buf_obj) {
         Ok(g) => g,
         Err(e) => {
-            error!("Failed to create GlobalRef for Buffer: {e}");
+            error!("jni new_global_ref failed for pcm buffer: {e}");
             return;
         },
     };
@@ -157,7 +157,7 @@ pub extern "system" fn Java_cc_tomko_outify_playback_AudioEngine_registerPcmCall
                 *guard = Some(buf_global)
             },
             Err(e) => {
-                error!("Failed to lock BufferGlobal mutex: {e}");
+                error!("lock of buffer_global mutex failed: {e}");
                 return;
             },
         }
@@ -167,5 +167,5 @@ pub extern "system" fn Java_cc_tomko_outify_playback_AudioEngine_registerPcmCall
     BUFFER_CAPACITY.set(buffer_capacity).ok();
 
     AndroidSink::set_callback(rust_pcm_trampoline);
-    log::info!("Registered PCM callback!");
+    info!("pcm callback registered");
 }

@@ -129,7 +129,7 @@ impl SpircRuntime {
             while let Some(ev) = rx.recv().await {
                 handle_event(ev);
             }
-            info!("SpircRuntime event receiver closed");
+            info!("spirc runtime event receiver closed");
         });
 
         GAPLESS.store(gapless, std::sync::atomic::Ordering::Relaxed);
@@ -139,7 +139,7 @@ impl SpircRuntime {
         *bitrate_mutex.lock().unwrap() = bitrate;
 
         info!(
-            "SpircRuntime initialized with bitrate {}, gapless audio {} and audio normalisation {}",
+            "spirc runtime initialized with bitrate {}, gapless {}, normalisation {}",
             bitrate as u32, gapless, normalisation
         );
 
@@ -226,7 +226,7 @@ impl SpircRuntime {
     }
 
     pub fn transfer(&self) -> Result<(), librespot_core::Error> {
-        info!("Transfering session");
+        info!("transferring session to this device");
         // TODO: Make configurable from Java?
         let options = librespot_core::dealer::protocol::TransferOptions {
             ..Default::default()
@@ -283,7 +283,7 @@ impl SpircRuntime {
             None => return,
         };
 
-        info!("Resuming playback!");
+        info!("resuming playback after reconnect");
 
         // Starting from latest recorded track
         let last_uri = match current_track() {
@@ -314,7 +314,7 @@ impl SpircRuntime {
 
         let req = LoadRequest::from_context_uri(context.uri.to_string(), options);
         if let Err(e) = self.spirc.load(req) {
-            error!("Failed to resume playback: {}", e);
+            error!("resume after reconnect load failed: {e}");
         }
     }
 
@@ -331,7 +331,7 @@ impl SpircRuntime {
 
 // Handles each player event accordingly
 fn handle_event(event: PlayerEvent) {
-    info!("handling event: {:#?}", event);
+    info!("handling player event: {event:#?}");
 
     match event {
         PlayerEvent::Playing {
@@ -392,13 +392,13 @@ fn handle_event(event: PlayerEvent) {
             play_request_id: _,
             track_id,
         } => {
-            info!("Its time to preload {}", track_id);
+            info!("preloading track {track_id}");
         }
         PlayerEvent::AddedToQueue { track_id } => {
-            info!("Track added to queue:  {}", track_id);
+            info!("track queued: {track_id}");
         }
         PlayerEvent::BufferStart {} => {
-            info!("We are buffering!");
+            info!("buffering started");
             notify_buffer_state("started".to_string());
         }
         PlayerEvent::BufferStop {} => {
@@ -418,7 +418,7 @@ fn handle_event(event: PlayerEvent) {
             let session = match with_session(|s| s.clone()) {
                 Ok(s) => s,
                 Err(_) => {
-                    error!("Session unavailable for device state check");
+                    error!("session not available for device state check");
                     return;
                 }
             };
@@ -471,34 +471,34 @@ pub async fn initialize_spirc(
     normalisation: bool,
     bitrate: Bitrate,
 ) -> Result<(), SpircError> {
-    debug!("Initializing SpircRuntime");
+    debug!("initializing spirc runtime");
 
     let lock = SPIRC_RUNTIME.get_or_init(|| RwLock::new(None));
 
     {
         let read_guard = lock.read().unwrap();
         if read_guard.is_some() {
-            warn!("Spirc already initialized!");
+            warn!("spirc already initialized");
         }
     }
 
     let session = with_session(|s| s.clone()).map_err(|e| {
-        error!("Failed to get session: {}", e);
-        SpircError::Other(format!("Failed to get session: {}", e))
+        error!("failed to clone session for spirc init: {e}");
+        SpircError::Other(format!("failed to clone session for spirc init: {e}"))
     })?;
 
     if session.cache().is_none() {
-        error!("Cannot initialize SpircRuntime as session cache is none!");
+        error!("session cache missing for spirc init");
         return Err(SpircError::Other(
-            "Cannot initialize SpircRuntime as session cache is none".to_string(),
+            "session cache missing for spirc init".to_string(),
         ));
     }
 
     let cache = session.cache().unwrap();
     let credentials = cache.credentials().ok_or_else(|| {
-        error!("Cannot initialize SpircRuntime as cached credentials are None!");
+        error!("cached credentials missing for spirc init");
         SpircError::Other(
-            "Cannot initialize SpircRuntime as cached credentials are None!".to_string(),
+            "cached credentials missing for spirc init".to_string(),
         )
     })?;
 
@@ -520,7 +520,7 @@ pub async fn initialize_spirc(
     let mut guard = lock.write().unwrap();
     *guard = Some(runtime);
 
-    debug!("SpircRuntime initialized");
+    debug!("spirc runtime initialized");
 
     Ok(())
 }
@@ -531,7 +531,7 @@ fn notify_buffer_state(method: String) {
     let jvm = match crate::JVM.get() {
         Some(j) => j,
         None => {
-            error!("cannot notify buffer state as JVM is none!");
+            error!("jvm not available for buffer callback");
             return;
         }
     };
@@ -545,23 +545,22 @@ fn notify_buffer_state(method: String) {
         let mut env = match jvm.attach_current_thread() {
             Ok(env) => env,
             Err(e) => {
-                error!("failed to attach env: {e}");
+                error!("thread attach for buffer callback failed: {e}");
                 return;
             }
         };
 
         if let Err(e) = env.call_method(callback.as_obj(), method, "()V", &[]) {
-            log::error!("Failed to call buffer callback: {e}");
+            log::error!("buffer callback invocation failed: {e}");
         }
     }
 }
 
-// Notifies UI when this device becomes active or inactive
 pub fn notify_device_state(is_active: bool) {
     let jvm = match crate::JVM.get() {
         Some(j) => j,
         None => {
-            error!("cannot notify device state as JVM is none!");
+            error!("jvm not available for device callback");
             return;
         }
     };
@@ -582,13 +581,13 @@ pub fn notify_device_state(is_active: bool) {
             let mut env = match jvm.attach_current_thread() {
                 Ok(env) => env,
                 Err(e) => {
-                    error!("failed to attach env for device callback: {e}");
+                    error!("jvm attach failed for device active callback: {e}");
                     return;
                 }
             };
 
             if let Err(e) = env.call_method(callback.as_obj(), method, "()V", &[]) {
-                log::error!("Failed to call device callback {}: {e}", method);
+                log::error!("device callback {method} invocation failed: {e}");
             }
         });
     }
@@ -598,7 +597,7 @@ pub fn notify_device_volume(volume: u16) {
     let jvm = match crate::JVM.get() {
         Some(j) => j,
         None => {
-            error!("cannot notify device state as JVM is none!");
+            error!("jvm not available for volume callback");
             return;
         }
     };
@@ -613,13 +612,13 @@ pub fn notify_device_volume(volume: u16) {
             let mut env = match jvm.attach_current_thread() {
                 Ok(env) => env,
                 Err(e) => {
-                    error!("failed to attach env for device callback: {e}");
+                    error!("jvm attach failed for device volume callback: {e}");
                     return;
                 }
             };
 
             if let Err(e) = env.call_method(callback.as_obj(), "volumeChanged", "(I)V", &[JValue::Int(volume as i32)]) {
-                log::error!("Failed to call device callback volumeChanged: {e}");
+                log::error!("volume callback invocation failed: {e}");
             }
         });
     }
@@ -641,7 +640,7 @@ pub fn shutdown() {
     let mut guard = lock.write().unwrap();
     *guard = None;
 
-    info!("SpircRuntime shutdown!");
+    info!("spirc runtime shut down");
 }
 
 pub fn with_spirc<F, R>(f: F) -> Result<R, SpircError>

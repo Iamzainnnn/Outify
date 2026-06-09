@@ -27,12 +27,12 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_initializeSpirc(
     bitrate: jint,
     device_name: JString,
 ) -> jboolean {
-    info!("Initializing spirc!");
+    info!("initializing spirc");
 
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(rt) => rt,
         None => {
-            error!("Cannot initialize spirc due to uninitialized tokio");
+            error!("tokio runtime not available for initialize_spirc");
             return 0;
         }
     };
@@ -42,7 +42,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_initializeSpirc(
     let global_callback = match env.new_global_ref(callback) {
         Ok(g) => g,
         Err(e) => {
-            error!("Failed to make global ref for callback: {e}");
+            error!("jni new_global_ref failed for spirc callback: {e}");
             return 0;
         }
     };
@@ -50,7 +50,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_initializeSpirc(
     let name: String = match env.get_string(&device_name) {
         Ok(s) => s.into(),
         Err(e) => {
-            error!("Failed to read device_name: {e}");
+            error!("jni get_string failed for device_name: {e}");
             return 0;
         }
     };
@@ -71,7 +71,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_initializeSpirc(
         let mut env = match jvm.attach_current_thread() {
             Ok(env) => env,
             Err(e) => {
-                error!("Failed to attach thread: {e}");
+                error!("jvm attach_current_thread failed for spirc init: {e}");
                 return;
             }
         };
@@ -106,7 +106,7 @@ pub extern "system" fn set_buffer_callback(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(rt) => rt,
         None => {
-            error!("Cannot initialize spirc due to uninitialized tokio");
+            error!("tokio runtime not available for buffer_callback");
             return 0;
         }
     };
@@ -116,7 +116,7 @@ pub extern "system" fn set_buffer_callback(
     let global_callback = match env.new_global_ref(callback) {
         Ok(g) => g,
         Err(e) => {
-            error!("Failed to make global ref for callback: {e}");
+            error!("jni new_global_ref failed for buffer callback: {e}");
             return 0;
         }
     };
@@ -138,7 +138,7 @@ pub extern "system" fn set_device_callback(
     let global_callback = match env.new_global_ref(callback) {
         Ok(g) => g,
         Err(e) => {
-            error!("Failed to make global ref for device callback: {e}");
+            error!("jni new_global_ref failed for device callback: {e}");
             return 0;
         }
     };
@@ -231,7 +231,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_addToQueue(
     let uri: String = match env.get_string(&juri) {
         Ok(u) => u.into(),
         Err(e) => {
-            warn!("Failed to get URI from JNI juri: {}", e);
+            warn!("jni get_string failed for add_to_queue uri: {e}");
             return 0;
         }
     };
@@ -242,7 +242,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_addToQueue(
     let spotify_uri = match SpotifyUri::from_uri(uri_string.as_str()) {
         Ok(uri) => uri,
         Err(e) => {
-            warn!("failed to get SpotifyURI: {}", e);
+            warn!("SpotifyUri::from_uri failed for add_to_queue: {e}");
             return 0;
         }
     };
@@ -250,11 +250,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_addToQueue(
     match with_spirc(|runtime| runtime.add_to_queue(spotify_uri)) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to add to queue: {:?}", e);
+            warn!("with_spirc add_to_queue failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to add to queue: {:?}", e);
+            warn!("with_spirc session error for add_to_queue: {e:?}");
             0
         }
     }
@@ -291,7 +291,7 @@ pub extern "system" fn set_queue(
         match SpotifyUri::from_uri(&uri_string) {
             Ok(s) => uris.push(s),
             Err(e) => {
-                error!("Failed to parse SpotifyUri: {}", e);
+                error!("SpotifyUri::from_uri failed for set_queue: {e}");
                 return 0;
             }
         }
@@ -307,7 +307,7 @@ pub extern "system" fn set_queue(
                 Some(PlayingTrack::Uri(outify_uri.to_uri()))
             }
             Err(e) => {
-                error!("failed to get string: {e}");
+                error!("jni get_string failed for set_queue playing_track: {e}");
                 None
             }
         }
@@ -316,11 +316,11 @@ pub extern "system" fn set_queue(
     match with_spirc(|runtime| runtime.set_queue(uris, playing_track)) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to set queue: {:?}", e);
+            warn!("with_spirc set_queue failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to set queue: {:?}", e);
+            warn!("with_spirc session error for set_queue: {e:?}");
             0
         }
     }
@@ -336,11 +336,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_setVolume(
     match with_spirc(|runtime| runtime.set_volume(volume)) {
         Ok(Ok(())) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to set volume: {:?}", e);
+            warn!("with_spirc set_volume failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to set volume: {:?}", e);
+            warn!("with_spirc session error for set_volume: {e:?}");
             0
         }
     }
@@ -355,11 +355,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_activate(
     match with_spirc(|runtime| runtime.activate()) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to activate spirc: {:?}", e);
+            warn!("with_spirc activate failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to activate spirc: {:?}", e);
+            warn!("with_spirc session error for activate: {e:?}");
             0
         }
     }
@@ -371,15 +371,15 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_transfer(
     _env: JNIEnv,
     _this: JClass,
 ) -> jboolean {
-    info!("JNI Transfering session");
+    info!("jni transferring session");
     match with_spirc(|runtime| runtime.transfer()) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to transfer spirc: {:?}", e);
+            warn!("with_spirc transfer failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to transfer spirc: {:?}", e);
+            warn!("with_spirc session error for transfer: {e:?}");
             0
         }
     }
@@ -394,11 +394,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_seekTo(
     match with_spirc(|runtime| runtime.seek_to(jposition as u32)) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to seek spirc: {:?}", e);
+            warn!("with_spirc seek_to failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to seek spirc: {:?}", e);
+            warn!("with_spirc session error for seek_to: {e:?}");
             0
         }
     }
@@ -410,11 +410,11 @@ pub extern "system" fn shuffle_spirc(env: JNIEnv, _this: JClass, enabled: jboole
     match with_spirc(|runtime| runtime.shuffle(enabled)) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to shuffle spirc: {:?}", e);
+            warn!("with_spirc shuffle failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to shuffle spirc: {:?}", e);
+            warn!("with_spirc session error for shuffle: {e:?}");
             0
         }
     }
@@ -426,11 +426,11 @@ pub extern "system" fn repeat_spirc(env: JNIEnv, _this: JClass, enabled: jboolea
     match with_spirc(|runtime| runtime.repeat(enabled)) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to repeat spirc: {:?}", e);
+            warn!("with_spirc repeat failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to repeat spirc: {:?}", e);
+            warn!("with_spirc session error for repeat: {e:?}");
             0
         }
     }
@@ -445,11 +445,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_playerPlay(
     match with_spirc(|runtime| runtime.play()) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to play spirc: {:?}", e);
+            warn!("with_spirc play failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to play spirc: {:?}", e);
+            warn!("with_spirc session error for play: {e:?}");
             0
         }
     }
@@ -464,11 +464,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_playerPause(
     match with_spirc(|runtime| runtime.pause()) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to pause spirc: {:?}", e);
+            warn!("with_spirc pause failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to pause spirc: {:?}", e);
+            warn!("with_spirc session error for pause: {e:?}");
             0
         }
     }
@@ -483,11 +483,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_playerPlayPause(
     match with_spirc(|runtime| runtime.play_pause()) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to play_pause spirc: {:?}", e);
+            warn!("with_spirc play_pause failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to play_pause spirc: {:?}", e);
+            warn!("with_spirc session error for play_pause: {e:?}");
             0
         }
     }
@@ -502,11 +502,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_playerNext(
     match with_spirc(|runtime| runtime.next()) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to player next spirc: {:?}", e);
+            warn!("with_spirc next failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to player next spirc: {:?}", e);
+            warn!("with_spirc session error for next: {e:?}");
             0
         }
     }
@@ -521,11 +521,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_playerPrevious(
     match with_spirc(|runtime| runtime.prev()) {
         Ok(Ok(_)) => 1,
         Ok(Err(e)) => {
-            warn!("Failed to player prev spirc: {:?}", e);
+            warn!("with_spirc prev failed: {e:?}");
             0
         }
         Err(e) => {
-            warn!("Failed to player prev spirc: {:?}", e);
+            warn!("with_spirc session error for prev: {e:?}");
             0
         }
     }
@@ -539,7 +539,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_previousTracks(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for prev_tracks");
             return std::ptr::null_mut();
         }
     };
@@ -548,11 +548,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_previousTracks(
         match with_spirc(|runtime| rt.block_on(async move { runtime.prev_tracks().await })) {
             Ok(Ok(tracks)) => tracks, // success: outer Ok, inner Ok
             Ok(Err(e)) => {
-                error!("failed to fetch tracks: {}", e);
+                error!("with_spirc prev_tracks failed: {e}");
                 return std::ptr::null_mut();
             }
             Err(e) => {
-                error!("spirc not available: {:?}", e);
+                error!("with_spirc session error for prev_tracks: {e:?}");
                 return std::ptr::null_mut();
             }
         };
@@ -561,7 +561,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_previousTracks(
     let json = match serde_json::to_string(&uris) {
         Ok(j) => j,
         Err(e) => {
-            error!("serde_json: {}", e);
+            error!("serde for prev_tracks failed: {e}");
             "[]".to_string()
         }
     };
@@ -569,7 +569,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_previousTracks(
     match env.new_string(&json) {
         Ok(jni_str) => jni_str.into_raw(),
         Err(e) => {
-            error!("failed to convert json into json: {}", e);
+            error!("jni new_string failed for prev_tracks: {e}");
             std::ptr::null_mut()
         }
     }
@@ -583,7 +583,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_nextTracks(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to get Tokio runtime!");
+            error!("tokio runtime not available for next_tracks");
             return std::ptr::null_mut();
         }
     };
@@ -592,11 +592,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_nextTracks(
         match with_spirc(|runtime| rt.block_on(async move { runtime.next_tracks().await })) {
             Ok(Ok(tracks)) => tracks,
             Ok(Err(e)) => {
-                error!("failed to fetch tracks: {}", e);
+                error!("with_spirc next_tracks failed: {e}");
                 return std::ptr::null_mut();
             }
             Err(e) => {
-                error!("spirc not available: {:?}", e);
+                error!("with_spirc session error for next_tracks: {e:?}");
                 return std::ptr::null_mut();
             }
         };
@@ -606,7 +606,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_nextTracks(
     let json = match serde_json::to_string(&uris) {
         Ok(j) => j,
         Err(e) => {
-            error!("serde_json: {}", e);
+            error!("serde for next_tracks failed: {e}");
             "[]".to_string()
         }
     };
@@ -614,7 +614,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_nextTracks(
     match env.new_string(&json) {
         Ok(jni_str) => jni_str.into_raw(),
         Err(e) => {
-            error!("failed to convert json into json: {}", e);
+            error!("jni new_string failed for next_tracks: {e}");
             std::ptr::null_mut()
         }
     }
@@ -633,7 +633,7 @@ fn resolve_uri_or_collection(env: &mut JNIEnv, juri: JString) -> Result<String, 
                 Ok(outify_uri.to_uri())
             }
             Err(e) => {
-                warn!("Failed to get URI from JNI juri: {}", e);
+                warn!("jni get_string failed for resolve_uri: {e}");
                 Err(())
             }
         }
@@ -648,7 +648,7 @@ fn jstring_to_option(env: &mut JNIEnv, js: JString) -> Result<Option<String>, ()
         match env.get_string(&js) {
             Ok(s) => Ok(Some(s.into())),
             Err(e) => {
-                error!("failed to get jstring: {}", e);
+                error!("jni get_string failed for jstring_to_option: {e}");
                 Err(())
             }
         }
@@ -659,28 +659,28 @@ fn call_spirc_load(uri: String, options: LoadRequestOptions) -> jboolean {
     match with_spirc(|runtime| runtime.load(uri, options)) {
         Ok(Ok(_)) => 1 as jboolean,
         Ok(Err(e)) => {
-            error!("Failed to load Spirc: {}", e);
+            error!("with_spirc load failed: {e}");
             0 as jboolean
         }
         Err(e) => match e {
             SpircError::NotInitialized | SpircError::NotCreated => {
-                debug!("Trying to auto initialize Spirc..");
+                debug!("auto initializing spirc on load failure");
                 let rt = match crate::TOKIO_RUNTIME.get() {
                     Some(rt) => rt,
                     None => {
-                        error!("Spirc not available: {}", e);
+                        error!("tokio runtime not available for auto_init on load: {e}");
                         return 0;
                     }
                 };
                 rt.spawn(async move {
                     if let Err(e) = crate::spirc::auto_initialize_spirc().await {
-                        error!("Failed to auto initialize Spirc: {}", e);
+                        error!("auto_initialize_spirc failed: {e}");
                     }
                 });
                 0
             }
             _ => {
-                error!("Spirc not available: {}", e);
+                error!("with_spirc session error for load: {e}");
                 0
             }
         },

@@ -19,7 +19,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_hasCachedCredential
     let dir = match crate::FILES_DIR.get() {
         Some(d) => d,
         None => {
-            warn!("Cannot check for cached credentials as FILES_DIR is not set.");
+            warn!("FILES_DIR not set for cached credentials check");
             return 0;
         }
     };
@@ -36,7 +36,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_getAuthorizationURL
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            warn!("Cannot get auth url as tokio isn't initialized'");
+            warn!("tokio runtime not available for get_authorization_url");
             return std::ptr::null_mut();
         }
     };
@@ -54,7 +54,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_getAuthorizationURL
     }) {
         Ok(val) => val,
         Err(e) => {
-            error!("Failed to get session: {}", e);
+            error!("with_session failed for get_authorization_url: {e}");
             None
         }
     };
@@ -62,7 +62,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_getAuthorizationURL
     let auth_url = match auth_url_opt {
         Some(u) => u,
         None => {
-            warn!("OAuth Session failed to setup!");
+            warn!("oauth session setup failed");
             return std::ptr::null_mut();
         }
     };
@@ -70,7 +70,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_getAuthorizationURL
     match env.new_string(auth_url.to_string()) {
         Ok(java_str) => java_str.into_raw(),
         Err(e) => {
-            warn!("Failed to create Java string: {:?}", e);
+            warn!("jni new_string failed for auth url: {e:?}");
             std::ptr::null_mut()
         }
     }
@@ -86,7 +86,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_handleOAuthCode(
     let code: String = match env.get_string(&code) {
         Ok(js) => js.into(),
         Err(e) => {
-            error!("JNI failed to read code: {}", e);
+            error!("jni get_string failed for oauth code: {e}");
             return make_error_json(&env, "authentication", "Failed to read OAuth code");
         }
     };
@@ -94,7 +94,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_handleOAuthCode(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(rt) => rt,
         None => {
-            error!("JNI: Tokio runtime is not initialized!");
+            error!("tokio runtime not available for handle_oauth_code");
             return make_error_json(&env, "unknown", "Tokio runtime not initialized");
         }
     };
@@ -102,7 +102,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_handleOAuthCode(
     let session_mutex = match crate::oauth::OAUTH_SESSION.get() {
         Some(m) => m,
         None => {
-            error!("OAuth Session is not initialized!");
+            error!("oauth session not initialized for handle_oauth_code");
             return make_error_json(&env, "authentication", "OAuth session not initialized");
         }
     };
@@ -113,7 +113,7 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_handleOAuthCode(
     }) {
         Ok(tok) => tok,
         Err(e) => {
-            error!("OAuth error: {}", e);
+            error!("get_access_token failed: {e}");
             let err_type = classify_oauth_error(&e);
             return make_error_json(&env, err_type, &e.to_string());
         }
@@ -125,11 +125,11 @@ pub extern "system" fn Java_cc_tomko_outify_core_AuthManager_handleOAuthCode(
             let cred = Credentials::with_access_token(&token.access_token);
             cache.save_credentials(&cred);
         } else {
-            warn!("Session has no cache, cannot persist credentials");
+            warn!("session has no cache for credential persistence");
         }
         Ok::<(), ()>(())
     }) {
-        warn!("Could not save credentials to cache: {:?}", e);
+        warn!("credential save to cache failed: {e:?}");
     }
 
     make_success_json(&env)
@@ -173,11 +173,11 @@ pub extern "system" fn logout(_env: JNIEnv, _class: JClass) -> jboolean {
 
     match std::fs::remove_file(os_files_dir) {
         Ok(_) => {
-            info!("Spirc login removed!");
+            info!("oauth credentials removed");
             1
         },
         Err(e) => {
-            error!("Failed to remove spirc login: {e}");
+            error!("oauth credential file removal failed: {e}");
             0
         },
     }

@@ -27,7 +27,7 @@ pub fn throw_exception(env: &mut jni::JNIEnv, message: String) {
     match env.throw_new("java/lang/IllegalArgumentException", message) {
         Ok(_) => {},
         Err(e) => {
-            error!("failed to throw exception: {e}");
+            error!("jni throw_new failed: {e}");
         },
     };
 }
@@ -39,7 +39,7 @@ pub fn optionable_string(mut env: &mut jni::JNIEnv, string: jni::objects::JStrin
         match env.get_string(&string) {
             Ok(n) => Some(n.into()),
             Err(e) => {
-                error!("failed to get optional string: {e}");
+                error!("jni get_string failed for optionable_string: {e}");
                 throw_exception(&mut env, format!("Failed to get optional string: {e}"));
                 return None
             }

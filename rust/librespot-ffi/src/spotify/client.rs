@@ -615,7 +615,7 @@ impl SpotifyClient {
         let mut oauth_state_guard = self.oauth_state.write().await;
         *oauth_state_guard = Some(state);
 
-        debug!("OAuth flow started with URL: {}", auth_url);
+        debug!("oauth flow started with url: {auth_url}");
         Ok(auth_url.to_string())
     }
 
@@ -626,9 +626,8 @@ impl SpotifyClient {
             "OAuth flow not started. Call start_oauth_flow first.".to_string(),
         ))?;
 
-        // Check if state is still valid (not expired)
         if state.created_at.elapsed() > Duration::from_secs(600) {
-            error!("OAuth state expired");
+            error!("oauth state expired");
             return Err(SpotifyApiError::Generic(
                 "OAuth state expired. Please restart the flow.".to_string(),
             ));
@@ -645,8 +644,8 @@ impl SpotifyClient {
             .get_access_token_with_verifier_async(pkce_verifier, auth_code)
             .await
             .map_err(|e| {
-                error!("OAuth token exchange failed: {}", e);
-                SpotifyApiError::Generic(format!("Token exchange failed: {}", e))
+                error!("oauth token exchange failed: {e}");
+                SpotifyApiError::Generic(format!("Token exchange failed: {e}"))
             })?;
 
         // Calculate remaining seconds until expiration
@@ -672,13 +671,12 @@ impl SpotifyClient {
         let mut oauth_state_guard = self.oauth_state.write().await;
         *oauth_state_guard = None;
 
-        debug!("OAuth flow completed successfully");
+        debug!("oauth flow completed");
 
-        // Save token to account.json
         match self.save_token(&new_token).await {
-            Ok(_) => debug!("Account token saved!"),
+            Ok(_) => debug!("oauth token saved to account.json"),
             Err(e) => {
-                error!("Failed to save account token: {e}");
+                error!("oauth token save failed: {e}");
             }
         };
 
@@ -719,7 +717,7 @@ impl SpotifyClient {
         match std::fs::remove_file(path) {
             Ok(_) => Ok(()),
             Err(e) => {
-                error!("failed to remove token: {e}");
+                error!("account.json removal failed: {e}");
                 Err(SpotifyApiError::IO(e))
             }
         }

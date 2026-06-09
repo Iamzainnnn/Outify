@@ -26,7 +26,7 @@ pub extern "system" fn get_native_metadata(
     let uri: String = match env.get_string(&juri) {
         Ok(u) => u.into(),
         Err(e) => {
-            error!("failed to get metadata: {}", e);
+            error!("jni get_string failed for metadata uri: {e}");
             return std::ptr::null_mut();
         }
     };
@@ -48,7 +48,7 @@ pub extern "system" fn get_native_metadata(
     let rt = match crate::TOKIO_RUNTIME.get() {
         Some(r) => r,
         None => {
-            error!("failed to retrieve tokio runtime");
+            error!("tokio runtime not available for get_native_metadata");
             return std::ptr::null_mut();
         }
     };
@@ -66,7 +66,7 @@ pub extern "system" fn get_native_metadata(
     }) {
         Ok(r) => r,
         Err(e) => {
-            error!("Internal error: {e}");
+            error!("with_session failed for metadata: {e}");
             return std::ptr::null_mut();
         },
     };
@@ -75,7 +75,7 @@ pub extern "system" fn get_native_metadata(
         Ok(Some(json)) => match env.new_string(&json) {
             Ok(jni_str) => jni_str.into_raw(),
             Err(e) => {
-                error!("failed to convert json into jstring: {}", e);
+                error!("jni new_string failed for metadata result: {e}");
                 std::ptr::null_mut()
             }
         },
@@ -234,7 +234,7 @@ fn convert_to_string<T: serde::Serialize>(metadata: &T) -> Option<String> {
     match serde_json::to_string(&metadata) {
         Ok(json) => Some(json),
         Err(e) => {
-            error!("serde_json: {}", e);
+            error!("serde for metadata failed: {e}");
             None
         }
     }

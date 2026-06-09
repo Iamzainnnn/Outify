@@ -14,7 +14,7 @@ pub fn on_player_track_update(track_id: SpotifyUri) {
     let jvm = match crate::JVM.get() {
         Some(j) => j,
         None => {
-            error!("failed to propagate player paused event: jvm not initialized");
+            error!("jvm not initialized for on_player_track_update");
             return;
         }
     };
@@ -25,7 +25,7 @@ pub fn on_player_track_update(track_id: SpotifyUri) {
             guard.clone()
         }
         None => {
-            error!("failed to propagate player paused event due to listener object not set");
+            error!("listener not set for on_player_track_update");
             return;
         }
     };
@@ -34,7 +34,7 @@ pub fn on_player_track_update(track_id: SpotifyUri) {
         let session = match with_session(|s| s.clone()) {
             Ok(s) => s,
             Err(e) => {
-                error!("Session unavailable: {}", e);
+                error!("with_session failed for on_player_track_update: {e}");
                 return;
             }
         };
@@ -42,7 +42,7 @@ pub fn on_player_track_update(track_id: SpotifyUri) {
             let maybe_metadata = match librespot_metadata::Track::get(&session, &track_id).await {
                 Ok(m) => Some(m),
                 Err(e) => {
-                    error!("failed to fetch metadata: {}", e);
+                    error!("track metadata fetch failed for on_player_track_update: {e}");
                     None
                 }
             };
@@ -53,7 +53,7 @@ pub fn on_player_track_update(track_id: SpotifyUri) {
                     match serde_json::to_string(&track) {
                         Ok(s) => s,
                         Err(e) => {
-                            error!("serde_json serialization failed: {}", e);
+                            error!("serde for track json failed on on_player_track_update: {e}");
                             return;
                         }
                     }
@@ -67,7 +67,7 @@ pub fn on_player_track_update(track_id: SpotifyUri) {
             let mut env = match jvm.attach_current_thread() {
                 Ok(e) => e,
                 Err(e) => {
-                    error!("failed to attach thread to JVM: {}", e);
+                    error!("jvm attach failed for on_player_track_update: {e}");
                     return;
                 }
             };
@@ -75,14 +75,14 @@ pub fn on_player_track_update(track_id: SpotifyUri) {
             let j_uri = match env.new_string(&track_id.to_uri()) {
                 Ok(s) => s,
                 Err(e) => {
-                    error!("failed to create jstring for uri: {}", e);
+                    error!("jni new_string for uri failed on on_player_track_update: {e}");
                     return;
                 }
             };
             let j_json = match env.new_string(&json) {
                 Ok(s) => s,
                 Err(e) => {
-                    error!("failed to create jstring for json: {}", e);
+                    error!("jni new_string for json failed on on_player_track_update: {e}");
                     return;
                 }
             };
@@ -93,7 +93,7 @@ pub fn on_player_track_update(track_id: SpotifyUri) {
                 "(Ljava/lang/String;Ljava/lang/String;)V",
                 &[JValue::Object(&j_uri), JValue::Object(&j_json)],
             ) {
-                error!("failed to call onTrackChange callback: {:?}", e);
+                error!("on_track_change callback failed: {e:?}");
             }
 
             if let Ok(true) = env.exception_check() {
@@ -109,7 +109,7 @@ pub fn on_player_position_update(position_ms: u32, track_id: SpotifyUri) {
     let jvm = match crate::JVM.get() {
         Some(j) => j,
         None => {
-            error!("failed to propagate player paused event: jvm not initialized");
+            error!("jvm not initialized for on_player_position_update");
             return;
         }
     };
@@ -120,7 +120,7 @@ pub fn on_player_position_update(position_ms: u32, track_id: SpotifyUri) {
             guard.clone()
         }
         None => {
-            error!("failed to propagate player paused event due to listener object not set");
+            error!("listener not set for on_player_position_update");
             return;
         }
     };
@@ -129,7 +129,7 @@ pub fn on_player_position_update(position_ms: u32, track_id: SpotifyUri) {
         let session = match with_session(|s| s.clone()) {
             Ok(s) => s,
             Err(e) => {
-                error!("Session unavailable: {}", e);
+                error!("with_session failed for on_player_position_update: {e}");
                 return;
             }
         };
@@ -138,7 +138,7 @@ pub fn on_player_position_update(position_ms: u32, track_id: SpotifyUri) {
             let maybe_metadata = match librespot_metadata::Track::get(&session, &track_id).await {
                 Ok(m) => Some(m),
                 Err(e) => {
-                    error!("failed to fetch metadata: {}", e);
+                    error!("track metadata fetch failed for on_player_position_update: {e}");
                     None
                 }
             };
@@ -149,7 +149,7 @@ pub fn on_player_position_update(position_ms: u32, track_id: SpotifyUri) {
                     match serde_json::to_string(&track) {
                         Ok(s) => s,
                         Err(e) => {
-                            error!("serde_json serialization failed: {}", e);
+                            error!("serde for track json failed on on_player_position_update: {e}");
                             return;
                         }
                     }
@@ -163,7 +163,7 @@ pub fn on_player_position_update(position_ms: u32, track_id: SpotifyUri) {
             let mut env = match jvm.attach_current_thread() {
                 Ok(e) => e,
                 Err(e) => {
-                    error!("failed to attach thread to JVM: {}", e);
+                    error!("jvm attach failed for on_player_position_update: {e}");
                     return;
                 }
             };
@@ -171,14 +171,14 @@ pub fn on_player_position_update(position_ms: u32, track_id: SpotifyUri) {
             let j_uri = match env.new_string(&track_id.to_uri()) {
                 Ok(s) => s,
                 Err(e) => {
-                    error!("failed to create jstring for uri: {}", e);
+                    error!("jni new_string for uri failed on on_player_position_update: {e}");
                     return;
                 }
             };
             let j_json = match env.new_string(&json) {
                 Ok(s) => s,
                 Err(e) => {
-                    error!("failed to create jstring for json: {}", e);
+                    error!("jni new_string for json failed on on_player_position_update: {e}");
                     return;
                 }
             };
@@ -193,7 +193,7 @@ pub fn on_player_position_update(position_ms: u32, track_id: SpotifyUri) {
                     JValue::Object(&j_json),
                 ],
             ) {
-                error!("failed to call onPositionUpdate callback: {:?}", e);
+                error!("on_position_update callback failed: {e:?}");
             }
 
             if let Ok(true) = env.exception_check() {
@@ -209,7 +209,7 @@ pub fn on_player_status(playing: bool) {
     let jvm = match crate::JVM.get() {
         Some(j) => j,
         None => {
-            error!("failed to propagate player paused event: jvm not initialized");
+            error!("jvm not initialized for on_player_status");
             return;
         }
     };
@@ -220,7 +220,7 @@ pub fn on_player_status(playing: bool) {
             guard.clone()
         }
         None => {
-            error!("failed to propagate player paused event due to listener object not set");
+            error!("listener not set for on_player_status");
             return;
         }
     };
@@ -228,7 +228,7 @@ pub fn on_player_status(playing: bool) {
     let session = match crate::session::SESSION.get() {
         Some(s) => s,
         None => {
-            error!("failed to retrieve session: not initialized");
+            error!("session not retrieved for on_player_status");
             return;
         }
     };
@@ -237,7 +237,7 @@ pub fn on_player_status(playing: bool) {
         let mut env = match jvm.attach_current_thread() {
             Ok(e) => e,
             Err(e) => {
-                error!("failed to attach thread to JVM: {}", e);
+                error!("jvm attach failed for on_player_status: {e}");
                 return;
             }
         };
@@ -248,7 +248,7 @@ pub fn on_player_status(playing: bool) {
             "(Z)V",
             &[JValue::Bool(playing as jboolean)],
         ) {
-            error!("failed to call onPlayerStatus callback: {:?}", e);
+            error!("on_player_status callback failed: {e:?}");
         }
 
         if let Ok(true) = env.exception_check() {
