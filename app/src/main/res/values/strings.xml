@@ -19,4 +19,5 @@
     <string name="repeat_mode_one">Repeat one</string>
     <string name="repeat_mode_off">No repeat</string>
     <string name="like">Like</string>
+    <string name="outify_playback_widget_description">Fast way to play your favorite tracks</string>
 </resources>

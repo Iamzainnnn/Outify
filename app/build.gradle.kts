@@ -144,6 +144,10 @@ dependencies {
     implementation(libs.navigation3.runtime)
     implementation(libs.adaptive.navigation3)
 
+    // Glance widget
+    implementation(libs.androidx.glance)
+    implementation(libs.androidx.glance.appwidget)
+
     // Preferences
     implementation(libs.androidx.datastore.preferences)
 

@@ -143,11 +143,25 @@
                 <data android:pathPattern=".*\\.outify" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ui.screens.HomeScreen"
             android:exported="false"
             android:label="@string/title_activity_home_screen"
             android:theme="@style/Theme.Material3Expressive" />
-    </application>
 
+        <activity android:name=".ui.widgets.PlaybackWidgetConfigure"
+            android:exported="false"
+            android:theme="@style/Theme.Material3Expressive" />
+
+        <receiver android:name=".ui.widgets.PlaybackWidgetReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/outify_playback_widget_info" />
+        </receiver>
+    </application>
 </manifest>
