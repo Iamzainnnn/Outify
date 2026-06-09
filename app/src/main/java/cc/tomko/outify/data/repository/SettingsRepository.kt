@@ -109,6 +109,9 @@ class SettingsRepository @Inject constructor(
         object Cached {
             val CACHED_TOPS = stringPreferencesKey("cached_tops_v1")
         }
+
+        val CLIENT_ID = stringPreferencesKey("client_id")
+        val CLIENT_SECRET = stringPreferencesKey("client_secret")
     }
 
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
@@ -472,6 +475,23 @@ class SettingsRepository @Inject constructor(
 
     suspend fun saveCachedTops(json: String) {
         dataStore.edit { it[Keys.Cached.CACHED_TOPS] = json }
+    }
+
+    val clientId: Flow<String?> = dataStore.data.map { it[Keys.CLIENT_ID] }
+    val clientSecret: Flow<String?> = dataStore.data.map { it[Keys.CLIENT_SECRET] }
+
+    suspend fun setClientId(id: String?) {
+        dataStore.edit { prefs ->
+            if (id.isNullOrBlank()) prefs.remove(Keys.CLIENT_ID)
+            else prefs[Keys.CLIENT_ID] = id
+        }
+    }
+
+    suspend fun setClientSecret(secret: String?) {
+        dataStore.edit { prefs ->
+            if (secret.isNullOrBlank()) prefs.remove(Keys.CLIENT_SECRET)
+            else prefs[Keys.CLIENT_SECRET] = secret
+        }
     }
 
     suspend fun resetSettings() {

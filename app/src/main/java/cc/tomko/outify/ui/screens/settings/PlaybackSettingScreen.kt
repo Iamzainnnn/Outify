@@ -66,6 +66,8 @@ fun PlaybackSettingScreen(
     val settings by viewModel.settings.collectAsState(initial = PlaybackSettings.Default)
     val restartNeeded by viewModel.needsRestart.collectAsState()
     val romanizeLyrics by viewModel.romanizeLyrics.collectAsState(initial = false)
+    val savedClientId by viewModel.clientId.collectAsState(initial = null)
+    val savedClientSecret by viewModel.clientSecret.collectAsState(initial = null)
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -96,7 +98,7 @@ fun PlaybackSettingScreen(
                 .fillMaxSize()
                 .padding(top = innerPaddings.calculateTopPadding())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
                 ElevatedCard(
@@ -149,6 +151,43 @@ fun PlaybackSettingScreen(
                             ),
                             selectedValue = settings.bitrate,
                             onValueChange = { viewModel.setBitrate(it) }
+                        )
+                    }
+                }
+            }
+
+            item {
+                ElevatedCard(
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = if (restartNeeded)
+                            MaterialTheme.colorScheme.tertiaryContainer
+                        else
+                            MaterialTheme.colorScheme.surface
+                    ),
+                    modifier =  Modifier
+                        .fillMaxWidth()
+                ) {
+                    Column {
+                        PreferenceEntry(
+                            title = { Text("Restart Spirc") },
+                            description = "Required to apply playback related settings",
+                            icon = { Icon(Icons.Default.RestartAlt, contentDescription = null) },
+                            onClick = {
+                                viewModel.restartSpirc()
+                            },
+                            trailingContent = {
+                                AnimatedVisibility(
+                                    visible = restartNeeded,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.tertiary
+                                    ) {
+                                        Text("!")
+                                    }
+                                }
+                            },
                         )
                     }
                 }
@@ -212,42 +251,53 @@ fun PlaybackSettingScreen(
             }
 
             item {
-                ElevatedCard(
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = if (restartNeeded)
-                            MaterialTheme.colorScheme.tertiaryContainer
-                        else
-                            MaterialTheme.colorScheme.surface
-                    ),
-                    modifier =  Modifier
-                        .fillMaxWidth()
-                ) {
-                    Column {
-                        PreferenceEntry(
-                            title = { Text("Restart Spirc") },
-                            description = "Required to apply playback related settings",
-                            icon = { Icon(Icons.Default.RestartAlt, contentDescription = null) },
-                            onClick = {
-                                viewModel.restartSpirc()
-                            },
-                            trailingContent = {
-                                AnimatedVisibility(
-                                    visible = restartNeeded,
-                                    enter = expandVertically() + fadeIn(),
-                                    exit = shrinkVertically() + fadeOut()
-                                ) {
-                                    Badge(
-                                        containerColor = MaterialTheme.colorScheme.tertiary
-                                    ) {
-                                        Text("!")
-                                    }
+                var advancedSettings by remember { mutableStateOf(false) }
+                ElevatedCard() {
+                    PreferenceEntry(
+                        title = { Text("Advanced settings") },
+                        onClick = { advancedSettings = !advancedSettings }
+                    )
+
+                    if(advancedSettings) {
+                        Column() {
+                            var clientIdInput by remember(savedClientId) {
+                                mutableStateOf(savedClientId ?: "")
+                            }
+                            var clientSecretInput by remember(savedClientSecret) {
+                                mutableStateOf(savedClientSecret ?: "")
+                            }
+
+                            LaunchedEffect(clientIdInput) {
+                                delay(500)
+                                if (clientIdInput != (savedClientId ?: "")) {
+                                    viewModel.setClientId(clientIdInput)
                                 }
-                            },
-                        )
+                            }
+
+                            LaunchedEffect(clientSecretInput) {
+                                delay(500)
+                                if (clientSecretInput != (savedClientSecret ?: "")) {
+                                    viewModel.setClientSecret(clientSecretInput)
+                                }
+                            }
+
+                            TextInputPreferenceEntry(
+                                title = { Text("Spotify Client Id") },
+                                placeholder = "Leave empty for default",
+                                value = clientIdInput,
+                                onValueChange = { clientIdInput = it },
+                            )
+
+                            TextInputPreferenceEntry(
+                                title = { Text("Spotify Client Secret") },
+                                placeholder = "Leave empty for default",
+                                value = clientSecretInput,
+                                onValueChange = { clientSecretInput = it },
+                            )
+                        }
                     }
                 }
             }
-
         }
     }
 }

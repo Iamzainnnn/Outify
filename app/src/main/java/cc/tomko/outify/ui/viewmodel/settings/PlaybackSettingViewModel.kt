@@ -2,6 +2,7 @@ package cc.tomko.outify.ui.viewmodel.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cc.tomko.outify.LibrespotFfi
 import cc.tomko.outify.core.spirc.SpircController
 import cc.tomko.outify.data.repository.PlaybackSettings
 import cc.tomko.outify.data.repository.SettingsRepository
@@ -11,6 +12,7 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -26,6 +28,12 @@ class PlaybackSettingViewModel @Inject constructor(
 
     val romanizeLyrics: Flow<Boolean> =
         settingsRepository.romanizeLyrics
+
+    val clientId: Flow<String?> =
+        settingsRepository.clientId
+
+    val clientSecret: Flow<String?> =
+        settingsRepository.clientSecret
 
     fun setGaplessPlayback(enabled: Boolean) {
         viewModelScope.launch {
@@ -74,8 +82,32 @@ class PlaybackSettingViewModel @Inject constructor(
         }
     }
 
+    fun setClientId(id: String) {
+        viewModelScope.launch {
+            settingsRepository.setClientId(id.ifBlank { null })
+            _needsRestart.value = true
+        }
+    }
+
+    fun setClientSecret(secret: String) {
+        viewModelScope.launch {
+            settingsRepository.setClientSecret(secret.ifBlank { null })
+            _needsRestart.value = true
+        }
+    }
+
     fun restartSpirc(){
         viewModelScope.launch {
+            val id = settingsRepository.clientId.first()
+            val secret = settingsRepository.clientSecret.first()
+            if (id != null && secret != null) {
+                LibrespotFfi.updateClientCredentials(id, secret)
+            } else {
+                LibrespotFfi.updateClientCredentials(
+                    "819a62c83de24821b2654387bc84f136",
+                    "6db424c706d34cf7810a5c8c59324182"
+                )
+            }
             spirc.restart()
             _needsRestart.value = false
         }

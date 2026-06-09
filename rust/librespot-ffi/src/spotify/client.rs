@@ -6,7 +6,7 @@ use std::{
     collections::HashMap,
     fs::OpenOptions,
     os::unix::fs::OpenOptionsExt,
-    sync::Arc,
+    sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
 use tokio::sync::RwLock;
@@ -49,10 +49,9 @@ pub struct OAuthState {
     pub created_at: Instant,
 }
 
-#[derive(Clone)]
 pub struct SpotifyClient {
-    client_id: String,
-    client_secret: String,
+    client_id: Mutex<String>,
+    client_secret: Mutex<String>,
     client: Client,
     token: Arc<RwLock<Option<WebApiToken>>>,
     oauth_state: Arc<RwLock<Option<OAuthState>>>,
@@ -61,8 +60,8 @@ pub struct SpotifyClient {
 impl SpotifyClient {
     pub fn new(client_id: String, client_secret: String) -> Self {
         Self {
-            client_id,
-            client_secret,
+            client_id: Mutex::new(client_id),
+            client_secret: Mutex::new(client_secret),
             client: Client::builder()
                 .pool_idle_timeout(Duration::from_secs(90))
                 .build()
@@ -70,6 +69,11 @@ impl SpotifyClient {
             token: Arc::new(RwLock::new(None)),
             oauth_state: Arc::new(RwLock::new(None)),
         }
+    }
+
+    pub fn update_credentials(&self, client_id: String, client_secret: String) {
+        *self.client_id.lock().unwrap() = client_id;
+        *self.client_secret.lock().unwrap() = client_secret;
     }
 
     pub async fn search(
@@ -595,8 +599,9 @@ impl SpotifyClient {
     /// Starts the OAuth flow and returns the authorization URL
     pub async fn start_oauth_flow(&self) -> Result<String, SpotifyApiError> {
         // Build OAuthClient using librespot_oauth
+        let client_id = self.client_id.lock().unwrap().clone();
         let oauth_client = OAuthClientBuilder::new(
-            &self.client_id,
+            &client_id,
             SPOTIFY_OAUTH_CALLBACK_URI,
             SPOTIFY_OAUTH_SCOPES.to_vec(),
         )
@@ -768,7 +773,8 @@ impl SpotifyClient {
         let mut form = HashMap::new();
         form.insert("grant_type", "refresh_token");
         form.insert("refresh_token", &token.refresh_token);
-        form.insert("client_id", &self.client_id);
+        let client_id = self.client_id.lock().unwrap().clone();
+        form.insert("client_id", &client_id);
 
         let response = self
             .client
@@ -810,4 +816,11 @@ pub fn get_client() -> &'static SpotifyClient {
     SPOTIFY_CLIENT
         .get()
         .expect("SpotifyClient not initialized!")
+}
+
+pub fn update_client(client_id: String, client_secret: String) {
+    if let Some(client) = SPOTIFY_CLIENT.get() {
+        client.update_credentials(client_id, client_secret);
+        info!("spotify client credentials updated");
+    }
 }
