@@ -38,12 +38,14 @@ class VolumeController @Inject constructor(
     fun onRemoteVolumeChanged(spotifyVolume: Int) {
         playbackStateHolder.setVolume(spotifyVolume)
 
+        if (!playbackStateHolder.state.value.isPlaying) return
+
         val androidVolume = mapSpotifyToAndroid(spotifyVolume)
         if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) != androidVolume) {
             audioManager.setStreamVolume(
                 AudioManager.STREAM_MUSIC,
                 androidVolume,
-                AudioManager.FLAG_SHOW_UI,
+                0,
             )
         }
     }
@@ -54,6 +56,8 @@ class VolumeController @Inject constructor(
         val spotifyVolume = (current.toDouble() / max * SPOTIFY_MAX_VOLUME).toInt().coerceIn(0, SPOTIFY_MAX_VOLUME)
 
         playbackStateHolder.setVolume(spotifyVolume)
+
+        if (!playbackStateHolder.state.value.isPlaying) return
 
         syncJob?.cancel()
         syncJob = scope.launch {
