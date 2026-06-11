@@ -86,7 +86,7 @@ class SpircController @Inject constructor(
                     }
 
                     override fun volumeChanged(volume: Int) {
-                        volumeController.onRemoteVolumeChanged(volume)
+                        //volumeController.onRemoteVolumeChanged(volume)
                     }
                 })
 

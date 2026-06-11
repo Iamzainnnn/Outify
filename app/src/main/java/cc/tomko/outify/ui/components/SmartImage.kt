@@ -1,5 +1,7 @@
 package cc.tomko.outify.ui.components
 
+import android.content.Context
+import android.graphics.Bitmap
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,12 +19,24 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.glance.GlanceModifier
+import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance.appwidget.cornerRadius
+import androidx.glance.background
+import androidx.glance.layout.Box
+import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.size
+import androidx.glance.unit.Dimension
 import cc.tomko.outify.data.setting.LocalUiSettings
+import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import coil3.request.crossfade
+import coil3.toBitmap
 
 @Composable
 fun SmartImage(
@@ -70,6 +84,30 @@ fun SmartImage(
 }
 
 @Composable
+fun GlanceSmartImage(
+    bitmap: Bitmap?,
+    modifier: GlanceModifier = GlanceModifier,
+    size: Dp = 48.dp
+) {
+    Box (
+        modifier = modifier
+            .background(GlanceTheme.colors.background)
+            .size(size)
+    ) {
+        bitmap?.let {
+            Image(
+                provider = ImageProvider(it),
+                contentDescription = null,
+                modifier = GlanceModifier
+                    .fillMaxSize()
+                    .size(size),
+                contentScale = androidx.glance.layout.ContentScale.Crop
+            )
+        }
+    }
+}
+
+@Composable
 fun rememberSmartImageRequest(url: String?, size: Int?): ImageRequest {
     val context = LocalContext.current
 
@@ -81,4 +119,16 @@ fun rememberSmartImageRequest(url: String?, size: Int?): ImageRequest {
             .allowHardware(true)
             .build()
     }
+}
+
+suspend fun loadBitmap(context: Context, url: String): Bitmap? {
+    val imageLoader = ImageLoader(context)
+
+    val request = ImageRequest.Builder(context)
+        .data(url)
+        .allowHardware(false)
+        .build()
+
+    val result = imageLoader.execute(request)
+    return result.image?.toBitmap()
 }
