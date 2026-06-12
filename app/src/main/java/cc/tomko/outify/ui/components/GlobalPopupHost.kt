@@ -12,6 +12,7 @@ import cc.tomko.outify.core.model.toOutifyUri
 import cc.tomko.outify.ui.GlobalPopupController
 import cc.tomko.outify.ui.PopupSpec
 import cc.tomko.outify.ui.components.bottomsheet.AddToPlaylistBottomSheet
+import cc.tomko.outify.ui.components.bottomsheet.AddToWidgetBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.ArtistInfoBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.AuthResultBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.CreatePlaylistBottomSheet
@@ -20,6 +21,7 @@ import cc.tomko.outify.ui.components.bottomsheet.PlaylistInfoBottomSheet
 import cc.tomko.outify.ui.components.bottomsheet.TrackInfoBottomSheet
 import cc.tomko.outify.ui.components.navigation.Route
 import cc.tomko.outify.ui.viewmodel.bottomsheet.AddToPlaylistViewModel
+import cc.tomko.outify.ui.viewmodel.bottomsheet.AddToWidgetViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.CreatePlaylistViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.PlaybackDevicesViewModel
 import kotlinx.coroutines.launch
@@ -37,6 +39,7 @@ fun GlobalPopupHost(
     addToPlaylistViewModel: AddToPlaylistViewModel,
     createPlaylistViewModel: CreatePlaylistViewModel,
     playbackDevicesViewModel:  PlaybackDevicesViewModel,
+    addToWidgetViewModel: AddToWidgetViewModel,
 ) {
     val popups by GlobalPopupController.popups.collectAsState()
     val scope = rememberCoroutineScope()
@@ -80,7 +83,19 @@ fun GlobalPopupHost(
                             backStack.add(Route.LikedScreen(scrollToIndex = popup.likedTrackIndex ?: -1))
                             GlobalPopupController.dismiss(popup.id)
                         }
+                    },
+                    onAddToWidget = {
+                        scope.launch {
+                            GlobalPopupController.show(PopupSpec.AddToWidgetInfo(popup.track))
+                        }
                     }
+                )
+            }
+
+            is PopupSpec.AddToWidgetInfo -> {
+                AddToWidgetBottomSheet(
+                    track = popup.track,
+                    viewModel = addToWidgetViewModel,
                 )
             }
 

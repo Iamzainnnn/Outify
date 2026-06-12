@@ -40,6 +40,11 @@ sealed class PopupSpec(
         override val id: String = UUID.randomUUID().toString(),
     ) : PopupSpec(id)
 
+    data class AddToWidgetInfo(
+        val track: Track,
+        override val id: String = UUID.randomUUID().toString(),
+    ) : PopupSpec(id)
+
     data class PlaylistInfo(
         val playlist: Playlist,
         val artworkUrl: String?,

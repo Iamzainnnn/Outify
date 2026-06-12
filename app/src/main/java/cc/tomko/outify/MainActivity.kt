@@ -74,6 +74,7 @@ import cc.tomko.outify.ui.notifications.InAppNotificationHost
 import cc.tomko.outify.ui.screens.PlayerScreen
 import cc.tomko.outify.ui.viewmodel.MainViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.AddToPlaylistViewModel
+import cc.tomko.outify.ui.viewmodel.bottomsheet.AddToWidgetViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.CreatePlaylistViewModel
 import cc.tomko.outify.ui.viewmodel.bottomsheet.PlaybackDevicesViewModel
 import cc.tomko.outify.ui.viewmodel.player.MiniPlayerViewModel
@@ -218,6 +219,7 @@ class MainActivity : ComponentActivity() {
         val addToPlaylistViewModel: AddToPlaylistViewModel = hiltViewModel()
         val createPlaylistViewModel: CreatePlaylistViewModel = hiltViewModel()
         val playbackDevicesViewModel: PlaybackDevicesViewModel = hiltViewModel()
+        val addToWidgetViewModel: AddToWidgetViewModel = hiltViewModel()
 
         val playerSheetState = rememberPlayerSheetState()
         val playerListState = rememberLazyListState()
@@ -285,6 +287,7 @@ class MainActivity : ComponentActivity() {
                                         addToPlaylistViewModel = addToPlaylistViewModel,
                                         createPlaylistViewModel = createPlaylistViewModel,
                                         playbackDevicesViewModel = playbackDevicesViewModel,
+                                        addToWidgetViewModel = addToWidgetViewModel,
                                     )
 
                                     AnimatedVisibility(

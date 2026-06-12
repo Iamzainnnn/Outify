@@ -2,12 +2,19 @@ package cc.tomko.outify.ui.widgets
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -24,6 +31,7 @@ import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.Row
@@ -34,31 +42,85 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import cc.tomko.outify.ALBUM_COVER_URL
+import cc.tomko.outify.core.Spirc.SpircWrapper
 import cc.tomko.outify.core.model.CoverSize
+import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.core.model.getCover
+import kotlinx.coroutines.flow.first
+import cc.tomko.outify.data.repository.SettingsRepository
+import cc.tomko.outify.data.repository.WidgetConfigItem
 import cc.tomko.outify.playback.PlaybackStateHolder
 import cc.tomko.outify.ui.components.GlanceSmartImage
 import cc.tomko.outify.ui.components.loadBitmap
-import javax.inject.Inject
+import cc.tomko.outify.ui.extractThemeColor
+import cc.tomko.outify.widgetMediaPreference
+import coil3.imageLoader
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import coil3.toBitmap
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.collect
+import kotlinx.serialization.json.Json
+import java.io.File
+
+@EntryPoint
+@InstallIn(SingletonComponent::class)
+interface PlaybackWidgetEntryPoint {
+    fun spircWrapper(): SpircWrapper
+    fun playbackStateHolder(): PlaybackStateHolder
+}
 
 class PlaybackWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
 
-    @Inject
-    lateinit var playbackStateHolder: PlaybackStateHolder
-
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val url = "https://i.scdn.co/image/ab67616d00001e026ed9aef791159496b286179f"
-        val bitmap = loadBitmap(context, url)
+        val entryPoint = EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            PlaybackWidgetEntryPoint::class.java
+        )
+
+        val spircWrapper = entryPoint.spircWrapper()
+        val playbackStateHolder = entryPoint.playbackStateHolder()
 
         provideContent {
-            val state by playbackStateHolder.state.collectAsState()
-            val track = state.currentTrack
-            track?.album?.getCover(CoverSize.SMALL)?.uri
+            val prefs = currentState<Preferences>()
+            val mediaUris = Json.decodeFromString<List<String>>(prefs[widgetMediaPreference(id)] ?: "[]")
+
+            val mediaItems = mediaUris.map { mediaUri ->
+                val snapshot = context.imageLoader.diskCache
+                    ?.openSnapshot(mediaUri)
+                val bitmap = snapshot?.data?.toFile()?.let {
+                    BitmapFactory.decodeFile(it.absolutePath)
+                }
+
+                MediaItem(mediaUri, bitmap)
+            }
+
+            val playbackState by playbackStateHolder.state.collectAsState()
+            val currentTrack = playbackState.currentTrack
+            var currentTrackBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+            LaunchedEffect(currentTrack) {
+                println("getting image")
+
+                val request = ImageRequest.Builder(context)
+                    .data(currentTrack?.album?.getCover(CoverSize.SMALL)?.uri?.let { ALBUM_COVER_URL + it })
+                    .allowHardware(false)
+                    .size(300)
+                    .build()
+
+                currentTrackBitmap = context.imageLoader.execute(request).image?.toBitmap()
+                println(currentTrackBitmap)
+            }
 
             GlanceTheme {
                 Scaffold(
@@ -68,15 +130,11 @@ class PlaybackWidget : GlanceAppWidget() {
                         .cornerRadius(android.R.dimen.system_app_widget_background_radius)
                 ) {
                     Content(
-                        itemsList = listOf(
-                            MediaItem("1", bitmap),
-                            MediaItem("2", bitmap),
-                            MediaItem("3", bitmap),
-                            MediaItem("4", bitmap),
-                            MediaItem("5", bitmap),
-                        ),
-                        currentTrack = track,
-                        isPlaying = state.isPlaying
+                        itemsList = mediaItems,
+                        currentTrack = currentTrack,
+                        currentTrackBitmap = currentTrackBitmap,
+                        isPlaying = playbackState.isPlaying,
+                        spirc = spircWrapper
                     )
                 }
             }
@@ -86,7 +144,7 @@ class PlaybackWidget : GlanceAppWidget() {
     data class MediaItem(val uri: String, val bitmap: Bitmap?)
 
     @Composable
-    private fun Content(itemsList: List<MediaItem>, currentTrack: Track?, isPlaying: Boolean) {
+    private fun Content(itemsList: List<MediaItem>, currentTrack: Track?, currentTrackBitmap: Bitmap?, isPlaying: Boolean, spirc: SpircWrapper) {
         val size = LocalSize.current
         if (itemsList.isEmpty()) {
             Text("No items to display", modifier = GlanceModifier.fillMaxSize())
@@ -124,7 +182,7 @@ class PlaybackWidget : GlanceAppWidget() {
                         ) {
                             rowItems.forEachIndexed { itemIndex, mediaItem ->
                                 if (itemIndex > 0) Spacer(GlanceModifier.width(gap))
-                                MediaEntry(item = mediaItem, size = itemSize)
+                                MediaEntry(item = mediaItem, size = itemSize, spirc)
                             }
                         }
                     }
@@ -135,6 +193,8 @@ class PlaybackWidget : GlanceAppWidget() {
 
 
             if (currentTrack != null) {
+                val color = currentTrackBitmap?.extractThemeColor()
+
                 Row(
                     modifier = GlanceModifier
                         .background(GlanceTheme.colors.tertiaryContainer)
@@ -145,7 +205,7 @@ class PlaybackWidget : GlanceAppWidget() {
                 ) {
                     // Track thumbnail
                     GlanceSmartImage(
-                        bitmap = null,
+                        bitmap = currentTrackBitmap,
                         modifier = GlanceModifier
                             .cornerRadius(8.dp),
                         size = 40.dp
@@ -180,7 +240,7 @@ class PlaybackWidget : GlanceAppWidget() {
                             provider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_previous),
                             contentDescription = "Previous",
                             colorFilter = ColorFilter.tint(GlanceTheme.colors.onTertiaryContainer),
-                            modifier = GlanceModifier.size(28.dp).clickable { /* previous */ }
+                            modifier = GlanceModifier.size(28.dp).clickable { spirc.playerPrevious() }
                         )
                         Spacer(GlanceModifier.width(8.dp))
                         val playPauseIcon =
@@ -190,14 +250,14 @@ class PlaybackWidget : GlanceAppWidget() {
                             provider = ImageProvider(playPauseIcon),
                             contentDescription = "Play / Pause",
                             colorFilter = ColorFilter.tint(GlanceTheme.colors.onTertiaryContainer),
-                            modifier = GlanceModifier.size(32.dp).clickable { /* play/pause */ }
+                            modifier = GlanceModifier.size(32.dp).clickable { spirc.playerPlayPause() }
                         )
                         Spacer(GlanceModifier.width(8.dp))
                         Image(
                             provider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_next),
                             contentDescription = "Next",
                             colorFilter = ColorFilter.tint(GlanceTheme.colors.onTertiaryContainer),
-                            modifier = GlanceModifier.size(28.dp).clickable { /* next */ }
+                            modifier = GlanceModifier.size(28.dp).clickable { spirc.playerNext() }
                         )
                     }
                 }
@@ -206,12 +266,12 @@ class PlaybackWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun MediaEntry(item: MediaItem, size: Dp) {
+    private fun MediaEntry(item: MediaItem, size: Dp, spirc: SpircWrapper) {
         GlanceSmartImage(
             item.bitmap,
             modifier = GlanceModifier
                 .cornerRadius(android.R.dimen.system_app_widget_inner_radius)
-                .clickable { println("Clicked on ${item.uri}") },
+                .clickable { spirc.load(OutifyUri.fromUriString(item.uri)) },
             size = size
         )
     }

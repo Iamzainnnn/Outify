@@ -180,7 +180,7 @@ fun AddToPlaylistBottomSheet(
 }
 
 @Composable
-private fun TrackInfoHeader(tracks: List<Track>) {
+fun TrackInfoHeader(tracks: List<Track>) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
