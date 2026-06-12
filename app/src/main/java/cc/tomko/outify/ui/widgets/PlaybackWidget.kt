@@ -52,9 +52,6 @@ import cc.tomko.outify.core.model.CoverSize
 import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.core.model.getCover
-import kotlinx.coroutines.flow.first
-import cc.tomko.outify.data.repository.SettingsRepository
-import cc.tomko.outify.data.repository.WidgetConfigItem
 import cc.tomko.outify.playback.PlaybackStateHolder
 import cc.tomko.outify.ui.components.GlanceSmartImage
 import cc.tomko.outify.ui.components.loadBitmap

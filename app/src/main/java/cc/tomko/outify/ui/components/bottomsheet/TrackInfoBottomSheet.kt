@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Queue
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -84,6 +85,7 @@ fun TrackInfoBottomSheet(
     onShare: (() -> Unit)? = null,
     onCopyUri: (() -> Unit)? = null,
     onScrollToLiked: (() -> Unit)? = null,
+    onAddToWidget: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -186,6 +188,15 @@ fun TrackInfoBottomSheet(
 
                 // Header icons: like, share, copy
                 Row {
+                    IconButton(
+                        onClick = {
+                            onAddToWidget?.invoke()
+                            onDismiss
+                        }
+                    ) {
+                        Icon(imageVector = Icons.Default.Widgets, contentDescription = "Add to widget")
+                    }
+
                     IconButton(
                         onClick = {
                             onToggleLike?.invoke()
