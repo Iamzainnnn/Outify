@@ -96,6 +96,7 @@ fun GlobalPopupHost(
                 AddToWidgetBottomSheet(
                     track = popup.track,
                     viewModel = addToWidgetViewModel,
+                    onDismiss = { GlobalPopupController.dismiss(popup.id) },
                 )
             }
 
