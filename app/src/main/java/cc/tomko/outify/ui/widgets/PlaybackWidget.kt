@@ -1,6 +1,7 @@
 package cc.tomko.outify.ui.widgets
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
@@ -11,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.core.DataStore
@@ -21,10 +23,13 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
 import androidx.glance.LocalSize
+import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.components.Scaffold
 import androidx.glance.appwidget.cornerRadius
@@ -47,6 +52,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import cc.tomko.outify.ALBUM_COVER_URL
+import cc.tomko.outify.MainActivity
 import cc.tomko.outify.core.Spirc.SpircWrapper
 import cc.tomko.outify.core.model.CoverSize
 import cc.tomko.outify.core.model.OutifyUri
@@ -107,8 +113,6 @@ class PlaybackWidget : GlanceAppWidget() {
             var currentTrackBitmap by remember { mutableStateOf<Bitmap?>(null) }
 
             LaunchedEffect(currentTrack) {
-                println("getting image")
-
                 val request = ImageRequest.Builder(context)
                     .data(currentTrack?.album?.getCover(CoverSize.SMALL)?.uri?.let { ALBUM_COVER_URL + it })
                     .allowHardware(false)
@@ -159,7 +163,7 @@ class PlaybackWidget : GlanceAppWidget() {
             .coerceIn(1, maxItemsPerRow)
             .coerceAtMost(itemsList.size)
 
-        val itemSize = (availableWidth - gap * (itemsPerRow - 1)) / itemsPerRow
+        val itemSize = ((availableWidth - gap * (itemsPerRow - 1)) / itemsPerRow).coerceAtMost(150.dp)
         val gridRows = itemsList.chunked(itemsPerRow)
 
         Column(modifier = GlanceModifier.padding(vertical = outerPadding)) {
@@ -190,14 +194,23 @@ class PlaybackWidget : GlanceAppWidget() {
 
 
             if (currentTrack != null) {
-                val color = currentTrackBitmap?.extractThemeColor()
+                val accentColor = currentTrackBitmap?.extractThemeColor()
+                val context = LocalContext.current
 
                 Row(
                     modifier = GlanceModifier
-                        .background(GlanceTheme.colors.tertiaryContainer)
+                        .let { m ->
+                            if (accentColor != null) m.background(accentColor)
+                            else m.background(GlanceTheme.colors.tertiaryContainer)
+                        }
                         .cornerRadius(android.R.dimen.system_app_widget_inner_radius)
                         .padding(horizontal = 12.dp, vertical = 8.dp)
-                        .fillMaxSize(),
+                        .fillMaxSize()
+                        .clickable(
+                            actionStartActivity(
+                                Intent(context, MainActivity::class.java)
+                            )
+                        ),
                     verticalAlignment = Alignment.Vertical.CenterVertically
                 ) {
                     // Track thumbnail
@@ -205,12 +218,10 @@ class PlaybackWidget : GlanceAppWidget() {
                         bitmap = currentTrackBitmap,
                         modifier = GlanceModifier
                             .cornerRadius(8.dp),
-                        size = 40.dp
                     )
 
                     Spacer(GlanceModifier.width(8.dp))
 
-                    // Track name + artist — fills remaining horizontal space
                     Column(modifier = GlanceModifier.defaultWeight()) {
                         Text(
                             text = currentTrack.name,
