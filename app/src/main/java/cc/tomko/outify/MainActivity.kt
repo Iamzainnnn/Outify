@@ -15,6 +15,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -260,6 +263,14 @@ class MainActivity : ComponentActivity() {
                                         .fillMaxSize()
                                         .padding(bottom = innerPadding.calculateBottomPadding())
                                 ) {
+                                    val notificationPaddingBottom by animateDpAsState(
+                                        targetValue = if (currentTrack != null) 168.dp
+                                        else if (interfaceSettings.experimentalFloatingNav) 80.dp
+                                        else 68.dp,
+                                        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                        label = "notificationPaddingBottom"
+                                    )
+
                                     NavigationRoot(
                                         backStack,
                                         modifier = Modifier.matchParentSize(),
@@ -268,7 +279,8 @@ class MainActivity : ComponentActivity() {
 
                                     InAppNotificationHost(
                                         modifier = Modifier.matchParentSize(),
-                                        maxWidthFraction = 0.92f
+                                        maxWidthFraction = 0.92f,
+                                        hostPaddingBottom = notificationPaddingBottom
                                     )
 
                                     GlobalPopupHost(
@@ -300,7 +312,7 @@ class MainActivity : ComponentActivity() {
                                         ) + fadeOut(),
                                         modifier = Modifier
                                             .align(Alignment.BottomCenter)
-                                            .padding(bottom = 68.dp)
+                                            .padding(bottom = if (interfaceSettings.experimentalFloatingNav) 78.dp else 68.dp)
                                     ) {
                                         PlayerSheet(
                                             sheetState = playerSheetState,
