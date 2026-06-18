@@ -257,10 +257,9 @@ fun SwipeableRowWithGestures(
                                 val overshootFraction = 0.12f
                                 val overshootAmount = widthPx * overshootFraction
 
-                                // bouncy spring
                                 val enterSpring = spring<Float>(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow
+                                    dampingRatio = Spring.DampingRatioLowBouncy,
+                                    stiffness = Spring.StiffnessHigh
                                 )
 
                                 val settleSpring = spring<Float>(
