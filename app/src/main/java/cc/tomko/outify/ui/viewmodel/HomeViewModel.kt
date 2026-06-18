@@ -38,6 +38,7 @@ sealed class HomeUiState {
         val topArtists: List<TopArtist>,
         val topTracks: List<Track>,
     ) : HomeUiState()
+    data object EmptyResult : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
 
@@ -186,39 +187,54 @@ class HomeViewModel @Inject constructor(
                     } catch (_: Exception) { }
                 }
 
-                val durationValue = duration.value
+                val durationsToTry = listOf(
+                    TopItemsDuration.SHORT_TERM,
+                    TopItemsDuration.MEDIUM_TERM,
+                    TopItemsDuration.LONG_TERM,
+                )
 
-                val topArtistsJson = spClient.getUserTop("artists", durationValue)
-                if (topArtistsJson == null) {
-                    _uiState.value = HomeUiState.NotAuthenticated
-                    loadUserProfile()
-                    return@launch
-                }
-                val topArtistsError = NativeErrorHandler.handleErrorJson(topArtistsJson, "top artists")
-                if (topArtistsError != null) {
-                    _uiState.value = HomeUiState.NotAuthenticated
-                    loadUserProfile()
-                    return@launch
+                for (fallbackDuration in durationsToTry) {
+                    val durationValue = fallbackDuration.value
+
+                    val topArtistsJson = spClient.getUserTop("artists", durationValue)
+                    if (topArtistsJson == null) {
+                        _uiState.value = HomeUiState.NotAuthenticated
+                        loadUserProfile()
+                        return@launch
+                    }
+                    val topArtistsError = NativeErrorHandler.handleErrorJson(topArtistsJson, "top artists")
+                    if (topArtistsError != null) {
+                        _uiState.value = HomeUiState.NotAuthenticated
+                        loadUserProfile()
+                        return@launch
+                    }
+
+                    val topTracksJson = spClient.getUserTop("tracks", durationValue)
+                    if (topTracksJson == null) {
+                        _uiState.value = HomeUiState.NotAuthenticated
+                        loadUserProfile()
+                        return@launch
+                    }
+                    val topTracksError = NativeErrorHandler.handleErrorJson(topTracksJson, "top tracks")
+                    if (topTracksError != null) {
+                        _uiState.value = HomeUiState.NotAuthenticated
+                        loadUserProfile()
+                        return@launch
+                    }
+
+                    val topArtists = parseTopArtists(topArtistsJson)
+                    val topTracks = fetchTrackMetadata(topTracksJson)
+
+                    if (topArtists.isNotEmpty() || topTracks.isNotEmpty()) {
+                        _selectedDuration.value = fallbackDuration
+                        _uiState.value = HomeUiState.Success(topArtists, topTracks)
+                        updateTopCache(fallbackDuration, topArtists, topTracks)
+                        loadUserProfile()
+                        return@launch
+                    }
                 }
 
-                val topTracksJson = spClient.getUserTop("tracks", durationValue)
-                if (topTracksJson == null) {
-                    _uiState.value = HomeUiState.NotAuthenticated
-                    loadUserProfile()
-                    return@launch
-                }
-                val topTracksError = NativeErrorHandler.handleErrorJson(topTracksJson, "top tracks")
-                if (topTracksError != null) {
-                    _uiState.value = HomeUiState.NotAuthenticated
-                    loadUserProfile()
-                    return@launch
-                }
-
-                val topArtists = parseTopArtists(topArtistsJson)
-                val topTracks = fetchTrackMetadata(topTracksJson)
-
-                _uiState.value = HomeUiState.Success(topArtists, topTracks)
-                updateTopCache(duration, topArtists, topTracks)
+                _uiState.value = HomeUiState.EmptyResult
                 loadUserProfile()
             } catch (e: Exception) {
                 _uiState.value = HomeUiState.Error(e.message ?: "Unknown error")

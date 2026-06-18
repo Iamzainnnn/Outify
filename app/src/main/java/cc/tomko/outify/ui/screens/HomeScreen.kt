@@ -157,6 +157,13 @@ fun SharedTransitionScope.HomeScreen(
                         }
                     }
 
+                    is HomeUiState.EmptyResult -> {
+                        item { Spacer(Modifier.height(32.dp)) }
+                        item {
+                            EmptyResultCard()
+                        }
+                    }
+
                     is HomeUiState.Success -> {
                         item {
                             Spacer(Modifier.height(24.dp))
@@ -348,6 +355,36 @@ private fun HeaderSection(
                     contentDescription = "Settings"
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun EmptyResultCard() {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "No top data available",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "API request returned nothing",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
