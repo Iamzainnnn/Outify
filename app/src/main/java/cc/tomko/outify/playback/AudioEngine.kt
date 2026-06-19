@@ -120,7 +120,10 @@ class AudioEngine(
                 currentChannels = channels
                 currentFormat = format
 
-                Log.d(TAG, "AudioTrack created: sampleRate=$sampleRate, channels=$channels, encoding=$encoding, buffer=$bufferSize")
+                Log.d(
+                    TAG,
+                    "AudioTrack created: sampleRate=$sampleRate, channels=$channels, encoding=$encoding, buffer=$bufferSize"
+                )
                 return true
             } catch (t: Throwable) {
                 Log.e(TAG, "Exception while creating AudioTrack", t)
@@ -224,13 +227,13 @@ class AudioEngine(
         writeLock.withLock {
             pcmBuffer.order(ByteOrder.nativeOrder())
 
-            if(!ensureAudioTrack(sampleRate, channels, PcmFormat.S16)) {
+            if (!ensureAudioTrack(sampleRate, channels, PcmFormat.S16)) {
                 Log.w(TAG, "ensureAudioTrack failed - dropping frame")
                 return
             }
 
             val cap = pcmBuffer.capacity()
-            if(size > cap) {
+            if (size > cap) {
                 Log.w(TAG, "pcm size $size > buffer capacity $cap; dropping frame")
                 return
             }

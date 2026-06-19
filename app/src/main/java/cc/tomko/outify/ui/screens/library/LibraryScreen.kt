@@ -48,6 +48,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -56,7 +57,6 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -88,9 +88,11 @@ import kotlinx.coroutines.launch
 
 private sealed class LibraryItem {
     abstract val key: String
+
     data class FolderHeader(val folder: PlaylistFolder, val isExpanded: Boolean) : LibraryItem() {
         override val key get() = "folder:${folder.id}"
     }
+
     data class PlaylistRow(val playlist: Playlist, val folderId: String?) : LibraryItem() {
         override val key get() = "playlist:${playlist.uri}"
     }
@@ -123,7 +125,7 @@ fun SharedTransitionScope.LibraryScreen(
     val atTop by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemIndex == 0 &&
-            lazyListState.firstVisibleItemScrollOffset == 0
+                    lazyListState.firstVisibleItemScrollOffset == 0
         }
     }
     SideEffect { collapsingState.canExpand = atTop }
@@ -133,7 +135,7 @@ fun SharedTransitionScope.LibraryScreen(
     val isScrolled by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemIndex > 2 ||
-            lazyListState.firstVisibleItemScrollOffset > 100
+                    lazyListState.firstVisibleItemScrollOffset > 100
         }
     }
     val showScrollToTop = isScrolled
@@ -150,7 +152,7 @@ fun SharedTransitionScope.LibraryScreen(
         if (searchQuery.isBlank()) libraryState.playlists
         else libraryState.playlists.filter { p ->
             p.attributes.name.contains(searchQuery, ignoreCase = true) ||
-            p.ownerUsername.contains(searchQuery, ignoreCase = true)
+                    p.ownerUsername.contains(searchQuery, ignoreCase = true)
         }
     }
 
@@ -162,7 +164,7 @@ fun SharedTransitionScope.LibraryScreen(
         if (!lazyListState.isScrollInProgress) {
             val canExpand =
                 lazyListState.firstVisibleItemIndex == 0 &&
-                lazyListState.firstVisibleItemScrollOffset == 0
+                        lazyListState.firstVisibleItemScrollOffset == 0
             collapsingState.snapIfNeeded(canExpand)
         }
     }
@@ -445,8 +447,14 @@ private fun FolderHeaderContent(
 
         Spacer(Modifier.width(12.dp))
 
-        Column(Modifier.weight(1f).clickable { onToggleExpand() }) {
-            Text(folder.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+        Column(Modifier
+            .weight(1f)
+            .clickable { onToggleExpand() }) {
+            Text(
+                folder.name,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold
+            )
             Text(
                 "${folder.playlistIds.size} playlists",
                 style = MaterialTheme.typography.bodySmall,
@@ -455,10 +463,20 @@ private fun FolderHeaderContent(
         }
 
         IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.Edit, "Edit", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+            Icon(
+                Icons.Default.Edit,
+                "Edit",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
         }
         IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.Delete, "Delete", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+            Icon(
+                Icons.Default.Delete,
+                "Delete",
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(18.dp)
+            )
         }
 
         Icon(
@@ -478,8 +496,13 @@ private fun PlaylistRowContent(
     viewModel: LibraryViewModel,
     onMovePlaylist: (String, String?) -> Unit,
 ) {
-    val artworkUrl by produceState<String?>(null, playlist.uri) { value = viewModel.getArtworkUrl(playlist) }
-    val authors by produceState<List<cc.tomko.outify.core.model.Profile>>(emptyList(), playlist.uri) { value = viewModel.getAuthors(playlist).take(3) }
+    val artworkUrl by produceState<String?>(null, playlist.uri) {
+        value = viewModel.getArtworkUrl(playlist)
+    }
+    val authors by produceState<List<cc.tomko.outify.core.model.Profile>>(
+        emptyList(),
+        playlist.uri
+    ) { value = viewModel.getAuthors(playlist).take(3) }
 
     val startIndent = if (folderId != null) 24.dp else 0.dp
 
@@ -494,7 +517,14 @@ private fun PlaylistRowContent(
                 playlist = playlist,
                 artworkUrl = artworkUrl,
                 onRowClick = { backStack.add(Route.PlaylistScreen(playlist.uri)) },
-                onRowLongClick = { GlobalPopupController.show(PopupSpec.PlaylistInfo(playlist, artworkUrl)) },
+                onRowLongClick = {
+                    GlobalPopupController.show(
+                        PopupSpec.PlaylistInfo(
+                            playlist,
+                            artworkUrl
+                        )
+                    )
+                },
                 trailingContent = {
                     authors.forEach { author ->
                         UserChipAvatar(
@@ -506,8 +536,16 @@ private fun PlaylistRowContent(
             )
         }
 
-        IconButton(onClick = { onMovePlaylist(playlist.uri, folderId) }, modifier = Modifier.size(32.dp)) {
-            Icon(Icons.Default.CreateNewFolder, "Move", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+        IconButton(
+            onClick = { onMovePlaylist(playlist.uri, folderId) },
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                Icons.Default.CreateNewFolder,
+                "Move",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }

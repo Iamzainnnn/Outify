@@ -41,15 +41,15 @@ fun PlayerSheet(
     val scope = rememberCoroutineScope()
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val density      = LocalDensity.current
+        val density = LocalDensity.current
         val screenHeightPx = with(density) { maxHeight.toPx() }
-        val miniHeightPx   = with(density) { miniPlayerHeight.toPx() }
+        val miniHeightPx = with(density) { miniPlayerHeight.toPx() }
         val collapsedOffset = screenHeightPx - miniHeightPx
 
         LaunchedEffect(collapsedOffset) {
             sheetState.draggableState.updateAnchors(
                 DraggableAnchors {
-                    PlayerSheetValue.Expanded  at 0f
+                    PlayerSheetValue.Expanded at 0f
                     PlayerSheetValue.Collapsed at collapsedOffset
                 }
             )
@@ -93,10 +93,10 @@ fun PlayerSheet(
 
                     if (midDrag || fastFlingDown) {
                         val target = when {
-                            available.y > 1200f  -> PlayerSheetValue.Collapsed
+                            available.y > 1200f -> PlayerSheetValue.Collapsed
                             available.y < -1200f -> PlayerSheetValue.Expanded
                             sheetState.progress >= 0.5f -> PlayerSheetValue.Expanded
-                            else                -> PlayerSheetValue.Collapsed
+                            else -> PlayerSheetValue.Collapsed
                         }
                         sheetState.draggableState.animateTo(target)
                         return available
@@ -104,7 +104,10 @@ fun PlayerSheet(
                     return Velocity.Zero
                 }
 
-                override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                override suspend fun onPostFling(
+                    consumed: Velocity,
+                    available: Velocity
+                ): Velocity {
                     val midDrag = sheetState.progress > 0.01f && sheetState.progress < 0.99f
                     if (midDrag) {
                         val target = if (sheetState.progress >= 0.5f)
@@ -148,10 +151,12 @@ fun PlayerSheet(
                                             PlayerSheetValue.Expanded
                                         else
                                             PlayerSheetValue.Collapsed
-                                        sheetState.draggableState.animateTo(target, animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioNoBouncy,
-                                            stiffness = Spring.StiffnessMedium
-                                        ))
+                                        sheetState.draggableState.animateTo(
+                                            target, animationSpec = spring(
+                                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                                stiffness = Spring.StiffnessMedium
+                                            )
+                                        )
                                     }
                                 },
                                 onDragCancel = {

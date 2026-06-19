@@ -66,7 +66,7 @@ fun SharedTransitionScope.AlbumRow(
         TrackRowDensity.Spacious -> 72.dp
     }
 
-    val combinedModifier = if (onRowClick != null ) {
+    val combinedModifier = if (onRowClick != null) {
         modifier
             .fillMaxWidth()
             .combinedClickable(
@@ -93,11 +93,13 @@ fun SharedTransitionScope.AlbumRow(
     ) {
         Row(
             modifier = Modifier
-                .padding(horizontal = 12.dp, vertical = when (density) {
-                    TrackRowDensity.Compact -> 6.dp
-                    TrackRowDensity.Default -> 8.dp
-                    TrackRowDensity.Spacious -> 12.dp
-                })
+                .padding(
+                    horizontal = 12.dp, vertical = when (density) {
+                        TrackRowDensity.Compact -> 6.dp
+                        TrackRowDensity.Default -> 8.dp
+                        TrackRowDensity.Spacious -> 12.dp
+                    }
+                )
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -123,11 +125,13 @@ fun SharedTransitionScope.AlbumRow(
                     text = album.name,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontSize = when(density){
-                        TrackRowDensity.Compact -> 14.sp
-                        TrackRowDensity.Default -> 16.sp
-                        TrackRowDensity.Spacious -> 18.sp
-                    }),
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = when (density) {
+                            TrackRowDensity.Compact -> 14.sp
+                            TrackRowDensity.Default -> 16.sp
+                            TrackRowDensity.Spacious -> 18.sp
+                        }
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("albumrow.title")

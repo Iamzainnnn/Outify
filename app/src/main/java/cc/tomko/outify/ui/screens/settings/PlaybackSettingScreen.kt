@@ -143,11 +143,20 @@ fun PlaybackSettingScreen(
                         DropdownPreferenceEntry(
                             title = { Text("Bitrate (Quality)") },
                             description = "Choose your preferred streaming quality",
-                            icon = { Icon(Icons.Default.HighQuality, contentDescription = null ) },
+                            icon = { Icon(Icons.Default.HighQuality, contentDescription = null) },
                             options = listOf(
-                                DropdownOption(Bitrate.KBPS320, "320Kbps, ${Bitrate.KBPS320.getName()}"),
-                                DropdownOption(Bitrate.KBPS160, "160Kbps, ${Bitrate.KBPS160.getName()}"),
-                                DropdownOption(Bitrate.KBPS96, "96Kbps, ${Bitrate.KBPS96.getName()}"),
+                                DropdownOption(
+                                    Bitrate.KBPS320,
+                                    "320Kbps, ${Bitrate.KBPS320.getName()}"
+                                ),
+                                DropdownOption(
+                                    Bitrate.KBPS160,
+                                    "160Kbps, ${Bitrate.KBPS160.getName()}"
+                                ),
+                                DropdownOption(
+                                    Bitrate.KBPS96,
+                                    "96Kbps, ${Bitrate.KBPS96.getName()}"
+                                ),
                             ),
                             selectedValue = settings.bitrate,
                             onValueChange = { viewModel.setBitrate(it) }
@@ -164,7 +173,7 @@ fun PlaybackSettingScreen(
                         else
                             MaterialTheme.colorScheme.surface
                     ),
-                    modifier =  Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
                 ) {
                     Column {
@@ -258,7 +267,7 @@ fun PlaybackSettingScreen(
                         onClick = { advancedSettings = !advancedSettings }
                     )
 
-                    if(advancedSettings) {
+                    if (advancedSettings) {
                         Column() {
                             var clientIdInput by remember(savedClientId) {
                                 mutableStateOf(savedClientId ?: "")

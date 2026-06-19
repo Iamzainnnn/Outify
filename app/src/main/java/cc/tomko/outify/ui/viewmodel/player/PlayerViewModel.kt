@@ -47,14 +47,15 @@ class PlayerViewModel @Inject constructor(
     private val likedDao: LikedDao,
     private val likedRepository: LikedRepository,
     private val spClient: SpClient,
-): ViewModel() {
+) : ViewModel() {
     private val _state = MutableStateFlow(PlaybackState())
     val state: StateFlow<PlaybackState> = _state.asStateFlow()
 
     private val _lyrics = MutableStateFlow<List<SyncedLyric>>(emptyList())
     val lyrics: StateFlow<List<SyncedLyric>> = _lyrics
 
-    private val _positionMs = MutableStateFlow(playbackStateHolder.estimatePosition().inWholeMilliseconds)
+    private val _positionMs =
+        MutableStateFlow(playbackStateHolder.estimatePosition().inWholeMilliseconds)
     val positionMs = _positionMs.asStateFlow()
 
     val isShuffling = settingsRepository.shuffleEnabled
@@ -128,6 +129,7 @@ class PlayerViewModel @Inject constructor(
                     playbackStateHolder.setPlaying(!playbackStateHolder.state.value.isPlaying)
                 }
             }
+
             PlayerAction.Next -> spirc.playerNext()
             PlayerAction.Previous -> {
                 spirc.playerPrevious()
@@ -135,12 +137,14 @@ class PlayerViewModel @Inject constructor(
                     playbackStateHolder.seekTo(Duration.ZERO)
                 }
             }
+
             is PlayerAction.SeekTo -> {
                 viewModelScope.launch {
                     playbackStateHolder.seekTo(action.position.toDuration(DurationUnit.MILLISECONDS))
                     spirc.seekTo(action.position)
                 }
             }
+
             PlayerAction.RepeatToggle -> {
                 val newValue = !isRepeating.value
                 viewModelScope.launch {
@@ -148,6 +152,7 @@ class PlayerViewModel @Inject constructor(
                     spirc.repeat(newValue)
                 }
             }
+
             PlayerAction.ShuffleToggle -> {
                 val newValue = !isShuffling.value
                 viewModelScope.launch {
@@ -205,7 +210,7 @@ class PlayerViewModel @Inject constructor(
 
     private val lyricsCache = mutableMapOf<String, List<SyncedLyric>>()
 
-    fun loadLyrics(){
+    fun loadLyrics() {
         val track = playbackStateHolder.state.value.currentTrack
         val trackId = track?.id ?: return
         val cached = lyricsCache[trackId]

@@ -1,4 +1,5 @@
 package cc.tomko.outify.data.dao
+
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -24,6 +25,7 @@ interface PlaylistDao {
     @Transaction
     @Query("SELECT * FROM playlists WHERE id IN (:ids)")
     fun getPlaylistsWithItemsFlow(ids: List<String>): Flow<List<PlaylistWithItems>>
+
     @Transaction
     @Query("SELECT * FROM playlists")
     fun getPlaylistsWithItemsFlow(): Flow<List<PlaylistWithItems>>

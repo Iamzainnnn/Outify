@@ -23,7 +23,7 @@ fun ArtworkBackground(
     topFade: Boolean = true,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        if(artworkUrl != null){
+        if (artworkUrl != null) {
             SmartImage(
                 url = artworkUrl,
                 modifier = Modifier.fillMaxSize(),

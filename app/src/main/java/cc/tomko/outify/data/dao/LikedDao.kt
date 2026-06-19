@@ -25,10 +25,12 @@ interface LikedDao {
     fun observeIsTrackLiked(id: String): Flow<Boolean>
 
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT * FROM tracks
         WHERE id IN (:trackIds)
-    """)
+    """
+    )
     suspend fun getTracksWithArtists(trackIds: List<String>): List<TrackWithArtists>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -70,15 +72,18 @@ interface LikedDao {
      * Inner-joins liked_songs with tracks — only returns rows where metadata exists.
      */
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT t.* FROM liked_songs ls
         INNER JOIN tracks t ON ls.trackId = t.id
         ORDER BY ls.position ASC
-    """)
+    """
+    )
     fun observeLikedTracksWithDetails(): Flow<List<TrackWithArtists>>
 
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT DISTINCT t.*
         FROM liked_songs ls
         INNER JOIN tracks t ON ls.trackId = t.id
@@ -88,19 +93,22 @@ interface LikedDao {
             t.name LIKE '%' || :query || '%'
             OR a.name LIKE '%' || :query || '%'
         ORDER BY ls.position ASC
-    """)
+    """
+    )
     fun observeSearchLikedTracks(query: String): Flow<List<TrackWithArtists>>
 
     @Query("SELECT trackId FROM liked_songs")
     fun observeLikedIds(): Flow<List<String>>
 
-    @Query("""
+    @Query(
+        """
         SELECT t.id
         FROM liked_songs ls
         JOIN track_artists ta ON ta.trackId = ls.trackId
         JOIN tracks t ON t.id = ls.trackId
         WHERE ta.artistId = :artistId
         ORDER BY ls.position
-    """)
+    """
+    )
     fun observeLikedIdsByArtist(artistId: String): Flow<List<String>>
 }

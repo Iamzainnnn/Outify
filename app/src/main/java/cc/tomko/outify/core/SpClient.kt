@@ -4,7 +4,6 @@ import cc.tomko.outify.core.model.DevicesResponse
 import cc.tomko.outify.data.metadata.NativeError
 import cc.tomko.outify.data.metadata.NativeErrorHandler
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -22,7 +21,12 @@ class SpClient @Inject constructor() {
     external fun username(): String?
 
     external fun getCurrentUserProfile(): String?
-    external fun search(query: String, type: String, offset: Int = -1, pages: Int = -1): Array<String>
+    external fun search(
+        query: String,
+        type: String,
+        offset: Int = -1,
+        pages: Int = -1
+    ): Array<String>
 
     external fun getUserCollection(query: String? = null): String?
 
@@ -89,7 +93,12 @@ class SpClient @Inject constructor() {
      *
      * Returns ID of the new playlist
      */
-    external fun createPlaylist(name: String, description: String = "", public: Boolean, collaborative: Boolean): String?
+    external fun createPlaylist(
+        name: String,
+        description: String = "",
+        public: Boolean,
+        collaborative: Boolean
+    ): String?
 
     /**
      * Modifies playlist
@@ -97,7 +106,13 @@ class SpClient @Inject constructor() {
      *
      * Returns status code
      */
-    external fun modifyPlaylist(playlistId: String, name: String, description: String = "", public: Boolean, collaborative: Boolean): Int
+    external fun modifyPlaylist(
+        playlistId: String,
+        name: String,
+        description: String = "",
+        public: Boolean,
+        collaborative: Boolean
+    ): Int
 
     /**
      * Retrieves the metadata for singular track by its ID

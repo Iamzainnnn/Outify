@@ -123,7 +123,7 @@ fun CreateFolderBottomSheet(
                 onColorChanged = { selectedColor = it },
                 preview = false,
 
-            )
+                )
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 

@@ -42,10 +42,12 @@ fun Color.toHsv(): HsvColor {
 }
 
 fun HsvColor.toColor(): Color {
-    return Color(android.graphics.Color.HSVToColor(
-        (alpha * 255).toInt(),
-        floatArrayOf(hue, saturation, value)
-    ))
+    return Color(
+        android.graphics.Color.HSVToColor(
+            (alpha * 255).toInt(),
+            floatArrayOf(hue, saturation, value)
+        )
+    )
 }
 
 @Composable
@@ -137,7 +139,7 @@ fun ColorPicker(
             }
         )
 
-        if(preview) {
+        if (preview) {
             // Preview
             Box(
                 modifier = Modifier

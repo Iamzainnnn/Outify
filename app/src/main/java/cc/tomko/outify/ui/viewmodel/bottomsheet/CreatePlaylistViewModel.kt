@@ -23,7 +23,12 @@ class CreatePlaylistViewModel @Inject constructor(
     private val _result = MutableSharedFlow<Result<String>>(extraBufferCapacity = 1)
     val result: SharedFlow<Result<String>> = _result
 
-    fun createPlaylist(name: String, description: String?, isPublic: Boolean, isCollaborative: Boolean) {
+    fun createPlaylist(
+        name: String,
+        description: String?,
+        isPublic: Boolean,
+        isCollaborative: Boolean
+    ) {
         viewModelScope.launch {
             try {
                 val playlistId = withContext(Dispatchers.IO) {
@@ -51,13 +56,25 @@ class CreatePlaylistViewModel @Inject constructor(
         }
     }
 
-    fun modifyPlaylist(playlistId: String, name: String, description: String?, isPublic: Boolean, isCollaborative: Boolean) {
+    fun modifyPlaylist(
+        playlistId: String,
+        name: String,
+        description: String?,
+        isPublic: Boolean,
+        isCollaborative: Boolean
+    ) {
         viewModelScope.launch {
             try {
                 val status = withContext(Dispatchers.IO) {
-                    spClient.modifyPlaylist(playlistId, name, description ?: "", isPublic, isCollaborative)
+                    spClient.modifyPlaylist(
+                        playlistId,
+                        name,
+                        description ?: "",
+                        isPublic,
+                        isCollaborative
+                    )
                 }
-                if(status == 200) {
+                if (status == 200) {
                     playlistDao.upsertPlaylist(
                         PlaylistEntity(
                             id = playlistId,

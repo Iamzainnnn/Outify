@@ -188,9 +188,15 @@ fun PlayerScreen(
                         // Top and bottom gradient fades
                         listOf(Alignment.TopCenter, Alignment.BottomCenter).forEach { alignment ->
                             val colors = if (alignment == Alignment.TopCenter)
-                                listOf(MaterialTheme.colorScheme.surfaceContainerHigh, Color.Transparent)
+                                listOf(
+                                    MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    Color.Transparent
+                                )
                             else
-                                listOf(Color.Transparent, MaterialTheme.colorScheme.surfaceContainerHigh)
+                                listOf(
+                                    Color.Transparent,
+                                    MaterialTheme.colorScheme.surfaceContainerHigh
+                                )
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -254,8 +260,10 @@ private fun TrackInfo(track: Track?, onArtistClick: (Artist) -> Unit) {
                     )
                 )
                 if (index < track.artists.lastIndex) {
-                    Text(", ", style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        ", ", style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
@@ -295,7 +303,12 @@ private fun BottomActionsBar(
             AnimatedContent(
                 targetState = isFavorite,
                 transitionSpec = {
-                    (scaleIn(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium)) + fadeIn()) togetherWith
+                    (scaleIn(
+                        spring(
+                            Spring.DampingRatioMediumBouncy,
+                            Spring.StiffnessMedium
+                        )
+                    ) + fadeIn()) togetherWith
                             (scaleOut() + fadeOut())
                 },
                 label = "favoriteIcon"
@@ -378,8 +391,8 @@ fun PlaybackControls(
 ) {
     val iconState = when {
         isBuffering -> PlaybackIconState.Buffering
-        isPlaying   -> PlaybackIconState.Playing
-        else        -> PlaybackIconState.Paused
+        isPlaying -> PlaybackIconState.Playing
+        else -> PlaybackIconState.Paused
     }
 
     // SpaceEvenly ensures buttons scale gracefully on narrow screens
@@ -398,8 +411,10 @@ fun PlaybackControls(
         }
 
         IconButton(onClick = onPrevious, modifier = Modifier.size(42.dp)) {
-            Icon(Icons.AutoMirrored.Filled.ArrowLeft, contentDescription = "Previous",
-                modifier = Modifier.size(42.dp))
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowLeft, contentDescription = "Previous",
+                modifier = Modifier.size(42.dp)
+            )
         }
 
         FilledIconButton(
@@ -414,7 +429,12 @@ fun PlaybackControls(
             AnimatedContent(
                 targetState = iconState,
                 transitionSpec = {
-                    (scaleIn(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)) + fadeIn()) togetherWith
+                    (scaleIn(
+                        spring(
+                            Spring.DampingRatioMediumBouncy,
+                            Spring.StiffnessMediumLow
+                        )
+                    ) + fadeIn()) togetherWith
                             (scaleOut() + fadeOut())
                 },
                 label = "playPauseIcon"
@@ -424,17 +444,29 @@ fun PlaybackControls(
                         modifier = Modifier.size(36.dp),
                         color = MaterialTheme.colorScheme.onPrimary
                     )
-                    PlaybackIconState.Playing -> Icon(Icons.Outlined.Pause, "Pause",
-                        modifier = Modifier.padding(12.dp).size(42.dp))
-                    PlaybackIconState.Paused  -> Icon(Icons.Outlined.PlayArrow, "Play",
-                        modifier = Modifier.padding(12.dp).size(42.dp))
+
+                    PlaybackIconState.Playing -> Icon(
+                        Icons.Outlined.Pause, "Pause",
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .size(42.dp)
+                    )
+
+                    PlaybackIconState.Paused -> Icon(
+                        Icons.Outlined.PlayArrow, "Play",
+                        modifier = Modifier
+                            .padding(12.dp)
+                            .size(42.dp)
+                    )
                 }
             }
         }
 
         IconButton(onClick = onNext, modifier = Modifier.size(42.dp)) {
-            Icon(Icons.AutoMirrored.Filled.ArrowRight, contentDescription = "Next",
-                modifier = Modifier.size(42.dp))
+            Icon(
+                Icons.AutoMirrored.Filled.ArrowRight, contentDescription = "Next",
+                modifier = Modifier.size(42.dp)
+            )
         }
 
         FilledTonalIconToggleButton(
@@ -478,11 +510,18 @@ fun Lyrics(
 
     if (lyrics.isEmpty()) {
         Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("♪", style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.30f))
-                Text("No lyrics available", style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.50f))
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    "♪", style = MaterialTheme.typography.displaySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.30f)
+                )
+                Text(
+                    "No lyrics available", style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.50f)
+                )
             }
         }
         return
@@ -518,19 +557,19 @@ private fun LyricLine(
 ) {
     val alpha by animateFloatAsState(
         targetValue = when {
-            isActive      -> 1.00f
+            isActive -> 1.00f
             distance == 1 -> 0.65f
             distance == 2 -> 0.38f
-            else          -> 0.18f
+            else -> 0.18f
         },
         animationSpec = tween(280), label = "lyricAlpha"
     )
     val scale by animateFloatAsState(
         targetValue = when {
-            isActive      -> 1.00f
+            isActive -> 1.00f
             distance == 1 -> 0.96f
             distance == 2 -> 0.93f
-            else          -> 0.90f
+            else -> 0.90f
         },
         animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium),
         label = "lyricScale"
@@ -551,12 +590,18 @@ private fun LyricLine(
         animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessHigh),
         label = "lyricTapScale"
     )
-    LaunchedEffect(tapped) { if (tapped) { delay(80); tapped = false } }
+    LaunchedEffect(tapped) {
+        if (tapped) {
+            delay(80); tapped = false
+        }
+    }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer { this.alpha = alpha; scaleX = scale * tapScale; scaleY = scale * tapScale }
+            .graphicsLayer {
+                this.alpha = alpha; scaleX = scale * tapScale; scaleY = scale * tapScale
+            }
             .padding(horizontal = 12.dp)
             .background(
                 color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = pillAlpha * 0.55f),
@@ -577,16 +622,16 @@ private fun LyricLine(
             Text(
                 text = line.text,
                 style = when {
-                    isActive      -> MaterialTheme.typography.headlineSmall
+                    isActive -> MaterialTheme.typography.headlineSmall
                     distance == 1 -> MaterialTheme.typography.titleLarge
                     distance == 2 -> MaterialTheme.typography.titleMedium
-                    else          -> MaterialTheme.typography.bodyLarge
+                    else -> MaterialTheme.typography.bodyLarge
                 },
                 fontWeight = when {
-                    isActive      -> FontWeight.ExtraBold
+                    isActive -> FontWeight.ExtraBold
                     distance == 1 -> FontWeight.SemiBold
                     distance == 2 -> FontWeight.Normal
-                    else          -> FontWeight.Light
+                    else -> FontWeight.Light
                 },
                 color = if (isActive) MaterialTheme.colorScheme.onSecondaryContainer
                 else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -598,10 +643,10 @@ private fun LyricLine(
                 Text(
                     text = romanizedText,
                     style = when {
-                        isActive      -> MaterialTheme.typography.titleSmall
+                        isActive -> MaterialTheme.typography.titleSmall
                         distance == 1 -> MaterialTheme.typography.labelLarge
                         distance == 2 -> MaterialTheme.typography.labelMedium
-                        else          -> MaterialTheme.typography.labelSmall
+                        else -> MaterialTheme.typography.labelSmall
                     },
                     fontWeight = FontWeight.Normal,
                     color = if (isActive) MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)

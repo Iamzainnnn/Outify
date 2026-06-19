@@ -24,7 +24,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DebugViewModel @Inject constructor(
-    @ApplicationContext val context:  Context,
+    @ApplicationContext val context: Context,
     val spClient: SpClient,
     val authManager: AuthManager,
     val json: Json,
@@ -81,7 +81,7 @@ class DebugViewModel @Inject constructor(
         _hasPlaybackFile.value = File(context.filesDir, "credentials.json").exists()
         _isSpircUsable.value = spircWrapper.isUsable
 
-        if(_isAccountLoggedIn.value) {
+        if (_isAccountLoggedIn.value) {
             fetchProfile()
         }
 
@@ -95,7 +95,8 @@ class DebugViewModel @Inject constructor(
                 "Shuffle" to settingsRepository.shuffleEnabled.first().toString(),
                 "Repeat" to settingsRepository.repeatEnabled.first().toString(),
                 "Romanize lyrics" to settingsRepository.romanizeLyrics.first().toString(),
-                "Show lyrics by default" to settingsRepository.showLyricsByDefault.first().toString(),
+                "Show lyrics by default" to settingsRepository.showLyricsByDefault.first()
+                    .toString(),
                 "Normalize audio" to settingsRepository.normalizePlayback.first().toString(),
             )
         }
@@ -119,7 +120,7 @@ class DebugViewModel @Inject constructor(
 
                 _userId.value = id
                 _username.value = username
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }

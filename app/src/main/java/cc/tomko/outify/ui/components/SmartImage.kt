@@ -23,12 +23,10 @@ import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
-import androidx.glance.appwidget.cornerRadius
 import androidx.glance.background
 import androidx.glance.layout.Box
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.size
-import androidx.glance.unit.Dimension
 import cc.tomko.outify.data.setting.LocalUiSettings
 import coil3.ImageLoader
 import coil3.compose.AsyncImage
@@ -89,7 +87,7 @@ fun GlanceSmartImage(
     modifier: GlanceModifier = GlanceModifier,
     size: Dp = 48.dp
 ) {
-    Box (
+    Box(
         modifier = modifier
             .background(GlanceTheme.colors.background)
             .size(size)

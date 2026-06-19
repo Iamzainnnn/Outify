@@ -91,6 +91,7 @@ fun SwipeableRowWithGestures(
                     .maxByOrNull { it.thresholdFraction }
                 chosen?.let { it to (it.thresholdFraction * widthPx) }
             }
+
             offset < 0f && sortedStart.isNotEmpty() -> {
                 val px = abs(offset)
                 val chosen = sortedStart
@@ -98,6 +99,7 @@ fun SwipeableRowWithGestures(
                     .maxByOrNull { it.thresholdFraction }
                 chosen?.let { it to (it.thresholdFraction * widthPx) }
             }
+
             else -> null
         }
     }
@@ -124,7 +126,8 @@ fun SwipeableRowWithGestures(
         } else 0f
     }
 
-    val iconTargetDp = lerp(minIconSize, maxIconSizeDp.coerceAtLeast(minIconSize), iconTargetFraction)
+    val iconTargetDp =
+        lerp(minIconSize, maxIconSizeDp.coerceAtLeast(minIconSize), iconTargetFraction)
     val animatedIconDp by animateFloatAsState(
         targetValue = with(density) { iconTargetDp.toPx() },
         animationSpec = tween(120)
@@ -157,7 +160,8 @@ fun SwipeableRowWithGestures(
             .clipToBounds()
             .onSizeChanged { containerWidthPx = it.width }
     ) {
-        val chosenPair = chosenGestureForOffset(offsetX.value) // returns gesture and its thresholdPx
+        val chosenPair =
+            chosenGestureForOffset(offsetX.value) // returns gesture and its thresholdPx
         val activeGesture = chosenPair?.first
 
         if (activeGesture != null && contentHeightPx > 0) {
@@ -242,7 +246,10 @@ fun SwipeableRowWithGestures(
                                 }
 
                                 if (absFinal < smallestThresholdPx) {
-                                    offsetX.animateTo(0f, animationSpec = tween(durationMillis = 120))
+                                    offsetX.animateTo(
+                                        0f,
+                                        animationSpec = tween(durationMillis = 120)
+                                    )
                                     return@launch
                                 }
 
@@ -277,7 +284,10 @@ fun SwipeableRowWithGestures(
                                     } else {
                                         val target = chosen.thresholdFraction * widthPx * sign
                                         val overshootTarget = target + sign * overshootAmount
-                                        offsetX.animateTo(overshootTarget, animationSpec = enterSpring)
+                                        offsetX.animateTo(
+                                            overshootTarget,
+                                            animationSpec = enterSpring
+                                        )
                                         chosen.onTrigger()
                                         offsetX.animateTo(0f, animationSpec = settleSpring)
                                     }

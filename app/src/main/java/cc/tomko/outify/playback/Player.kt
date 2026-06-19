@@ -45,7 +45,7 @@ class Player @Inject constructor(
     val spirc: SpircWrapper,
     val json: Json,
     val imageLoader: ImageLoader,
-): SimpleBasePlayer(application.mainLooper) {
+) : SimpleBasePlayer(application.mainLooper) {
 
     private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     var currentArtworkBitmap: Bitmap? = null
@@ -54,92 +54,107 @@ class Player @Inject constructor(
 
     private var artworkJob: Job? = null
 
-    var engine: AudioEngine = AudioEngine(application.applicationContext, object: PlayerEventCallback {
+    var engine: AudioEngine =
+        AudioEngine(application.applicationContext, object : PlayerEventCallback {
 
-        override fun onTrackChange(spotify_uri: String, json_str: String) {
-            scope.launch {
-                val track: Track = json.decodeFromString(json_str)
-                stateHolder.setTrack(track)
+            override fun onTrackChange(spotify_uri: String, json_str: String) {
+                scope.launch {
+                    val track: Track = json.decodeFromString(json_str)
+                    stateHolder.setTrack(track)
 
-                val cover = track.album?.getCover(CoverSize.LARGE)
-                val artworkUrl = cover?.let { ALBUM_COVER_URL + it.uri }
-                currentArtworkUri = artworkUrl
+                    val cover = track.album?.getCover(CoverSize.LARGE)
+                    val artworkUrl = cover?.let { ALBUM_COVER_URL + it.uri }
+                    currentArtworkUri = artworkUrl
 
-                invalidateState()
+                    invalidateState()
 
-                artworkJob?.cancel()
+                    artworkJob?.cancel()
 
-                if (artworkUrl == null) return@launch
+                    if (artworkUrl == null) return@launch
 
-                artworkJob = scope.launch {
-                    val loadResult = withContext(Dispatchers.IO) {
-                        try {
-                            val request = ImageRequest.Builder(application)
-                                .data(artworkUrl)
-                                .allowHardware(false)
-                                .build()
+                    artworkJob = scope.launch {
+                        val loadResult = withContext(Dispatchers.IO) {
+                            try {
+                                val request = ImageRequest.Builder(application)
+                                    .data(artworkUrl)
+                                    .allowHardware(false)
+                                    .build()
 
-                            val result = imageLoader.execute(request)
-                            val bmp = result.image?.toBitmap()
+                                val result = imageLoader.execute(request)
+                                val bmp = result.image?.toBitmap()
 
-                            val finalBmp = bmp?.let {
-                                val max = 1024
-                                if (it.width > max || it.height > max) {
-                                    val ratio = minOf(max.toFloat() / it.width, max.toFloat() / it.height)
-                                    it.scale((it.width * ratio).toInt(), (it.height * ratio).toInt())
-                                } else it
-                            }
-
-                            val bytes = finalBmp?.let { fb ->
-                                ByteArrayOutputStream().use { stream ->
-                                    fb.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
-                                    stream.toByteArray()
+                                val finalBmp = bmp?.let {
+                                    val max = 1024
+                                    if (it.width > max || it.height > max) {
+                                        val ratio = minOf(
+                                            max.toFloat() / it.width,
+                                            max.toFloat() / it.height
+                                        )
+                                        it.scale(
+                                            (it.width * ratio).toInt(),
+                                            (it.height * ratio).toInt()
+                                        )
+                                    } else it
                                 }
+
+                                val bytes = finalBmp?.let { fb ->
+                                    ByteArrayOutputStream().use { stream ->
+                                        fb.compress(
+                                            android.graphics.Bitmap.CompressFormat.PNG,
+                                            100,
+                                            stream
+                                        )
+                                        stream.toByteArray()
+                                    }
+                                }
+
+                                Pair(finalBmp, bytes)
+                            } catch (e: Exception) {
+                                Log.w("Player", "artwork load failed", e)
+                                null
                             }
-
-                            Pair(finalBmp, bytes)
-                        } catch (e: Exception) {
-                            Log.w("Player", "artwork load failed", e)
-                            null
                         }
-                    }
 
-                    if (loadResult == null) return@launch
+                        if (loadResult == null) return@launch
 
-                    val (loadedBitmap, loadedBytes) = loadResult
+                        val (loadedBitmap, loadedBytes) = loadResult
 
-                    val currentTrackId = stateHolder.state.value.currentTrack?.id
-                    if (currentTrackId != track.id) {
-                        return@launch
-                    }
+                        val currentTrackId = stateHolder.state.value.currentTrack?.id
+                        if (currentTrackId != track.id) {
+                            return@launch
+                        }
 
-                    withContext(Dispatchers.Main) {
-                        currentArtworkBitmap = loadedBitmap
-                        currentArtworkBytes = loadedBytes
+                        withContext(Dispatchers.Main) {
+                            currentArtworkBitmap = loadedBitmap
+                            currentArtworkBytes = loadedBytes
 
-                        invalidateState()
+                            invalidateState()
+                        }
                     }
                 }
             }
-        }
 
-        override fun onPositionUpdate(spotify_uri: String, position_ms: Long, json_raw: String) {
-            if (stateHolder.state.value.currentTrack?.id != spotify_uri) {
-                onTrackChange(spotify_uri, json_raw)
+            override fun onPositionUpdate(
+                spotify_uri: String,
+                position_ms: Long,
+                json_raw: String
+            ) {
+                if (stateHolder.state.value.currentTrack?.id != spotify_uri) {
+                    onTrackChange(spotify_uri, json_raw)
+                }
+                scope.launch {
+                    stateHolder.seekTo(position_ms.toDuration(DurationUnit.MILLISECONDS))
+                    invalidateState()
+                }
             }
-            scope.launch {
-                stateHolder.seekTo(position_ms.toDuration(DurationUnit.MILLISECONDS))
-                invalidateState()
-            }
-        }
 
-        override fun onPlayingStatus(playing: Boolean) {
-            scope.launch {
-                stateHolder.setPlaying(playing)
-                invalidateState()
+            override fun onPlayingStatus(playing: Boolean) {
+                scope.launch {
+                    stateHolder.setPlaying(playing)
+                    invalidateState()
+                }
             }
-        }
-    })
+        })
 
     override fun getState(): State {
         val ps = stateHolder.state.value
@@ -209,7 +224,11 @@ class Player @Inject constructor(
         return com.google.common.util.concurrent.Futures.immediateVoidFuture()
     }
 
-    override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> {
+    override fun handleSeek(
+        mediaItemIndex: Int,
+        positionMs: Long,
+        seekCommand: Int
+    ): ListenableFuture<*> {
 //        spirc.seekTo(mediaItemIndex, positionMs)
         when (seekCommand) {
             COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM -> spirc.playerPrevious()

@@ -36,7 +36,7 @@ sealed class SpotifyUri : OutifyUri() {
     override fun toUriString(): String = when (this) {
         is Playlist -> user?.let { "spotify:user:$it:playlist:$id" } ?: "spotify:playlist:$id"
         else -> "spotify:$itemType:$id"
-        }
+    }
 
     companion object {
         fun fromUriString(uri: String): SpotifyUri {
@@ -80,6 +80,7 @@ sealed class SpotifyUri : OutifyUri() {
                         durationSeconds = localParts.getOrNull(3)?.toLongOrNull() ?: 0L
                     )
                 }
+
                 else -> Unknown(id, itemType)
             }
         }

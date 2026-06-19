@@ -183,15 +183,17 @@ private fun TrackSelectionRow(
     showCheckbox: Boolean = true,
     onToggle: () -> Unit,
 ) {
-    val artworkUrl = remember(track) { ALBUM_COVER_URL + (track.album?.getCover(CoverSize.SMALL)?.uri ?: "") }
+    val artworkUrl =
+        remember(track) { ALBUM_COVER_URL + (track.album?.getCover(CoverSize.SMALL)?.uri ?: "") }
 
-    val background = when(isAlreadyInPlaylist) {
+    val background = when (isAlreadyInPlaylist) {
         true -> {
             when (isSelected) {
                 true -> MaterialTheme.colorScheme.onPrimaryFixedVariant
                 false -> MaterialTheme.colorScheme.background
             }
         }
+
         false -> {
             when (isSelected) {
                 true -> MaterialTheme.colorScheme.onPrimaryFixedVariant

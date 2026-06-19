@@ -2,7 +2,6 @@ package cc.tomko.outify.ui.widgets
 
 import android.appwidget.AppWidgetManager
 import android.os.Bundle
-import android.os.PersistableBundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -10,20 +9,13 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import cc.tomko.outify.MainActivity.MainActivity.LocalSharedTransitionScope
 import cc.tomko.outify.data.dao.PlaylistDao
 import cc.tomko.outify.data.repository.InterfaceSettings
-import cc.tomko.outify.data.repository.SettingsRepository
-import cc.tomko.outify.data.setting.LocalSwipeActionHandler
-import cc.tomko.outify.data.setting.LocalSwipeGestureSettings
-import cc.tomko.outify.data.setting.LocalUiSettings
 import cc.tomko.outify.ui.OutifyTheme
 import cc.tomko.outify.ui.ThemeMode
 import cc.tomko.outify.ui.viewmodel.widgets.PlaybackConfigureViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -44,7 +36,7 @@ class PlaybackWidgetConfigure : ComponentActivity() {
             AppWidgetManager.INVALID_APPWIDGET_ID
         )
 
-        if(appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
             finish()
             return
         }
@@ -55,7 +47,8 @@ class PlaybackWidgetConfigure : ComponentActivity() {
                 .collectAsState(initial = InterfaceSettings())
 
             val currentTrack by viewModel.currentTrack.collectAsState()
-            val themeMode = if (interfaceSettings.dynamicTheme) ThemeMode.DYNAMIC_ALBUM else if (interfaceSettings.dynamicSystem) ThemeMode.DYNAMIC_SYSTEM else ThemeMode.STATIC
+            val themeMode =
+                if (interfaceSettings.dynamicTheme) ThemeMode.DYNAMIC_ALBUM else if (interfaceSettings.dynamicSystem) ThemeMode.DYNAMIC_SYSTEM else ThemeMode.STATIC
 
             OutifyTheme(
                 track = currentTrack,

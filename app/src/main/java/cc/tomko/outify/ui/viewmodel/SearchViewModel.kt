@@ -21,7 +21,6 @@ import cc.tomko.outify.ui.model.search.SearchResultType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -31,10 +30,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.UUID
 import javax.inject.Inject
 
 @OptIn(FlowPreview::class)
@@ -46,7 +43,7 @@ class SearchViewModel @Inject constructor(
     private val repository: SearchRepository,
     private val playbackStateHolder: PlaybackStateHolder,
     private val settingsRepository: SettingsRepository,
-): ViewModel() {
+) : ViewModel() {
     private val queryFlow = MutableStateFlow("")
 
     private val _results = MutableStateFlow<List<SearchUiModel>>(emptyList())
@@ -111,49 +108,57 @@ class SearchViewModel @Inject constructor(
                         SearchUiModel.SkeletonItem(3),
                     )
 
-                    launch { searchSection("track", R.string.search_section_tracks) { uris ->
-                        withContext(Dispatchers.IO) {
-                            metadata.getTrackMetadata(uris).map { track ->
-                                SearchUiModel.TrackItem(track.uri, track)
-                            }
-                        }
-                    }}
-
-                    launch { searchSection("artist", R.string.search_section_artists) { uris ->
-                        withContext(Dispatchers.IO) {
-                            uris.mapNotNull { uri ->
-                                runCatching {
-                                    metadata.getArtistMetadata(uri)
-                                }.getOrNull()?.let { artist ->
-                                    SearchUiModel.ArtistItem(uri, artist)
+                    launch {
+                        searchSection("track", R.string.search_section_tracks) { uris ->
+                            withContext(Dispatchers.IO) {
+                                metadata.getTrackMetadata(uris).map { track ->
+                                    SearchUiModel.TrackItem(track.uri, track)
                                 }
                             }
                         }
-                    }}
+                    }
 
-                    launch { searchSection("album", R.string.search_section_albums) { uris ->
-                        withContext(Dispatchers.IO) {
-                            uris.mapNotNull { uri ->
-                                runCatching {
-                                    metadata.getAlbumMetadata(uri)
-                                }.getOrNull()?.let { album ->
-                                    SearchUiModel.AlbumItem(uri, album)
+                    launch {
+                        searchSection("artist", R.string.search_section_artists) { uris ->
+                            withContext(Dispatchers.IO) {
+                                uris.mapNotNull { uri ->
+                                    runCatching {
+                                        metadata.getArtistMetadata(uri)
+                                    }.getOrNull()?.let { artist ->
+                                        SearchUiModel.ArtistItem(uri, artist)
+                                    }
                                 }
                             }
                         }
-                    }}
+                    }
 
-                    launch { searchSection("playlist", R.string.search_section_playlists) { uris ->
-                        withContext(Dispatchers.IO) {
-                            uris.mapNotNull { uri ->
-                                runCatching {
-                                    metadata.getPlaylistMetadata(uri, true)
-                                }.getOrNull()?.let { playlist ->
-                                    SearchUiModel.PlaylistItem(uri, playlist)
+                    launch {
+                        searchSection("album", R.string.search_section_albums) { uris ->
+                            withContext(Dispatchers.IO) {
+                                uris.mapNotNull { uri ->
+                                    runCatching {
+                                        metadata.getAlbumMetadata(uri)
+                                    }.getOrNull()?.let { album ->
+                                        SearchUiModel.AlbumItem(uri, album)
+                                    }
                                 }
                             }
                         }
-                    }}
+                    }
+
+                    launch {
+                        searchSection("playlist", R.string.search_section_playlists) { uris ->
+                            withContext(Dispatchers.IO) {
+                                uris.mapNotNull { uri ->
+                                    runCatching {
+                                        metadata.getPlaylistMetadata(uri, true)
+                                    }.getOrNull()?.let { playlist ->
+                                        SearchUiModel.PlaylistItem(uri, playlist)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
         }
 
@@ -173,22 +178,30 @@ class SearchViewModel @Inject constructor(
                                         SearchUiModel.TrackItem(item.uri, track)
                                     }
                                 }
+
                                 SearchResultType.ARTIST -> {
                                     val artist = metadata.getArtistMetadata(item.uri)
                                     artist?.let { SearchUiModel.ArtistItem(item.uri, it) }
                                 }
+
                                 SearchResultType.ALBUM -> {
                                     val album = metadata.getAlbumMetadata(item.uri)
                                     album?.let { SearchUiModel.AlbumItem(item.uri, it) }
                                 }
+
                                 SearchResultType.PLAYLIST -> {
                                     val playlist = metadata.getPlaylistMetadata(item.uri, true)
                                     playlist?.let { SearchUiModel.PlaylistItem(item.uri, it) }
                                 }
+
                                 else -> null
                             }
                         } catch (e: Exception) {
-                            Log.w("SearchViewModel", "Failed to load history metadata for ${item.uri}", e)
+                            Log.w(
+                                "SearchViewModel",
+                                "Failed to load history metadata for ${item.uri}",
+                                e
+                            )
                             null
                         }
                     }
@@ -218,7 +231,8 @@ class SearchViewModel @Inject constructor(
     private fun replaceSkeleton(headerRes: Int, items: List<SearchUiModel>) {
         _results.update { current ->
             val out = current.toMutableList()
-            val headerIdx = out.indexOfLast { it is SearchUiModel.SectionHeader && it.titleRes == headerRes }
+            val headerIdx =
+                out.indexOfLast { it is SearchUiModel.SectionHeader && it.titleRes == headerRes }
             if (headerIdx < 0) return@update current
             val skeletonIdx = headerIdx + 1
             if (skeletonIdx >= out.size || out[skeletonIdx] !is SearchUiModel.SkeletonItem) return@update current
@@ -234,7 +248,7 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    fun onQueryChange(query: String){
+    fun onQueryChange(query: String) {
         queryFlow.value = query
     }
 
@@ -244,11 +258,12 @@ class SearchViewModel @Inject constructor(
 
     fun saveItem(uri: String) {
         viewModelScope.launch {
-            if(!spClient.saveItems(arrayOf(uri))){
-                Log.w("SearchViewModel", "saveItem failed", )
+            if (!spClient.saveItems(arrayOf(uri))) {
+                Log.w("SearchViewModel", "saveItem failed")
             }
         }
     }
+
     fun setTrack(track: Track) {
         playbackStateHolder.setTrack(track)
     }

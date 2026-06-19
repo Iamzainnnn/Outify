@@ -294,7 +294,8 @@ private fun Track.toMediaItem(isPlayable: Boolean = true, isBrowsable: Boolean =
                 .setSubtitle(artists.joinToString { it.name })
                 .setArtist(artists.joinToString { it.name })
                 .setAlbumTitle(album?.name)
-                .setArtworkUri(album?.getCover(CoverSize.LARGE)?.let { ALBUM_COVER_URL + it.uri }?.toUri())
+                .setArtworkUri(album?.getCover(CoverSize.LARGE)?.let { ALBUM_COVER_URL + it.uri }
+                    ?.toUri())
                 .setIsPlayable(isPlayable)
                 .setIsBrowsable(isBrowsable)
                 .setMediaType(MEDIA_TYPE_MUSIC)

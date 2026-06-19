@@ -4,60 +4,62 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed interface Route: NavKey {
+sealed interface Route : NavKey {
     @Serializable
-    data object HomeScreen: Route, NavKey
+    data object HomeScreen : Route, NavKey
 
     @Serializable
-    data object SearchScreen: Route, NavKey
+    data object SearchScreen : Route, NavKey
 
     @Serializable
-    data class LikedScreen(val scrollToIndex: Int = -1): Route, NavKey
+    data class LikedScreen(val scrollToIndex: Int = -1) : Route, NavKey
 
     @Serializable
-    data object LibraryScreen: Route, NavKey
+    data object LibraryScreen : Route, NavKey
 
     @Serializable
-    data class PlaylistScreen(val playlistUri: String): Route, NavKey
+    data class PlaylistScreen(val playlistUri: String) : Route, NavKey
 
     /**
      * When we know only the Track uri and want to open the Album Screen
      */
     @Serializable
-    data class AlbumScreen(val albumUri: String): Route, NavKey
+    data class AlbumScreen(val albumUri: String) : Route, NavKey
 
     @Serializable
-    data class TrackScreen(val trackUri: String): Route, NavKey
+    data class TrackScreen(val trackUri: String) : Route, NavKey
 
     @Serializable
-    data class ArtistScreen(val artistUri: String): Route, NavKey
+    data class ArtistScreen(val artistUri: String) : Route, NavKey
 
     @Serializable
-    data class ProfileScreen(val profileUri: String): Route, NavKey
+    data class ProfileScreen(val profileUri: String) : Route, NavKey
 
     // Settings
     @Serializable
-    data object SettingsScreen: Route, NavKey
+    data object SettingsScreen : Route, NavKey
 
     @Serializable
-    data object InterfaceSettings: Route, NavKey
+    data object InterfaceSettings : Route, NavKey
 
     @Serializable
-    data object PlaybackSettings: Route, NavKey
-    @Serializable
-    data object AppearanceSettings: Route, NavKey
+    data object PlaybackSettings : Route, NavKey
 
     @Serializable
-    data object GestureSettings: Route, NavKey
+    data object AppearanceSettings : Route, NavKey
 
     @Serializable
-    data object AboutScreen: Route, NavKey
+    data object GestureSettings : Route, NavKey
 
     @Serializable
-    data object AccountsScreen: Route, NavKey
+    data object AboutScreen : Route, NavKey
 
     @Serializable
-    data object MiscSettings: Route, NavKey
+    data object AccountsScreen : Route, NavKey
+
     @Serializable
-    data object DebugScreen: Route, NavKey
+    data object MiscSettings : Route, NavKey
+
+    @Serializable
+    data object DebugScreen : Route, NavKey
 }

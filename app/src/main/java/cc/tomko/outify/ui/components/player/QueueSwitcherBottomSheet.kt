@@ -324,10 +324,10 @@ internal fun QueueNameDialog(
 private fun relativeTime(timestamp: Long): String {
     val diff = System.currentTimeMillis() - timestamp
     return when {
-        diff < 60_000L          -> "just now"
-        diff < 3_600_000L       -> "${diff / 60_000}m ago"
-        diff < 86_400_000L      -> "${diff / 3_600_000}h ago"
-        diff < 7 * 86_400_000L  -> "${diff / 86_400_000}d ago"
+        diff < 60_000L -> "just now"
+        diff < 3_600_000L -> "${diff / 60_000}m ago"
+        diff < 86_400_000L -> "${diff / 3_600_000}h ago"
+        diff < 7 * 86_400_000L -> "${diff / 86_400_000}d ago"
         else -> SimpleDateFormat("MMM d", Locale.getDefault()).format(Date(timestamp))
     }
 }

@@ -28,7 +28,7 @@ fun SettingItem(
                 fontWeight = FontWeight.SemiBold
             )
 
-            if(subtitle != null) {
+            if (subtitle != null) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,

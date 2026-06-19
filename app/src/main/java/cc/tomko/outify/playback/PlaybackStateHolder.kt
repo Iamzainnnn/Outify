@@ -27,18 +27,18 @@ class PlaybackStateHolder @Inject constructor() {
     private val mutex = Mutex()
 
     fun setQueue(queue: List<Track>, startIndex: Int = 0) {
-            val track = queue.getOrNull(startIndex)
-            _state.value = _state.value.copy(
-                queue = queue,
-                queueIndex = startIndex,
-                currentTrack = track,
-                position = PositionInfo.EMPTY.copy(
-                    lastSync = System.currentTimeMillis()
-                )
+        val track = queue.getOrNull(startIndex)
+        _state.value = _state.value.copy(
+            queue = queue,
+            queueIndex = startIndex,
+            currentTrack = track,
+            position = PositionInfo.EMPTY.copy(
+                lastSync = System.currentTimeMillis()
             )
+        )
     }
 
-    suspend fun play(){
+    suspend fun play() {
         mutex.withLock {
             _state.value = _state.value.copy(
                 isPlaying = true
@@ -46,7 +46,7 @@ class PlaybackStateHolder @Inject constructor() {
         }
     }
 
-    suspend fun pause(){
+    suspend fun pause() {
         mutex.withLock {
             val cur = _state.value
             val pos = computePositionLocked()
@@ -87,7 +87,7 @@ class PlaybackStateHolder @Inject constructor() {
     }
 
     fun setTrack(track: Track?) {
-        if(_state.value.currentTrack?.id == track?.id) return
+        if (_state.value.currentTrack?.id == track?.id) return
         _state.value = _state.value.copy(
             currentTrack = track
         )

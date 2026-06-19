@@ -45,7 +45,8 @@ fun InterfaceSettingScreen(
         modifier = modifier
     ) { innerPaddings ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .padding(top = innerPaddings.calculateTopPadding())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)

@@ -119,7 +119,7 @@ fun SharedTransitionScope.SearchScreen(
     val isScrolled by remember {
         derivedStateOf {
             listState.firstVisibleItemIndex > 2 ||
-            listState.firstVisibleItemScrollOffset > 100
+                    listState.firstVisibleItemScrollOffset > 100
         }
     }
     val showScrollToTop = isScrolled
@@ -135,7 +135,15 @@ fun SharedTransitionScope.SearchScreen(
     var showShows by rememberSaveable { mutableStateOf(false) }
     var showEpisodes by rememberSaveable { mutableStateOf(false) }
 
-    val filteredResults = remember(results, showTracks, showArtists, showAlbums, showPlaylists, showShows, showEpisodes) {
+    val filteredResults = remember(
+        results,
+        showTracks,
+        showArtists,
+        showAlbums,
+        showPlaylists,
+        showShows,
+        showEpisodes
+    ) {
         applyFiltersToSectionedResults(
             results,
             showTracks,
@@ -147,9 +155,10 @@ fun SharedTransitionScope.SearchScreen(
         )
     }
 
-    Box(modifier = modifier
-        .fillMaxSize()
-        .systemBarsPadding()
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .systemBarsPadding()
     ) {
         LazyColumn(
             state = listState,
@@ -279,6 +288,7 @@ fun SharedTransitionScope.SearchScreen(
                                 modifier = Modifier.animateItem()
                             )
                         }
+
                         is SearchUiModel.AlbumItem -> {
                             val album = item.album
                             val artworkUrl = ALBUM_COVER_URL + album.getCover(CoverSize.MEDIUM)?.uri
@@ -292,6 +302,7 @@ fun SharedTransitionScope.SearchScreen(
                                 modifier = Modifier.animateItem()
                             )
                         }
+
                         is SearchUiModel.ArtistItem -> {
                             val artist = item.artist
                             ArtistRow(
@@ -304,6 +315,7 @@ fun SharedTransitionScope.SearchScreen(
                                 modifier = Modifier.animateItem()
                             )
                         }
+
                         is SearchUiModel.PlaylistItem -> {
                             val playlist = item.playlist
                             var artworkUrl by remember(playlist.uri) { mutableStateOf<String?>(null) }
@@ -317,7 +329,12 @@ fun SharedTransitionScope.SearchScreen(
                                     backStack.add(PlaylistScreen(playlist.uri))
                                 },
                                 onRowLongClick = {
-                                    GlobalPopupController.show(PopupSpec.PlaylistInfo(playlist, artworkUrl))
+                                    GlobalPopupController.show(
+                                        PopupSpec.PlaylistInfo(
+                                            playlist,
+                                            artworkUrl
+                                        )
+                                    )
                                 },
                                 onArtistClick = {
                                     // TODO: Add author page
@@ -328,6 +345,7 @@ fun SharedTransitionScope.SearchScreen(
                                 modifier = Modifier.animateItem()
                             )
                         }
+
                         else -> {}
                     }
                 }
@@ -351,7 +369,7 @@ fun SharedTransitionScope.SearchScreen(
                     )
                 }
 
-                if(!isLoggedIn) {
+                if (!isLoggedIn) {
                     item {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -385,9 +403,7 @@ fun SharedTransitionScope.SearchScreen(
                             }
                         }
                     }
-                }
-
-                else if (filteredResults.isEmpty()) {
+                } else if (filteredResults.isEmpty()) {
                     item {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -424,100 +440,109 @@ fun SharedTransitionScope.SearchScreen(
                     items = filteredResults,
                     key = { it.uri }
                 ) { item ->
-                when (item) {
-                    is SearchUiModel.SectionHeader -> {
-                        Text(
-                            text = stringResource(id = item.titleRes),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(
-                                horizontal = 16.dp,
-                                vertical = 8.dp
+                    when (item) {
+                        is SearchUiModel.SectionHeader -> {
+                            Text(
+                                text = stringResource(id = item.titleRes),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(
+                                    horizontal = 16.dp,
+                                    vertical = 8.dp
+                                )
                             )
-                        )
-                    }
-
-                    is SearchUiModel.SkeletonItem -> {
-                        SkeletonTrackRow()
-                    }
-
-                    is SearchUiModel.TrackItem -> {
-                        val track = item.track
-
-                        SwipeableTrackRowConfigured(
-                            track = track,
-                            currentTrack = currentTrack,
-                            isPlaybackPlaying = isPlaybackPlaying,
-                            onRowClick = remember(track.uri) {
-                                {
-                                    viewModel.addToHistory(item)
-                                    spirc.load(track.toSpotifyUri()) // TODO: make context be the search screen
-                                    // Optimistic UI
-                                    viewModel.setTrack(track)
-                                }
-                            },
-                            onArtistClick = {
-                                backStack.add(ArtistScreen(it.uri))
-                            },
-                            onArtworkClick = {
-                                backStack.add(TrackScreen(item.uri))
-                            },
-                            modifier = Modifier.animateItem()
-                        )
-                    }
-                    is SearchUiModel.AlbumItem -> {
-                        val album = item.album
-                        val artworkUrl = ALBUM_COVER_URL + album.getCover(CoverSize.MEDIUM)?.uri;
-
-                        AlbumRow(
-                            album = album,
-                            artworkUrl = artworkUrl,
-                            onRowClick = {
-                                viewModel.addToHistory(item)
-                                backStack.add(Route.AlbumScreen(album.uri))
-                            },
-                            modifier = Modifier.animateItem()
-                        )
-                    }
-                    is SearchUiModel.ArtistItem -> {
-                        val artist = item.artist
-
-                        ArtistRow(
-                            artist = artist,
-                            artworkUrl = ALBUM_COVER_URL + artist.getCover(CoverSize.MEDIUM)?.uri,
-                            onRowClick = {
-                                viewModel.addToHistory(item)
-                                backStack.add(ArtistScreen(artist.uri))
-                            },
-                            modifier = Modifier.animateItem()
-                        )
-                    }
-                    is SearchUiModel.PlaylistItem -> {
-                        val playlist = item.playlist
-                        var artworkUrl by remember(playlist.uri) { mutableStateOf<String?>(null) }
-
-                        LaunchedEffect(playlist.uri) {
-                            artworkUrl = viewModel.getArtworkUrl(playlist)
                         }
 
-                        PlaylistRow(
-                            playlist = playlist,
-                            artworkUrl = artworkUrl,
-                            onRowClick = {
-                                viewModel.addToHistory(item)
-                                backStack.add(PlaylistScreen(playlist.uri))
-                            },
-                            onRowLongClick = {
-                                GlobalPopupController.show(PopupSpec.PlaylistInfo(playlist, artworkUrl))
-                            },
-                            onArtistClick = {
-                                // TODO: Add author page
-                            },
-                            contentDescription = playlist.attributes.description,
-                            sharedTransitionScope = this@SearchScreen,
-                            modifier = Modifier.animateItem()
-                        )
+                        is SearchUiModel.SkeletonItem -> {
+                            SkeletonTrackRow()
+                        }
+
+                        is SearchUiModel.TrackItem -> {
+                            val track = item.track
+
+                            SwipeableTrackRowConfigured(
+                                track = track,
+                                currentTrack = currentTrack,
+                                isPlaybackPlaying = isPlaybackPlaying,
+                                onRowClick = remember(track.uri) {
+                                    {
+                                        viewModel.addToHistory(item)
+                                        spirc.load(track.toSpotifyUri()) // TODO: make context be the search screen
+                                        // Optimistic UI
+                                        viewModel.setTrack(track)
+                                    }
+                                },
+                                onArtistClick = {
+                                    backStack.add(ArtistScreen(it.uri))
+                                },
+                                onArtworkClick = {
+                                    backStack.add(TrackScreen(item.uri))
+                                },
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+
+                        is SearchUiModel.AlbumItem -> {
+                            val album = item.album
+                            val artworkUrl =
+                                ALBUM_COVER_URL + album.getCover(CoverSize.MEDIUM)?.uri;
+
+                            AlbumRow(
+                                album = album,
+                                artworkUrl = artworkUrl,
+                                onRowClick = {
+                                    viewModel.addToHistory(item)
+                                    backStack.add(Route.AlbumScreen(album.uri))
+                                },
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+
+                        is SearchUiModel.ArtistItem -> {
+                            val artist = item.artist
+
+                            ArtistRow(
+                                artist = artist,
+                                artworkUrl = ALBUM_COVER_URL + artist.getCover(CoverSize.MEDIUM)?.uri,
+                                onRowClick = {
+                                    viewModel.addToHistory(item)
+                                    backStack.add(ArtistScreen(artist.uri))
+                                },
+                                modifier = Modifier.animateItem()
+                            )
+                        }
+
+                        is SearchUiModel.PlaylistItem -> {
+                            val playlist = item.playlist
+                            var artworkUrl by remember(playlist.uri) { mutableStateOf<String?>(null) }
+
+                            LaunchedEffect(playlist.uri) {
+                                artworkUrl = viewModel.getArtworkUrl(playlist)
+                            }
+
+                            PlaylistRow(
+                                playlist = playlist,
+                                artworkUrl = artworkUrl,
+                                onRowClick = {
+                                    viewModel.addToHistory(item)
+                                    backStack.add(PlaylistScreen(playlist.uri))
+                                },
+                                onRowLongClick = {
+                                    GlobalPopupController.show(
+                                        PopupSpec.PlaylistInfo(
+                                            playlist,
+                                            artworkUrl
+                                        )
+                                    )
+                                },
+                                onArtistClick = {
+                                    // TODO: Add author page
+                                },
+                                contentDescription = playlist.attributes.description,
+                                sharedTransitionScope = this@SearchScreen,
+                                modifier = Modifier.animateItem()
+                            )
+                        }
                     }
-                }
                 }
             }
         }
@@ -585,7 +610,7 @@ fun MaterialSearchBar(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     LaunchedEffect(autoFocus) {
-        if(autoFocus) {
+        if (autoFocus) {
             focusRequester.requestFocus()
             keyboardController?.show()
         }
@@ -618,7 +643,10 @@ fun MaterialSearchBar(
                         IconButton(onClick = {
                             onQueryChange("")
                         }) {
-                            Icon(imageVector = Icons.Default.Close, contentDescription = "Clear query")
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear query"
+                            )
                         }
                     }
                 }

@@ -53,7 +53,8 @@ class VolumeController @Inject constructor(
     fun onAndroidVolumeChanged() {
         val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        val spotifyVolume = (current.toDouble() / max * SPOTIFY_MAX_VOLUME).toInt().coerceIn(0, SPOTIFY_MAX_VOLUME)
+        val spotifyVolume =
+            (current.toDouble() / max * SPOTIFY_MAX_VOLUME).toInt().coerceIn(0, SPOTIFY_MAX_VOLUME)
 
         playbackStateHolder.setVolume(spotifyVolume)
 

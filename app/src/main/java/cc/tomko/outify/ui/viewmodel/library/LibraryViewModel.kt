@@ -55,6 +55,7 @@ class LibraryViewModel @Inject constructor(
             metadata.syncLikedPlaylists()
         }
     }
+
     private val _headerArtwork = mutableStateOf<String?>(null)
     val headerArtwork = _headerArtwork
 
@@ -190,7 +191,7 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    fun refresh(){
+    fun refresh() {
         playlistsLoaded = false
         artworkCache.clear()
         authorsCache.clear()

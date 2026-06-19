@@ -96,7 +96,7 @@ class PlaybackSettingViewModel @Inject constructor(
         }
     }
 
-    fun restartSpirc(){
+    fun restartSpirc() {
         viewModelScope.launch {
             val id = settingsRepository.clientId.first()
             val secret = settingsRepository.clientSecret.first()

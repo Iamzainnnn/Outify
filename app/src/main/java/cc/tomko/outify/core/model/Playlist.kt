@@ -145,6 +145,7 @@ data class PlaylistUpdateListAttributes(
     @SerialName("picture_sizes")
     val pictureSizes: JsonElement? = null
 )
+
 fun List<Int>.toByteArray(): ByteArray = ByteArray(size) { i -> (this[i] and 0xFF).toByte() }
 
 fun List<Int>.toBase64(): String =
@@ -157,7 +158,7 @@ fun PlaylistItem.toDto(): PlaylistItemDto {
 }
 
 suspend fun Playlist.getCover(metadata: Metadata, size: CoverSize = CoverSize.MEDIUM): String? {
-    if(attributes.pictureId.isNotEmpty()) {
+    if (attributes.pictureId.isNotEmpty()) {
         return ALBUM_COVER_URL + attributes.pictureId
     }
 
@@ -194,8 +195,10 @@ fun Playlist.toItemEntities(): List<PlaylistItemEntity> =
             isPublic = item.attributes.isPublic,
         )
     }
+
 fun Playlist.toSpotifyUri(): SpotifyUri =
     SpotifyUri.Playlist(id)
+
 fun Playlist.toOutifyUri(): OutifyUri =
     OutifyUri.fromUriString(uri)
 

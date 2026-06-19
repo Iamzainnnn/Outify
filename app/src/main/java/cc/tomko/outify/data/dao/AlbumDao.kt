@@ -14,7 +14,11 @@ import javax.inject.Singleton
 @Dao
 @Singleton
 interface AlbumDao {
-    data class CoverUris(val smallCoverUri: String?, val mediumCoverUri: String?, val largeCoverUri: String?)
+    data class CoverUris(
+        val smallCoverUri: String?,
+        val mediumCoverUri: String?,
+        val largeCoverUri: String?
+    )
 
     @Query("SELECT smallCoverUri, mediumCoverUri, largeCoverUri FROM albums WHERE albumId = :albumId LIMIT 1")
     suspend fun getCoverUris(albumId: String): CoverUris?
@@ -39,13 +43,15 @@ interface AlbumDao {
     suspend fun getAlbumWithTracks(albumId: String): AlbumWithTracks
 
     @Transaction
-    @Query("""
+    @Query(
+        """
     SELECT t.trackUri 
     FROM tracks t
     INNER JOIN album_tracks at ON t.id = at.trackId
     WHERE at.albumId = :albumId
     ORDER BY at.position
-""")
+"""
+    )
     suspend fun getTrackUrisForAlbum(albumId: String): List<String>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

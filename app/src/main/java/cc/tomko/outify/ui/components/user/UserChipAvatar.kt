@@ -21,7 +21,7 @@ fun UserChipAvatar(
     artworkUrl: String?,
     modifier: Modifier = Modifier,
     size: Dp = 20.dp,
-){
+) {
     Box(
         modifier = modifier
             .size(size)

@@ -39,7 +39,7 @@ class MainViewModel @Inject constructor(
     private val spClient: SpClient,
     private val likedRepository: LikedRepository,
     private val json: Json,
-): ViewModel() {
+) : ViewModel() {
     val swipeSettings: Flow<List<GestureSetting>> =
         settingsRepository.interfaceSettings.map { it.gestureSettings }
 
@@ -54,16 +54,22 @@ class MainViewModel @Inject constructor(
         override fun playNext(uri: String) {
             this@MainViewModel.playNext(uri)
         }
+
         override fun startRadio(track: Track) {
             this@MainViewModel.startRadio(track)
         }
+
         override fun favorite(trackUri: String) {
             this@MainViewModel.favorite(trackUri)
         }
+
         override fun addToPlaylist(track: Track) {
             this@MainViewModel.addToPlaylist(track)
         }
-        override fun trackInfo(track: Track) { openTrackInfo(track) }
+
+        override fun trackInfo(track: Track) {
+            openTrackInfo(track)
+        }
     }
 
     val currentTrack: StateFlow<Track?> = playbackStateHolder.state
@@ -77,25 +83,37 @@ class MainViewModel @Inject constructor(
 
     fun addToQueue(uri: String) {
         spirc.addToQueue(uri)
-        InAppNotificationController.show("Added to queue", { Icon(Icons.Default.Queue, contentDescription = "Added to queue") }, 1000L)
+        InAppNotificationController.show(
+            "Added to queue",
+            { Icon(Icons.Default.Queue, contentDescription = "Added to queue") },
+            1000L
+        )
     }
 
     fun playNext(uri: String) {
         spirc.playNext(uri)
-        InAppNotificationController.show("Inserted to queue", { Icon(Icons.Default.Queue, contentDescription = "Inserted to queue") }, 1000L)
+        InAppNotificationController.show(
+            "Inserted to queue",
+            { Icon(Icons.Default.Queue, contentDescription = "Inserted to queue") },
+            1000L
+        )
     }
 
     fun startRadio(track: Track) {
         spirc.startRadio(track.toSpotifyUri(), false)
         playbackStateHolder.setTrack(track)
-        InAppNotificationController.show("Radio started", { Icon(Icons.Default.Radio, contentDescription = "Radio started") }, 1000L)
+        InAppNotificationController.show(
+            "Radio started",
+            { Icon(Icons.Default.Radio, contentDescription = "Radio started") },
+            1000L
+        )
     }
 
     fun getRadioUri(track: Track): String? {
         val jsonResult = spClient.getRadioForTrack(track.uri) ?: return null
         val result: RadioResult = json.decodeFromString(jsonResult)
 
-        if(result.total == 0 || result.mediaItems.isEmpty()){
+        if (result.total == 0 || result.mediaItems.isEmpty()) {
             return null
         }
 
@@ -140,7 +158,10 @@ class MainViewModel @Inject constructor(
                     // Restore to not liked
                     likedRepository.removeLiked(trackId)
                 }
-                InAppNotificationController.show("Failed to update favorite", durationMillis = 2000L)
+                InAppNotificationController.show(
+                    "Failed to update favorite",
+                    durationMillis = 2000L
+                )
             }
         }
     }
@@ -155,7 +176,13 @@ class MainViewModel @Inject constructor(
 
             val isLiked = likedRepository.isLiked(track.id)
 
-            GlobalPopupController.show(PopupSpec.TrackInfo(track, likedTrackIndex = if (likedIndex >= 0) likedIndex else null, isLiked = isLiked))
+            GlobalPopupController.show(
+                PopupSpec.TrackInfo(
+                    track,
+                    likedTrackIndex = if (likedIndex >= 0) likedIndex else null,
+                    isLiked = isLiked
+                )
+            )
         }
     }
 }

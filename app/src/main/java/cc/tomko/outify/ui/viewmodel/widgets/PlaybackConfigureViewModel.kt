@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
 class PlaybackConfigureViewModel @Inject constructor(
-   settingsRepository: SettingsRepository,
+    settingsRepository: SettingsRepository,
     playbackStateHolder: PlaybackStateHolder,
 ) : ViewModel() {
     val interfaceSettings: Flow<InterfaceSettings> =

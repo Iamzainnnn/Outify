@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PhoneIphone
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material3.ContainedLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -90,13 +89,15 @@ fun SharedTransitionScope.MiniPlayer(
     val totalTime = currentTrack?.duration ?: 0L
 
     val imageSize = 40.dp
-    val artworkUrl = currentTrack?.album?.getCover(CoverSize.SMALL)?.uri.let { ALBUM_COVER_URL + it }
+    val artworkUrl =
+        currentTrack?.album?.getCover(CoverSize.SMALL)?.uri.let { ALBUM_COVER_URL + it }
 
     val offsetY = remember { Animatable(0f) }
     val coroutineScope = rememberCoroutineScope()
 
     Box(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .pointerInput(Unit) {
                 var totalDragX = 0f
                 var totalDragY = 0f
@@ -270,7 +271,7 @@ fun SharedTransitionScope.MiniPlayer(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val icon = if(isActiveDevice) Icons.Default.PhoneIphone else Icons.Default.Cast
+                    val icon = if (isActiveDevice) Icons.Default.PhoneIphone else Icons.Default.Cast
 
                     Icon(
                         icon,

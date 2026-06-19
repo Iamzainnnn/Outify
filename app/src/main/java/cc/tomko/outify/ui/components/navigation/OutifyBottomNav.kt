@@ -54,7 +54,7 @@ fun OutifyBottomNav(
     selectedColor: Color = MaterialTheme.colorScheme.primary,
     unselectedColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     showLabels: Boolean = false,
-){
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -74,7 +74,7 @@ fun OutifyBottomNav(
                 OutifyNavItem(
                     destination = item,
                     selected = isSelected,
-                    onClick =  { onItemSelected(item) },
+                    onClick = { onItemSelected(item) },
                     selectedColor = selectedColor,
                     unselectedColor = unselectedColor,
                     showLabel = showLabels
@@ -107,22 +107,22 @@ private fun OutifyNavItem(
                 onClick = onClick,
             )
             .padding(horizontal = 6.dp, vertical = 6.dp)
-            .semantics { contentDescription = destination.label}
+            .semantics { contentDescription = destination.label }
     ) {
         CompositionLocalProvider(LocalContentColor provides iconTint) {
-            Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center){
+            Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) {
                 destination.icon()
             }
         }
 
-        if(showLabel){
+        if (showLabel) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = destination.label,
                 fontSize = 11.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                color = if(selected) selectedColor else unselectedColor
+                color = if (selected) selectedColor else unselectedColor
             )
         }
     }

@@ -63,7 +63,8 @@ fun AppearanceSettingScreen(
         modifier = modifier
     ) { innerPaddings ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
                 .padding(top = innerPaddings.calculateTopPadding())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -147,7 +148,7 @@ fun AppearanceSettingScreen(
 
             }
             item {
-                if(settings.monochromeImages) {
+                if (settings.monochromeImages) {
                     PreferenceSectionHeader("Monochrome settings")
 
                     ElevatedCard {
@@ -174,7 +175,12 @@ fun AppearanceSettingScreen(
                         SwitchPreferenceEntry(
                             title = { Text("Monochrome playlists") },
                             description = "Playlist artwork will be monochrome",
-                            icon = { Icon(Icons.AutoMirrored.Filled.PlaylistPlay, contentDescription = null) },
+                            icon = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.PlaylistPlay,
+                                    contentDescription = null
+                                )
+                            },
                             isChecked = settings.monochromePlaylists,
                             onCheckedChange = { enabled ->
                                 viewModel.setMonochromePlaylists(enabled)
@@ -194,7 +200,12 @@ fun AppearanceSettingScreen(
                         SwitchPreferenceEntry(
                             title = { Text("Monochrome player") },
                             description = "Player (mini & fullscreen) will be monochrome",
-                            icon = { Icon(Icons.Default.PlayCircleOutline, contentDescription = null) },
+                            icon = {
+                                Icon(
+                                    Icons.Default.PlayCircleOutline,
+                                    contentDescription = null
+                                )
+                            },
                             isChecked = settings.monochromePlayer,
                             onCheckedChange = { enabled ->
                                 viewModel.setMonochromePlayer(enabled)

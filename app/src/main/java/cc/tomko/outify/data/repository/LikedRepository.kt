@@ -83,10 +83,18 @@ class LikedRepository @Inject constructor(
                         attempt++
                         val isTransient = true
                         if (attempt >= maxRetries || !isTransient) {
-                            Log.e(TAG, "Failed fetching metadata for liked tracks (offset=$offset).", e)
+                            Log.e(
+                                TAG,
+                                "Failed fetching metadata for liked tracks (offset=$offset).",
+                                e
+                            )
                             return@withContext false
                         } else {
-                            Log.w(TAG, "Transient failure fetching metadata (offset=$offset), retrying in $backoff ms (attempt=$attempt).", e)
+                            Log.w(
+                                TAG,
+                                "Transient failure fetching metadata (offset=$offset), retrying in $backoff ms (attempt=$attempt).",
+                                e
+                            )
                             delay(backoff)
                             backoff = min(backoff * 2, 10_000L)
                         }

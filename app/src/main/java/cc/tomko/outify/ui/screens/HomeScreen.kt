@@ -110,127 +110,130 @@ fun SharedTransitionScope.HomeScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 24.dp)
                 ) {
-                item {
-                    HeaderSection(
-                        username = username,
-                        userAvatarUrl = userAvatarUrl,
-                        isPlaybackLoggedIn = isPlaybackLoggedIn,
-                        selectedDuration = selectedDuration,
-                        onDurationChange = { viewModel.setDuration(it) },
-                        onSettingsClick = { backStack.add(Route.SettingsScreen) },
-                        onAccountClick = { backStack.add(Route.AccountsScreen) },
-                        durationExpanded = durationExpanded,
-                        onDurationExpandedChange = { durationExpanded = it }
-                    )
-                }
-
-                when (state) {
-                    is HomeUiState.Loading -> {
-                        item {
-                            Spacer(Modifier.height(24.dp))
-                            Text(
-                                text = "Top Artists",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 24.dp)
-                            )
-                        }
-                        item { SkeletonArtistRow() }
-                        item {
-                            Spacer(Modifier.height(16.dp))
-                            Text(
-                                text = "Top Tracks",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 24.dp)
-                            )
-                        }
-                        items(10) { SwipeableTrackRowConfigured(track = null) }
+                    item {
+                        HeaderSection(
+                            username = username,
+                            userAvatarUrl = userAvatarUrl,
+                            isPlaybackLoggedIn = isPlaybackLoggedIn,
+                            selectedDuration = selectedDuration,
+                            onDurationChange = { viewModel.setDuration(it) },
+                            onSettingsClick = { backStack.add(Route.SettingsScreen) },
+                            onAccountClick = { backStack.add(Route.AccountsScreen) },
+                            durationExpanded = durationExpanded,
+                            onDurationExpandedChange = { durationExpanded = it }
+                        )
                     }
 
-                    is HomeUiState.NotAuthenticated -> {
-                        item { Spacer(Modifier.height(32.dp)) }
-                        item {
-                            ConnectSpotifyCard(
-                                onConnectClick = { backStack.add(Route.AccountsScreen) }
-                            )
-                        }
-                    }
-
-                    is HomeUiState.EmptyResult -> {
-                        item { Spacer(Modifier.height(32.dp)) }
-                        item {
-                            EmptyResultCard()
-                        }
-                    }
-
-                    is HomeUiState.Success -> {
-                        item {
-                            Spacer(Modifier.height(24.dp))
-                            Text(
-                                text = "Top Artists",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 24.dp)
-                            )
-                        }
-                        if (state.topArtists.isNotEmpty()) {
+                    when (state) {
+                        is HomeUiState.Loading -> {
                             item {
-                                LazyRow(
-                                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    items(state.topArtists.take(10)) { artist ->
-                                        TopArtistItem(
-                                            artist = artist,
-                                            modifier = Modifier.clickable {
-                                                backStack.add(Route.ArtistScreen(artist.uri))
-                                            }
-                                        )
+                                Spacer(Modifier.height(24.dp))
+                                Text(
+                                    text = "Top Artists",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 24.dp)
+                                )
+                            }
+                            item { SkeletonArtistRow() }
+                            item {
+                                Spacer(Modifier.height(16.dp))
+                                Text(
+                                    text = "Top Tracks",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 24.dp)
+                                )
+                            }
+                            items(10) { SwipeableTrackRowConfigured(track = null) }
+                        }
+
+                        is HomeUiState.NotAuthenticated -> {
+                            item { Spacer(Modifier.height(32.dp)) }
+                            item {
+                                ConnectSpotifyCard(
+                                    onConnectClick = { backStack.add(Route.AccountsScreen) }
+                                )
+                            }
+                        }
+
+                        is HomeUiState.EmptyResult -> {
+                            item { Spacer(Modifier.height(32.dp)) }
+                            item {
+                                EmptyResultCard()
+                            }
+                        }
+
+                        is HomeUiState.Success -> {
+                            item {
+                                Spacer(Modifier.height(24.dp))
+                                Text(
+                                    text = "Top Artists",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 24.dp)
+                                )
+                            }
+                            if (state.topArtists.isNotEmpty()) {
+                                item {
+                                    LazyRow(
+                                        contentPadding = PaddingValues(
+                                            horizontal = 24.dp,
+                                            vertical = 12.dp
+                                        ),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        items(state.topArtists.take(10)) { artist ->
+                                            TopArtistItem(
+                                                artist = artist,
+                                                modifier = Modifier.clickable {
+                                                    backStack.add(Route.ArtistScreen(artist.uri))
+                                                }
+                                            )
+                                        }
                                     }
+                                }
+                            }
+
+                            item {
+                                Spacer(Modifier.height(16.dp))
+                                Text(
+                                    text = "Top Tracks",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 24.dp)
+                                )
+                            }
+                            if (state.topTracks.isNotEmpty()) {
+                                items(state.topTracks.take(10)) { track ->
+                                    SwipeableTrackRowConfigured(
+                                        track,
+                                        currentTrack = currentTrack,
+                                        isPlaybackPlaying = isPlaybackPlaying,
+                                        onRowClick = remember(track.uri) {
+                                            { viewModel.loadTrack(track) }
+                                        },
+                                        onArtworkClick = {
+                                            backStack.add(Route.AlbumScreen(track.album!!.uri))
+                                        },
+                                        onArtistClick = { artist ->
+                                            backStack.add(Route.ArtistScreen(artist.uri))
+                                        },
+                                        trailingContent = {},
+                                        modifier = Modifier.animateItem()
+                                    )
                                 }
                             }
                         }
 
-                        item {
-                            Spacer(Modifier.height(16.dp))
-                            Text(
-                                text = "Top Tracks",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 24.dp)
-                            )
+                        is HomeUiState.Error -> {
+                            // handled above
                         }
-                        if (state.topTracks.isNotEmpty()) {
-                            items(state.topTracks.take(10)) { track ->
-                                SwipeableTrackRowConfigured(
-                                    track,
-                                    currentTrack = currentTrack,
-                                    isPlaybackPlaying = isPlaybackPlaying,
-                                    onRowClick = remember(track.uri) {
-                                        { viewModel.loadTrack(track) }
-                                    },
-                                    onArtworkClick = {
-                                        backStack.add(Route.AlbumScreen(track.album!!.uri))
-                                    },
-                                    onArtistClick = { artist ->
-                                        backStack.add(Route.ArtistScreen(artist.uri))
-                                    },
-                                    trailingContent = {},
-                                    modifier = Modifier.animateItem()
-                                )
-                            }
-                        }
-                    }
-
-                    is HomeUiState.Error -> {
-                        // handled above
                     }
                 }
             }
         }
     }
-}
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)

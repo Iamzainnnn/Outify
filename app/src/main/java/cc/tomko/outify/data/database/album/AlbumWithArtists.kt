@@ -11,7 +11,7 @@ import cc.tomko.outify.data.database.AlbumEntity
 import cc.tomko.outify.data.database.ArtistEntity
 import cc.tomko.outify.data.database.toDomain
 
-data class AlbumWithArtists (
+data class AlbumWithArtists(
     @Embedded val album: AlbumEntity,
     @Relation(
         parentColumn = "albumId",
@@ -20,6 +20,7 @@ data class AlbumWithArtists (
     )
     val artists: List<ArtistEntity>
 )
+
 fun AlbumWithArtists.toDomain(): Album {
     val domainArtists = artists.map { it.toDomain() }
 

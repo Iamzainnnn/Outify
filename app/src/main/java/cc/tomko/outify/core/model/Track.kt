@@ -47,12 +47,18 @@ data class Track(
                     popularity = 0,
                     tracks = listOf("6D62fCTKuWTtO4WhRw1RvT"),
                     covers = listOf(
-                        Cover("ab67616d000048518c03cf97818d390d723ef1a9", CoverSize.SMALL.asSize(),
-                            CoverSize.SMALL.asSize(), CoverSize.SMALL.asInt()),
-                        Cover("ab67616d000048518c03cf97818d390d723ef1a9", CoverSize.MEDIUM.asSize(),
-                            CoverSize.MEDIUM.asSize(), CoverSize.MEDIUM.asInt()),
-                        Cover("ab67616d000048518c03cf97818d390d723ef1a9", CoverSize.LARGE.asSize(),
-                            CoverSize.LARGE.asSize(), CoverSize.LARGE.asInt()),
+                        Cover(
+                            "ab67616d000048518c03cf97818d390d723ef1a9", CoverSize.SMALL.asSize(),
+                            CoverSize.SMALL.asSize(), CoverSize.SMALL.asInt()
+                        ),
+                        Cover(
+                            "ab67616d000048518c03cf97818d390d723ef1a9", CoverSize.MEDIUM.asSize(),
+                            CoverSize.MEDIUM.asSize(), CoverSize.MEDIUM.asInt()
+                        ),
+                        Cover(
+                            "ab67616d000048518c03cf97818d390d723ef1a9", CoverSize.LARGE.asSize(),
+                            CoverSize.LARGE.asSize(), CoverSize.LARGE.asInt()
+                        ),
                     )
                 ),
                 artists = artists,
@@ -109,5 +115,6 @@ fun Track.toEntities(now: Long): Triple<TrackEntity, List<ArtistEntity>, List<Tr
 
 fun Track.toSpotifyUri(): SpotifyUri =
     SpotifyUri.Track(id)
+
 fun Track.toOutifyUri(): OutifyUri =
     OutifyUri.fromUriString(uri)

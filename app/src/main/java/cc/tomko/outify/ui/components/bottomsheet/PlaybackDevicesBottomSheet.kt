@@ -146,7 +146,7 @@ fun PlaybackDevicesBottomSheet(
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                if(devices.isEmpty()) {
+                if (devices.isEmpty()) {
                     item {
                         Box(
                             modifier = Modifier
@@ -170,8 +170,8 @@ fun PlaybackDevicesBottomSheet(
                     }
                 }
 
-                items(devices, key = {it.id ?: it.name}) {
-                    val icon = when(it.type) {
+                items(devices, key = { it.id ?: it.name }) {
+                    val icon = when (it.type) {
                         "Computer" -> Icons.Default.Laptop
                         "Smartphone" -> Icons.Default.Smartphone
                         "Speaker" -> Icons.Default.Speaker

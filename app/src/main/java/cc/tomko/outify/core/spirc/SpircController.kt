@@ -8,7 +8,6 @@ import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.data.repository.SettingsRepository
 import cc.tomko.outify.playback.PlaybackStateHolder
 import cc.tomko.outify.playback.model.getSpeed
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -52,7 +51,7 @@ class SpircController @Inject constructor(
         // handleSessionAutoRestart() will set usable=true when it completes.
     }
 
-    private suspend fun initializeSpirc(){
+    private suspend fun initializeSpirc() {
         val gapless = settingsRepository.gaplessPlayback.first()
         val normalise = settingsRepository.normalizePlayback.first()
         val bitrate = settingsRepository.bitrate.first()
@@ -60,7 +59,7 @@ class SpircController @Inject constructor(
 
         Spirc.initializeSpirc(object : SpircInitializationCallback {
             override fun initialized() {
-                if(spircReady) return
+                if (spircReady) return
                 spircReady = true
 
                 Spirc.bufferCallback(object : SpircBufferCallback {
@@ -110,10 +109,16 @@ class SpircController @Inject constructor(
 
         if (lastContextUri.isNullOrBlank()) return
 
-        Log.i("SpircController","Restoring last playback: $lastContextUri @ ${lastTrackUri ?: "first"}")
+        Log.i(
+            "SpircController",
+            "Restoring last playback: $lastContextUri @ ${lastTrackUri ?: "first"}"
+        )
 
         if (lastTrackUri != null) {
-            spirc.load(OutifyUri.fromUriString(lastContextUri), OutifyUri.fromUriString(lastTrackUri))
+            spirc.load(
+                OutifyUri.fromUriString(lastContextUri),
+                OutifyUri.fromUriString(lastTrackUri)
+            )
         } else {
             spirc.load(OutifyUri.fromUriString(lastContextUri), null)
         }
@@ -124,7 +129,7 @@ class SpircController @Inject constructor(
         }
     }
 
-    private suspend fun activateAndTransfer(){
+    private suspend fun activateAndTransfer() {
         if (!spirc.activate()) {
             Log.e("SpircController", "Failed to activate Spirc session!")
             return
@@ -133,7 +138,7 @@ class SpircController @Inject constructor(
         spirc.setUsable(true)
 
         spirc.scope.launch {
-            if(settingsRepository.autoTransfer.first()) {
+            if (settingsRepository.autoTransfer.first()) {
                 if (!spirc.smartTransfer()) {
                     Log.w("SpircController", "Spirc session did not transfer!")
                     playbackStateHolder.setActiveDevice(false)
@@ -154,11 +159,11 @@ class SpircController @Inject constructor(
     }
 
     private fun handleSessionShutdown() {
-        Log.w("SpircController", "Session has shut down! Restarting..", );
+        Log.w("SpircController", "Session has shut down! Restarting..");
         spirc.setUsable(false)
     }
 
-    private fun handleSessionAutoRestart(){
+    private fun handleSessionAutoRestart() {
         spirc.setUsable(true)
     }
 

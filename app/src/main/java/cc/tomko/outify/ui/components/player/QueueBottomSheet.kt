@@ -311,8 +311,11 @@ fun SharedTransitionScope.QueueBottomSheet(
                                     shape = RoundedCornerShape(8.dp),
                                     color = when {
                                         isDraggingItem -> MaterialTheme.colorScheme.surfaceVariant
-                                        isCurrentTrack -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                                        else           -> Color.Transparent
+                                        isCurrentTrack -> MaterialTheme.colorScheme.primaryContainer.copy(
+                                            alpha = 0.5f
+                                        )
+
+                                        else -> Color.Transparent
                                     },
                                     modifier = Modifier.animateItem(),
                                 ) {
@@ -420,6 +423,11 @@ class QueueBottomSheetController @OptIn(ExperimentalMaterial3Api::class) constru
     val sheetState: SheetState,
     val visible: MutableState<Boolean>,
 ) {
-    fun show() { visible.value = true }
-    fun hide() { visible.value = false }
+    fun show() {
+        visible.value = true
+    }
+
+    fun hide() {
+        visible.value = false
+    }
 }

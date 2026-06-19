@@ -4,10 +4,10 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.view.KeyEvent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -110,8 +110,10 @@ class MainActivity : ComponentActivity() {
     }
 
     data object MainActivity {
-        val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope> { error("No scope provided") }
-        val LocalAnimatedVisibilityScope = compositionLocalOf<AnimatedVisibilityScope> { error("No scope provided") }
+        val LocalSharedTransitionScope =
+            compositionLocalOf<SharedTransitionScope> { error("No scope provided") }
+        val LocalAnimatedVisibilityScope =
+            compositionLocalOf<AnimatedVisibilityScope> { error("No scope provided") }
     }
 
     private fun requestNotificationPermission() {
@@ -119,7 +121,9 @@ class MainActivity : ComponentActivity() {
             val permission = Manifest.permission.POST_NOTIFICATIONS
             val permissionCheck = checkSelfPermission(permission)
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                registerForActivityResult(ActivityResultContracts.RequestPermission()) { }.launch(permission)
+                registerForActivityResult(ActivityResultContracts.RequestPermission()) { }.launch(
+                    permission
+                )
             }
         }
     }
@@ -238,7 +242,8 @@ class MainActivity : ComponentActivity() {
         val density = LocalDensity.current
         val fixedDensity = Density(density.density, fontScale = interfaceSettings.fontScale)
 
-        val themeMode = if (interfaceSettings.dynamicTheme) ThemeMode.DYNAMIC_ALBUM else if (interfaceSettings.dynamicSystem) ThemeMode.DYNAMIC_SYSTEM else ThemeMode.STATIC
+        val themeMode =
+            if (interfaceSettings.dynamicTheme) ThemeMode.DYNAMIC_ALBUM else if (interfaceSettings.dynamicSystem) ThemeMode.DYNAMIC_SYSTEM else ThemeMode.STATIC
 
         OutifyTheme(
             track = currentTrack,

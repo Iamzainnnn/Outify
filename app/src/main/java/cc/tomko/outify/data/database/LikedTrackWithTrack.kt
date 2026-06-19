@@ -24,7 +24,8 @@ suspend fun LikedTrackWithTrack.toDomain(
     likedDao: LikedDao,
     albumDao: AlbumDao,
 ): Track {
-    val trackEntity = track ?: throw IllegalStateException("Track missing for liked track ${liked.trackId}")
+    val trackEntity =
+        track ?: throw IllegalStateException("Track missing for liked track ${liked.trackId}")
 
     val trackWithArtists = likedDao.getTracksWithArtists(listOf(trackEntity.id)).firstOrNull()
         ?: throw IllegalStateException("TrackWithArtists missing for ${trackEntity.id}")

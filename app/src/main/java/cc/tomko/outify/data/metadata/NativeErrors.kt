@@ -44,11 +44,14 @@ sealed class NativeError {
                     when {
                         lowerMessage.contains("token") && lowerMessage.contains("credentials") ->
                             AuthenticationError(message)
+
                         lowerMessage.contains("service unavailable") ->
                             ServiceUnavailable(message)
+
                         else -> Unknown(message, type)
                     }
                 }
+
                 else -> Unknown(message, type)
             }
         }
@@ -97,7 +100,8 @@ object NativeErrorHandler {
                 val err = obj.getJSONObject("error")
                 val type = err.optString("type", "unknown")
                 val message = err.optString("message", "Unknown error")
-                val retryAfter = if (err.has("retry_after_seconds")) err.getLong("retry_after_seconds") else null
+                val retryAfter =
+                    if (err.has("retry_after_seconds")) err.getLong("retry_after_seconds") else null
 
                 val error = NativeError.fromJson(type, message, retryAfter)
                 handleError(error, context)

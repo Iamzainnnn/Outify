@@ -93,7 +93,8 @@ fun TrackInfoBottomSheet(
 
     val imageSize = 96.dp
 
-    val artworkUrl = remember(track) { ALBUM_COVER_URL + (track.album?.getCover(CoverSize.MEDIUM)?.uri ?: "") }
+    val artworkUrl =
+        remember(track) { ALBUM_COVER_URL + (track.album?.getCover(CoverSize.MEDIUM)?.uri ?: "") }
 
     val defaultShare: () -> Unit = {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -105,7 +106,10 @@ fun TrackInfoBottomSheet(
 
     val defaultCopy: () -> Unit = {
         scope.launch {
-            val clipData = ClipData.newPlainText("${track.name} - Outify", "https://open.spotify.com/track/${track.id}")
+            val clipData = ClipData.newPlainText(
+                "${track.name} - Outify",
+                "https://open.spotify.com/track/${track.id}"
+            )
             clipboardManager.setClipEntry(ClipEntry(clipData))
             InAppNotificationController.show("Copied to clipboard")
         }
@@ -194,7 +198,10 @@ fun TrackInfoBottomSheet(
                             onDismiss
                         }
                     ) {
-                        Icon(imageVector = Icons.Default.Widgets, contentDescription = "Add to widget")
+                        Icon(
+                            imageVector = Icons.Default.Widgets,
+                            contentDescription = "Add to widget"
+                        )
                     }
 
                     IconButton(

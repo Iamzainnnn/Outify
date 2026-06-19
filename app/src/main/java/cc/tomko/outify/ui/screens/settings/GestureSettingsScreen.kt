@@ -56,8 +56,8 @@ fun SharedTransitionScope.GestureSettingsScreen(
     val swipeEnabled by viewModel.swipeEnabled.collectAsState()
     val scope = rememberCoroutineScope()
 
-    var customizeGesture by remember { mutableStateOf<GestureSetting?>(null)}
-    var customizeGestureIndex by remember { mutableStateOf<Int?>(null)}
+    var customizeGesture by remember { mutableStateOf<GestureSetting?>(null) }
+    var customizeGestureIndex by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = {
@@ -103,14 +103,23 @@ fun SharedTransitionScope.GestureSettingsScreen(
                 PreferenceEntry(
                     title = { Text(actionLabel) },
                     description = if (gesture.enabled) "$triggerLabel • $directionLabel" else "Disabled",
-                    icon = { Box(modifier = Modifier.size(24.dp), contentAlignment = Alignment.Center) { gesture.action.DisplayIcon(Modifier.size(20.dp)) } },
+                    icon = {
+                        Box(
+                            modifier = Modifier.size(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) { gesture.action.DisplayIcon(Modifier.size(20.dp)) }
+                    },
                     onClick = {
                         customizeGesture = gesture
                         customizeGestureIndex = index
                     },
                     trailingContent = {
                         if (!gesture.enabled) {
-                            Text("Off", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                "Off",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                         IconButton(
                             onClick = { viewModel.removeGesture(index) }
@@ -125,7 +134,7 @@ fun SharedTransitionScope.GestureSettingsScreen(
                 )
             }
 
-            if(swipeEnabled) {
+            if (swipeEnabled) {
                 item {
                     ElevatedCard(
                         modifier = modifier
@@ -164,7 +173,7 @@ fun SharedTransitionScope.GestureSettingsScreen(
         }
     }
 
-    if (customizeGesture != null){
+    if (customizeGesture != null) {
         GestureCustomizeBottomSheet(
             gesture = customizeGesture!!,
             onDismiss = {

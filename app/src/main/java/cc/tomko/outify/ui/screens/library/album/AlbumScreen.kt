@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -40,7 +41,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -105,7 +105,7 @@ fun SharedTransitionScope.AlbumDetailScreen(
             val atTop by remember {
                 derivedStateOf {
                     lazyList.firstVisibleItemIndex == 0 &&
-                    lazyList.firstVisibleItemScrollOffset == 0
+                            lazyList.firstVisibleItemScrollOffset == 0
                 }
             }
             SideEffect { collapsingState.canExpand = atTop }
@@ -132,7 +132,7 @@ fun SharedTransitionScope.AlbumDetailScreen(
             val isScrolled by remember {
                 derivedStateOf {
                     lazyList.firstVisibleItemIndex > 2 ||
-                    lazyList.firstVisibleItemScrollOffset > 100
+                            lazyList.firstVisibleItemScrollOffset > 100
                 }
             }
             val showScrollToTop = isScrolled

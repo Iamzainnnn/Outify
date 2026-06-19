@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -47,7 +48,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -139,7 +139,7 @@ fun SharedTransitionScope.ArtistDetailScreen(
             val atTop by remember {
                 derivedStateOf {
                     lazyList.firstVisibleItemIndex == 0 &&
-                    lazyList.firstVisibleItemScrollOffset == 0
+                            lazyList.firstVisibleItemScrollOffset == 0
                 }
             }
             SideEffect { collapsingState.canExpand = atTop }
@@ -163,7 +163,7 @@ fun SharedTransitionScope.ArtistDetailScreen(
                 val currentTopBarHeightDp =
                     with(density) { collapsingState.height.value.toDp() }
 
-                val topPadding = currentTopBarHeightDp + if(likedTrackCount > 0) 8.dp else 0.dp
+                val topPadding = currentTopBarHeightDp + if (likedTrackCount > 0) 8.dp else 0.dp
 
                 if (isContentLoading) {
                     ArtistDetailSkeleton(
@@ -219,11 +219,11 @@ fun SharedTransitionScope.ArtistDetailScreen(
                                 }
                             },
                             onArtistClick = { onArtistClick(it) },
-                            onArtworkClick = {onArtworkClick(track)},
+                            onArtworkClick = { onArtworkClick(track) },
                         )
                     }
 
-                    if(albums.isNotEmpty()) {
+                    if (albums.isNotEmpty()) {
                         item {
                             Spacer(modifier = Modifier.height(48.dp))
 
@@ -351,7 +351,7 @@ fun ArtistTracksHeader(
     imageSize: Dp = 48.dp,
     onClick: () -> Unit = {},
     previewTracks: List<Track> = emptyList(),
-){
+) {
     val previewSize = 36.dp
     val previewsToShow = previewTracks.take(3)
 
@@ -441,7 +441,8 @@ fun ArtistTracksHeader(
             if (previewsToShow.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     previewsToShow.forEach { track ->
-                        val previewArtwork = ALBUM_COVER_URL + (track.album?.getCover(CoverSize.SMALL)?.uri ?: "")
+                        val previewArtwork =
+                            ALBUM_COVER_URL + (track.album?.getCover(CoverSize.SMALL)?.uri ?: "")
                         Surface(
                             shape = RoundedCornerShape(6.dp),
                             color = MaterialTheme.colorScheme.surfaceVariant,

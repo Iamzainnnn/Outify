@@ -75,7 +75,7 @@ fun AddToPlaylistBottomSheet(
     val playlists by viewModel.ownedPlaylists.collectAsState(initial = emptyList())
 
     val trackIds = remember(tracks) { tracks.map { it.id }.toSet() }
-    
+
     var selectedPlaylist by remember { mutableStateOf<Playlist?>(null) }
     var isRemoveMode by remember { mutableStateOf(false) }
 
@@ -146,7 +146,7 @@ fun AddToPlaylistBottomSheet(
                         val playlist = playlistUi.playlist
                         val existingCount = playlist.contents.count { it.id in trackIds }
                         val isInPlaylist = existingCount > 0
-                        
+
                         PlaylistItem(
                             playlistName = playlist.attributes.name,
                             artworkUrl = playlistUi.artworkUrl,
@@ -196,8 +196,8 @@ fun TrackInfoHeader(tracks: List<Track>) {
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.size(56.dp)
                 ) {
-                    val artworkUrl = remember(track) { 
-                        ALBUM_COVER_URL + (track.album?.getCover(CoverSize.MEDIUM)?.uri ?: "") 
+                    val artworkUrl = remember(track) {
+                        ALBUM_COVER_URL + (track.album?.getCover(CoverSize.MEDIUM)?.uri ?: "")
                     }
                     SmartImage(
                         url = artworkUrl,
@@ -206,9 +206,9 @@ fun TrackInfoHeader(tracks: List<Track>) {
                         monochrome = LocalUiSettings.current.monochromeTracks
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.width(12.dp))
-                
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = track.name,
@@ -232,8 +232,8 @@ fun TrackInfoHeader(tracks: List<Track>) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 tracks.take(3).forEach { track ->
-                    val artworkUrl = remember(track) { 
-                        ALBUM_COVER_URL + (track.album?.getCover(CoverSize.SMALL)?.uri ?: "") 
+                    val artworkUrl = remember(track) {
+                        ALBUM_COVER_URL + (track.album?.getCover(CoverSize.SMALL)?.uri ?: "")
                     }
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceVariant,
@@ -263,9 +263,9 @@ fun TrackInfoHeader(tracks: List<Track>) {
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             Text(
                 text = "${tracks.size} tracks selected",
                 style = MaterialTheme.typography.bodyMedium,
@@ -290,15 +290,15 @@ private fun PlaylistItem(
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp)),
         colors = CardDefaults.cardColors(
-            containerColor = if (isInPlaylist) 
+            containerColor = if (isInPlaylist)
                 MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-            else 
+            else
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
         ListItem(
-            modifier = Modifier.clickable { 
-                if (isInPlaylist) onRemoveClick() else onAddClick() 
+            modifier = Modifier.clickable {
+                if (isInPlaylist) onRemoveClick() else onAddClick()
             },
             headlineContent = {
                 Text(

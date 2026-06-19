@@ -20,7 +20,7 @@ import java.util.Set;
 
 /**
  * Simple modular secure storage backed by Tink AEAD + SharedPreferences.
- *
+ * <p>
  * - Stores encrypted Base64 blobs under a user-chosen key.
  * - You can store raw bytes, strings, or arbitrary objects (via Gson).
  */
@@ -32,11 +32,12 @@ public final class SecureStorage {
         ACCESS_TOKEN_EXPIRATION("access_token_expiration");
 
         private final String internalName;
-        Keys(String internalName){
+
+        Keys(String internalName) {
             this.internalName = internalName;
         }
 
-        public String key(){
+        public String key() {
             return internalName;
         }
     }
@@ -60,8 +61,8 @@ public final class SecureStorage {
     /**
      * Create storage with explicit configuration.
      *
-     * @param prefsName   SharedPreferences name for storage.
-     * @param keysetPref  SharedPreferences key where Tink keyset is stored.
+     * @param prefsName    SharedPreferences name for storage.
+     * @param keysetPref   SharedPreferences key where Tink keyset is stored.
      * @param masterKeyUri Master key in Android Keystore.
      */
     public SecureStorage(Context context, String prefsName, String keysetPref, String masterKeyUri)

@@ -28,7 +28,9 @@ fun Album.getCover(size: CoverSize): Cover? {
 fun Album.sharedTransitionKey(): String {
     return "${SharedElementKey.ALBUM_ARTWORK}_$id"
 }
+
 fun Album.toSpotifyUri(): SpotifyUri =
     SpotifyUri.Album(id)
+
 fun Album.toOutifyUri(): OutifyUri =
     OutifyUri.fromUriString(uri)

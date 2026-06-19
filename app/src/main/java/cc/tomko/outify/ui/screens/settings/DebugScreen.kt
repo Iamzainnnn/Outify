@@ -184,18 +184,21 @@ private fun Availability(text: String, available: Boolean, modifier: Modifier = 
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = if(available) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (available) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
 
         Icon(
-            imageVector = if(available) Icons.Default.CheckCircle else Icons.Outlined.Cancel,
-            contentDescription = if(available) "Available" else "Unavailable",
-            tint = if(available) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+            imageVector = if (available) Icons.Default.CheckCircle else Icons.Outlined.Cancel,
+            contentDescription = if (available) "Available" else "Unavailable",
+            tint = if (available) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error.copy(
+                alpha = 0.7f
+            ),
             modifier = Modifier.size(22.dp)
         )
     }
 }
+
 @Composable
 private fun Information(text: String, value: String?, modifier: Modifier = Modifier) {
     Row(

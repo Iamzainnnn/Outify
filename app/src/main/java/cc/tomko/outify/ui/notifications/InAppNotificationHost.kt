@@ -57,8 +57,8 @@ fun InAppNotificationHost(
     var dismissJob by remember { mutableStateOf<Job?>(null) }
 
     val offsetY = remember { Animatable(0f) }
-    val alpha  = remember { Animatable(0f) }
-    val scale  = remember { Animatable(0.88f) }
+    val alpha = remember { Animatable(0f) }
+    val scale = remember { Animatable(0.88f) }
 
     var bannerHeightPx by remember { mutableIntStateOf(0) }
 
@@ -130,13 +130,13 @@ fun InAppNotificationHost(
 
             Box(modifier = Modifier.align(placementAlignment)) {
                 BannerLayout(
-                    spec             = spec,
-                    offsetY          = offsetY,
-                    alpha            = alpha,
-                    scale            = scale,
+                    spec = spec,
+                    offsetY = offsetY,
+                    alpha = alpha,
+                    scale = scale,
                     maxWidthFraction = maxWidthFraction,
-                    onMeasured       = { bannerHeightPx = it },
-                    onDismiss        = {
+                    onMeasured = { bannerHeightPx = it },
+                    onDismiss = {
                         dismissJob?.cancel()
                         dismissJob = null
                         current = null
@@ -152,8 +152,8 @@ fun InAppNotificationHost(
 private fun BannerLayout(
     spec: NotificationSpec,
     offsetY: Animatable<Float, AnimationVector1D>,
-    alpha:   Animatable<Float, AnimationVector1D>,
-    scale:   Animatable<Float, AnimationVector1D>,
+    alpha: Animatable<Float, AnimationVector1D>,
+    scale: Animatable<Float, AnimationVector1D>,
     maxWidthFraction: Float,
     onMeasured: (heightPx: Int) -> Unit,
     onDismiss: () -> Unit,
@@ -167,7 +167,10 @@ private fun BannerLayout(
         timerProgress.snapTo(1f)
         timerProgress.animateTo(
             targetValue = 0f,
-            animationSpec = tween(durationMillis = spec.durationMillis.toInt(), easing = LinearEasing)
+            animationSpec = tween(
+                durationMillis = spec.durationMillis.toInt(),
+                easing = LinearEasing
+            )
         )
     }
 
@@ -175,27 +178,41 @@ private fun BannerLayout(
         if (!spec.allowSwipeToDismiss) return@pointerInput
         detectVerticalDragGestures(
             onVerticalDrag = { _, dragAmount ->
-                scope.launch { offsetY.snapTo((offsetY.value + dragAmount).coerceIn(-1000f, 1000f)) }
+                scope.launch {
+                    offsetY.snapTo(
+                        (offsetY.value + dragAmount).coerceIn(
+                            -1000f,
+                            1000f
+                        )
+                    )
+                }
             },
             onDragEnd = {
                 scope.launch {
-                    val threshold   = measuredHeightPx * 0.35f
+                    val threshold = measuredHeightPx * 0.35f
                     val placedBottom = spec.placement == NotificationPlacement.Bottom
-                    val dismissed   =
-                        (placedBottom  && offsetY.value >  threshold) ||
+                    val dismissed =
+                        (placedBottom && offsetY.value > threshold) ||
                                 (!placedBottom && offsetY.value < -threshold)
 
                     if (dismissed) {
-                        val offScreen = if (placedBottom) measuredHeightPx + 200f else -(measuredHeightPx + 200f)
+                        val offScreen =
+                            if (placedBottom) measuredHeightPx + 200f else -(measuredHeightPx + 200f)
                         offsetY.animateTo(
                             targetValue = offScreen,
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
                         )
                         onDismiss()
                     } else {
                         offsetY.animateTo(
                             targetValue = 0f,
-                            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
                         )
                     }
                 }
@@ -204,7 +221,10 @@ private fun BannerLayout(
                 scope.launch {
                     offsetY.animateTo(
                         targetValue = 0f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
                     )
                 }
             }
@@ -212,8 +232,8 @@ private fun BannerLayout(
     }
 
     val backgroundColor = spec.backgroundColor ?: MaterialTheme.colorScheme.inverseSurface
-    val contentColor    = spec.contentColor    ?: MaterialTheme.colorScheme.inverseOnSurface
-    val timerColor      = MaterialTheme.colorScheme.inversePrimary
+    val contentColor = spec.contentColor ?: MaterialTheme.colorScheme.inverseOnSurface
+    val timerColor = MaterialTheme.colorScheme.inversePrimary
 
     Surface(
         modifier = Modifier
@@ -221,17 +241,17 @@ private fun BannerLayout(
             .fillMaxWidth(maxWidthFraction)
             .graphicsLayer {
                 translationY = offsetY.value
-                scaleX       = scale.value
-                scaleY       = scale.value
-                this.alpha   = alpha.value
+                scaleX = scale.value
+                scaleY = scale.value
+                this.alpha = alpha.value
             }
             .then(pointerModifier)
             .onSizeMeasured { _, h ->
                 measuredHeightPx = h
                 onMeasured(h)
             },
-        shape          = RoundedCornerShape(24.dp),
-        color          = backgroundColor,
+        shape = RoundedCornerShape(24.dp),
+        color = backgroundColor,
         tonalElevation = 6.dp,
         shadowElevation = 10.dp,
     ) {
@@ -251,7 +271,7 @@ private fun BannerLayout(
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     Text(
-                        text  = spec.message,
+                        text = spec.message,
                         style = MaterialTheme.typography.bodyMedium,
                         color = contentColor,
                     )

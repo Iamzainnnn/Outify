@@ -39,7 +39,7 @@ class AlbumViewModel @Inject constructor(
     val json: Json,
     val likedDao: LikedDao,
     private val savedStateHandle: SavedStateHandle,
-): ViewModel() {
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         savedStateHandle.get<String>(ALBUM_STATE_KEY)?.let {

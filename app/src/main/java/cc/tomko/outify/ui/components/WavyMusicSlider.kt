@@ -129,11 +129,15 @@ fun WavyMusicSlider(
         if (shouldShowWave && waveAnimationDuration > 0) {
             val fullRotation = (2 * PI).toFloat()
             while (shouldShowWave) {
-                val start = (phaseShiftAnim.value % fullRotation).let { if (it < 0f) it + fullRotation else it }
+                val start =
+                    (phaseShiftAnim.value % fullRotation).let { if (it < 0f) it + fullRotation else it }
                 phaseShiftAnim.snapTo(start)
                 phaseShiftAnim.animateTo(
                     targetValue = start + fullRotation,
-                    animationSpec = tween(durationMillis = waveAnimationDuration, easing = LinearEasing)
+                    animationSpec = tween(
+                        durationMillis = waveAnimationDuration,
+                        easing = LinearEasing
+                    )
                 )
             }
         }
@@ -148,7 +152,8 @@ fun WavyMusicSlider(
     } else {
         0f
     }
-    val thumbLineHeightPxInternal = with(LocalDensity.current) { thumbLineHeightWhenInteracting.toPx() }
+    val thumbLineHeightPxInternal =
+        with(LocalDensity.current) { thumbLineHeightWhenInteracting.toPx() }
     val thumbGapPx = with(LocalDensity.current) { 4.dp.toPx() }
 
     val wavePath = remember { Path() }
@@ -162,7 +167,10 @@ fun WavyMusicSlider(
     val normalizedValue = if (valueRange.endInclusive == valueRange.start) {
         0f
     } else {
-        ((clampedValue - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
+        ((clampedValue - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(
+            0f,
+            1f
+        )
     }
     val safeSemanticsStep = semanticsProgressStep.coerceIn(0.005f, 0.25f)
     val semanticNormalizedValue = remember(normalizedValue, safeSemanticsStep) {
@@ -181,7 +189,10 @@ fun WavyMusicSlider(
                 val normalizedNew = if (valueRange.endInclusive == valueRange.start) {
                     0f
                 } else {
-                    ((newValue - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(0f, 1f)
+                    ((newValue - valueRange.start) / (valueRange.endInclusive - valueRange.start)).coerceIn(
+                        0f,
+                        1f
+                    )
                 }
                 // Slightly coarser haptic granularity keeps tactile quality while reducing binder chatter.
                 val currentStep = (normalizedNew * 50f).roundToInt()
@@ -206,7 +217,8 @@ fun WavyMusicSlider(
                     )
                     if (enabled) {
                         setProgress { requested ->
-                            val coerced = requested.coerceIn(valueRange.start, valueRange.endInclusive)
+                            val coerced =
+                                requested.coerceIn(valueRange.start, valueRange.endInclusive)
                             onValueChange(coerced)
                             onValueChangeFinished?.invoke()
                             true
@@ -274,7 +286,8 @@ fun WavyMusicSlider(
                             if (waveAmplitudePxInternal > 0.01f && waveFrequency > 0f) {
                                 wavePath.reset()
                                 val waveStartDrawX = localTrackStart
-                                val waveEndDrawX = activeTrackVisualEnd.coerceAtLeast(waveStartDrawX)
+                                val waveEndDrawX =
+                                    activeTrackVisualEnd.coerceAtLeast(waveStartDrawX)
                                 if (waveEndDrawX > waveStartDrawX) {
                                     val periodPx = ((2 * PI) / waveFrequency).toFloat()
                                     val samplesPerCycle = 20f

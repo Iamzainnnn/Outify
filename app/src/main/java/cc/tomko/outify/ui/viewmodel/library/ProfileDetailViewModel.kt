@@ -27,6 +27,7 @@ sealed class ProfileUiState {
         val followersCount: Int = 0,
         val followingCount: Int = 0
     ) : ProfileUiState()
+
     data class Error(val message: String) : ProfileUiState()
 }
 
@@ -65,12 +66,12 @@ class ProfileDetailViewModel @Inject constructor(
             val uri = currentState.profile?.uri ?: return
             _uiState.value = currentState.copy(isFollowing = !currentState.isFollowing)
 
-            if(currentState.isFollowing) {
-                if(!spClient.saveItems(arrayOf(uri))) {
+            if (currentState.isFollowing) {
+                if (!spClient.saveItems(arrayOf(uri))) {
                     _uiState.value = currentState.copy(isFollowing = false)
                 }
             } else {
-                if(!spClient.deleteItems(arrayOf(uri))) {
+                if (!spClient.deleteItems(arrayOf(uri))) {
                     _uiState.value = currentState.copy(isFollowing = true)
                 }
             }

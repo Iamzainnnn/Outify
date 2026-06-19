@@ -119,6 +119,7 @@ class Metadata @Inject constructor(
 
     fun observePlaylist(uri: String) =
         playlistMetadataHelper.observePlaylist(uri)
+
     fun observePlaylists(uris: List<String>) =
         playlistMetadataHelper.observePlaylists(uris)
 

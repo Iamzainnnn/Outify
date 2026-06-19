@@ -95,7 +95,7 @@ fun SharedTransitionScope.NavigationRoot(
                 )
             }
 
-            entry<Route.LikedScreen>  {
+            entry<Route.LikedScreen> {
                 val viewModel: LikedViewModel = hiltViewModel()
                 val listState = rememberLazyListState()
 
@@ -123,7 +123,7 @@ fun SharedTransitionScope.NavigationRoot(
 
             entry<Route.SearchScreen> {
                 val viewModel = hiltViewModel<SearchViewModel>()
-                SearchScreen(backStack,viewModel)
+                SearchScreen(backStack, viewModel)
             }
 
             entry<Route.TrackScreen> {
@@ -330,7 +330,7 @@ fun SharedTransitionScope.NavigationRoot(
             }
 
             entry<Route.DebugScreen> {
-               val viewModel: DebugViewModel = hiltViewModel()
+                val viewModel: DebugViewModel = hiltViewModel()
                 DebugScreen(
                     viewModel = viewModel,
                     onNavigateBack = { backStack.removeAt(backStack.lastIndex) },

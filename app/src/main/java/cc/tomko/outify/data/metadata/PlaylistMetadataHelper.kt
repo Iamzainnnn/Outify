@@ -93,7 +93,8 @@ class PlaylistMetadataHelper @Inject constructor(
                 withContext(Dispatchers.IO) { persistPlaylist(remotePlaylist) }
             }
 
-            val updated = withContext(Dispatchers.IO) { playlistDao.getPlaylistWithItems(playlistId) }
+            val updated =
+                withContext(Dispatchers.IO) { playlistDao.getPlaylistWithItems(playlistId) }
             return@coroutineScope updated?.toDomain()
         } else {
             return@coroutineScope cached?.toDomain()
@@ -196,7 +197,8 @@ class PlaylistMetadataHelper @Inject constructor(
         val playlistId = currentDb.playlist.id
         val now = System.currentTimeMillis()
 
-        val currentItems = currentDb.items.sortedBy { it.position }.map { it.copy() }.toMutableList()
+        val currentItems =
+            currentDb.items.sortedBy { it.position }.map { it.copy() }.toMutableList()
 
         fun remoteItemToEntity(remoteItem: PlaylistItem): PlaylistItemEntity {
             return PlaylistItemEntity(

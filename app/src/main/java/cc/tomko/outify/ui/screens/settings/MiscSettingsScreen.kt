@@ -146,6 +146,7 @@ fun MiscSettingsScreen(
                                     )
                                 }
                             }
+
                             is SyncStatus.Syncing -> {
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -160,6 +161,7 @@ fun MiscSettingsScreen(
                                     )
                                 }
                             }
+
                             is SyncStatus.Progress -> {
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -175,6 +177,7 @@ fun MiscSettingsScreen(
                                     )
                                 }
                             }
+
                             is SyncStatus.Success -> {
                                 Button(
                                     onClick = { viewModel.resetStatus() },
@@ -184,6 +187,7 @@ fun MiscSettingsScreen(
                                     Text("Sync complete!")
                                 }
                             }
+
                             is SyncStatus.Error -> {
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -280,6 +284,7 @@ fun MiscSettingsScreen(
                                     }
                                 }
                             }
+
                             is BackupStatus.Exporting -> {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -295,6 +300,7 @@ fun MiscSettingsScreen(
                                     )
                                 }
                             }
+
                             is BackupStatus.Importing -> {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -310,6 +316,7 @@ fun MiscSettingsScreen(
                                     )
                                 }
                             }
+
                             is BackupStatus.Success -> {
                                 Text(
                                     text = status.message,
@@ -317,6 +324,7 @@ fun MiscSettingsScreen(
                                     color = MaterialTheme.colorScheme.primary,
                                 )
                             }
+
                             is BackupStatus.Error -> {
                                 Text(
                                     text = status.message,

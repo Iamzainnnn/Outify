@@ -150,7 +150,7 @@ class ArtistDetailViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val albums: StateFlow<List<Album>> = albumUris
         .flatMapLatest { uris ->
-            if(uris.isEmpty()) flowOf(emptyList())
+            if (uris.isEmpty()) flowOf(emptyList())
             else metadata.observeAlbums(uris)
         }
         .stateIn(

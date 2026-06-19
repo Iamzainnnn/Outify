@@ -43,6 +43,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -50,7 +51,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -136,7 +136,12 @@ fun SharedTransitionScope.PlaylistScreen(
                 else playlistRows.filter { row ->
                     val state = viewModel.getTrackState(row.trackUri)
                     state?.name?.contains(searchQuery, ignoreCase = true) == true ||
-                    state?.artists?.any { it.name.contains(searchQuery, ignoreCase = true) } == true
+                            state?.artists?.any {
+                                it.name.contains(
+                                    searchQuery,
+                                    ignoreCase = true
+                                )
+                            } == true
                 }
             }
 
@@ -144,7 +149,7 @@ fun SharedTransitionScope.PlaylistScreen(
             val atTop by remember {
                 derivedStateOf {
                     lazyList.firstVisibleItemIndex == 0 &&
-                    lazyList.firstVisibleItemScrollOffset == 0
+                            lazyList.firstVisibleItemScrollOffset == 0
                 }
             }
             SideEffect { collapsingState.canExpand = atTop }
@@ -153,7 +158,7 @@ fun SharedTransitionScope.PlaylistScreen(
             val isScrolled by remember {
                 derivedStateOf {
                     lazyList.firstVisibleItemIndex > 2 ||
-                    lazyList.firstVisibleItemScrollOffset > 100
+                            lazyList.firstVisibleItemScrollOffset > 100
                 }
             }
             val showScrollToTop = isScrolled
@@ -223,35 +228,35 @@ fun SharedTransitionScope.PlaylistScreen(
                         }
 
                         SwipeableTrackRowConfigured(
-                                track = track,
-                                currentTrack = currentTrack,
-                                isPlaybackPlaying = isPlaybackPlaying,
-                                isLiked = track?.id in likedIds,
-                                onRowClick = track?.let { t ->
-                                    remember(t.uri) {
-                                        {
-                                            spirc.load(playlistUri, t.toSpotifyUri())
-                                            // Optimistic UI
-                                            viewModel.setTrack(t)
-                                        }
-                                    }
-                                },
-                                onArtworkClick = track?.let { { onArtworkClick(it) } },
-                                onArtistClick = onArtistClick,
-                                trailingContent = {
-                                    val author = authorMap[row.addedBy]
-
-                                    author?.let {
-                                        UserChipAvatar(
-                                            it.imageUrl,
-                                            modifier = Modifier
-                                                .clickable {
-                                                    onAuthorClick(it)
-                                                }
-                                        )
+                            track = track,
+                            currentTrack = currentTrack,
+                            isPlaybackPlaying = isPlaybackPlaying,
+                            isLiked = track?.id in likedIds,
+                            onRowClick = track?.let { t ->
+                                remember(t.uri) {
+                                    {
+                                        spirc.load(playlistUri, t.toSpotifyUri())
+                                        // Optimistic UI
+                                        viewModel.setTrack(t)
                                     }
                                 }
-                            )
+                            },
+                            onArtworkClick = track?.let { { onArtworkClick(it) } },
+                            onArtistClick = onArtistClick,
+                            trailingContent = {
+                                val author = authorMap[row.addedBy]
+
+                                author?.let {
+                                    UserChipAvatar(
+                                        it.imageUrl,
+                                        modifier = Modifier
+                                            .clickable {
+                                                onAuthorClick(it)
+                                            }
+                                    )
+                                }
+                            }
+                        )
                     }
                 }
 

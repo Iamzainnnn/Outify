@@ -9,9 +9,9 @@ import cc.tomko.outify.core.AuthCallbackServer
 import cc.tomko.outify.core.AuthManager
 import cc.tomko.outify.core.AuthStateEventBus
 import cc.tomko.outify.core.SpClient
-import cc.tomko.outify.core.spirc.SpircController
 import cc.tomko.outify.core.UserProfile
 import cc.tomko.outify.core.model.CurrentUserProfile
+import cc.tomko.outify.core.spirc.SpircController
 import cc.tomko.outify.data.metadata.NativeErrorHandler
 import cc.tomko.outify.data.repository.SettingsRepository
 import cc.tomko.outify.services.OAuthService
@@ -178,7 +178,7 @@ class AccountsViewModel @Inject constructor(
                 _userImageUrl.value = imageUrl
 
                 settingsRepository.saveUserProfile(id, username, imageUrl)
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 e.printStackTrace()
             }
         }

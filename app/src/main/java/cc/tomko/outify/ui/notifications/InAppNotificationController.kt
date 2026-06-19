@@ -35,6 +35,10 @@ object InAppNotificationController {
 
     fun show(spec: NotificationSpec): Boolean = _events.tryEmit(spec)
 
-    fun show(message: String, icon: (@Composable (() -> Unit))? = null, durationMillis: Long = 1600L) =
+    fun show(
+        message: String,
+        icon: (@Composable (() -> Unit))? = null,
+        durationMillis: Long = 1600L
+    ) =
         show(NotificationSpec(message = message, icon = icon, durationMillis = durationMillis))
 }

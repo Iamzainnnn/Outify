@@ -4,8 +4,6 @@ import android.os.Build
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import android.util.Log
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.Icon
 import cc.tomko.outify.core.AuthManager
 import cc.tomko.outify.core.Spirc.SpircWrapper
 import cc.tomko.outify.core.model.OutifyUri
@@ -23,8 +21,10 @@ import kotlinx.coroutines.withContext
 class LikedTileService : TileService() {
     @Inject
     lateinit var spircWrapper: SpircWrapper
+
     @Inject
     lateinit var likedRepository: LikedRepository
+
     @Inject
     lateinit var authManager: AuthManager
 

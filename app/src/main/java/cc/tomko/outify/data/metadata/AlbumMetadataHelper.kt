@@ -17,9 +17,9 @@ import cc.tomko.outify.data.database.album.AlbumArtistEntity
 import cc.tomko.outify.data.database.album.AlbumTrackCrossRef
 import cc.tomko.outify.data.database.album.AlbumWithArtists
 import cc.tomko.outify.data.database.album.toDomain
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
@@ -159,7 +159,7 @@ class AlbumMetadataHelper @Inject constructor(
                 CoverSize.MEDIUM -> cover.mediumCoverUri
             }
 
-            if(url != null)
+            if (url != null)
                 return Cover(url, size.asSize(), size.asSize(), size.asInt())
         }
 
@@ -181,8 +181,9 @@ class AlbumMetadataHelper @Inject constructor(
     suspend fun getCoverByTrackId(trackId: String, size: CoverSize): Cover? {
         if (trackId.isBlank()) return null
         var albumId = albumTrackDao.getAlbumIdForTrack(trackId)
-        if(albumId == null){
-            albumId = trackMetadataHelper.getTrackMetadata(listOf("spotify:track:$trackId")).firstOrNull()?.album?.id
+        if (albumId == null) {
+            albumId = trackMetadataHelper.getTrackMetadata(listOf("spotify:track:$trackId"))
+                .firstOrNull()?.album?.id
             if (albumId == null) return null
         }
 

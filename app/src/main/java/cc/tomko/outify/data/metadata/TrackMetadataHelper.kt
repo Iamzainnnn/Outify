@@ -23,6 +23,7 @@ import cc.tomko.outify.data.database.album.AlbumTrackCrossRef
 import cc.tomko.outify.data.database.album.AlbumWithArtists
 import cc.tomko.outify.data.database.toDomain
 import cc.tomko.outify.data.repository.TrackRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -30,7 +31,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
@@ -73,7 +73,9 @@ class TrackMetadataHelper @Inject constructor(
 
         return uris.mapNotNull { uri ->
             cached[uri]?.let { twa ->
-                try { twa.toDomain() } catch (e: Exception) {
+                try {
+                    twa.toDomain()
+                } catch (e: Exception) {
                     Log.w("Metadata", "Failed to map $uri", e)
                     null
                 }
@@ -112,7 +114,9 @@ class TrackMetadataHelper @Inject constructor(
                     val cached = loadCached(uris)
                     val missing = uris.filterNot { cached.containsKey(it) }
                     if (missing.isNotEmpty()) {
-                        try { fetchAndPersist(missing) } catch (e: Exception) {
+                        try {
+                            fetchAndPersist(missing)
+                        } catch (e: Exception) {
                             Log.w("Metadata", "Background fetch failed", e)
                         }
                     }
@@ -128,7 +132,11 @@ class TrackMetadataHelper @Inject constructor(
 
                     rows.associateBy { it.track.trackUri }
                         .mapNotNull { (_, tf) ->
-                            try { tf.toDomain() } catch (e: Exception) { null }
+                            try {
+                                tf.toDomain()
+                            } catch (e: Exception) {
+                                null
+                            }
                         }
                 }
             )

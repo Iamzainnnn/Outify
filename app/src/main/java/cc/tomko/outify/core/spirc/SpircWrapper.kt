@@ -7,7 +7,6 @@ import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
 import cc.tomko.outify.core.RadioResult
 import cc.tomko.outify.core.SpClient
-import cc.tomko.outify.core.model.Device
 import cc.tomko.outify.core.model.DevicesResponse
 import cc.tomko.outify.core.model.OutifyUri
 import cc.tomko.outify.core.spirc.ISpircWrapper
@@ -22,10 +21,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlin.concurrent.Volatile
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.concurrent.Volatile
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -37,7 +36,7 @@ class SpircWrapper @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val savedQueueRepository: SavedQueueRepository,
     private val json: Json,
-): ISpircWrapper{
+) : ISpircWrapper {
     val scope = CoroutineScope(
         Dispatchers.Main.immediate
     )
@@ -80,14 +79,14 @@ class SpircWrapper @Inject constructor(
         val jsonResult = spClient.getRadioForTrack(trackUri.toUriString()) ?: return false
         val result: RadioResult = json.decodeFromString(jsonResult)
 
-        if(result.total == 0 || result.mediaItems.isEmpty()){
+        if (result.total == 0 || result.mediaItems.isEmpty()) {
             return false
         }
 
         val playlistUri = result.mediaItems.first().uri
         val uri = OutifyUri.fromUriString(playlistUri)
 
-        if(shuffle) {
+        if (shuffle) {
             shuffleLoad(playlistUri)
         } else {
             load(uri, trackUri)
@@ -219,7 +218,7 @@ class SpircWrapper @Inject constructor(
         println("sum3")
 
         for (device in devices.devices) {
-            if(device.isActive) return false
+            if (device.isActive) return false
         }
         println("sum4")
 
@@ -245,7 +244,8 @@ class SpircWrapper @Inject constructor(
                     val devices = Json.decodeFromString<DevicesResponse>(json)
                     return@withContext devices.devices.any { it.isActive }
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+            }
             delay(500)
         }
         false
@@ -256,7 +256,7 @@ class SpircWrapper @Inject constructor(
      * @return `true` if success
      */
     override suspend fun seekTo(positionMs: Long): Boolean {
-        if(positionMs < 0){
+        if (positionMs < 0) {
             return false
         }
 

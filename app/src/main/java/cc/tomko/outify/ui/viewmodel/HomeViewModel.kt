@@ -38,6 +38,7 @@ sealed class HomeUiState {
         val topArtists: List<TopArtist>,
         val topTracks: List<Track>,
     ) : HomeUiState()
+
     data object EmptyResult : HomeUiState()
     data class Error(val message: String) : HomeUiState()
 }
@@ -106,14 +107,17 @@ class HomeViewModel @Inject constructor(
                         delay(200)
                         loadData()
                     }
+
                     is AuthStateEvent.AccountLoggedOut -> {
                         _uiState.value = HomeUiState.NotAuthenticated
                         loadUserProfile()
                     }
+
                     is AuthStateEvent.PlaybackLoggedIn -> {
                         delay(200)
                         _isPlaybackLoggedIn.value = authManager.hasCachedCredentials()
                     }
+
                     is AuthStateEvent.PlaybackLoggedOut -> {
                         _isPlaybackLoggedIn.value = authManager.hasCachedCredentials()
                     }
@@ -184,7 +188,8 @@ class HomeViewModel @Inject constructor(
                             val cachedTracks = trackMetadataHelper.getTrackMetadata(hit.trackUris)
                             _uiState.value = HomeUiState.Success(hit.artists, cachedTracks)
                         }
-                    } catch (_: Exception) { }
+                    } catch (_: Exception) {
+                    }
                 }
 
                 val durationsToTry = listOf(
@@ -202,7 +207,8 @@ class HomeViewModel @Inject constructor(
                         loadUserProfile()
                         return@launch
                     }
-                    val topArtistsError = NativeErrorHandler.handleErrorJson(topArtistsJson, "top artists")
+                    val topArtistsError =
+                        NativeErrorHandler.handleErrorJson(topArtistsJson, "top artists")
                     if (topArtistsError != null) {
                         _uiState.value = HomeUiState.NotAuthenticated
                         loadUserProfile()
@@ -215,7 +221,8 @@ class HomeViewModel @Inject constructor(
                         loadUserProfile()
                         return@launch
                     }
-                    val topTracksError = NativeErrorHandler.handleErrorJson(topTracksJson, "top tracks")
+                    val topTracksError =
+                        NativeErrorHandler.handleErrorJson(topTracksJson, "top tracks")
                     if (topTracksError != null) {
                         _uiState.value = HomeUiState.NotAuthenticated
                         loadUserProfile()
@@ -242,11 +249,18 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private suspend fun updateTopCache(duration: TopItemsDuration, artists: List<TopArtist>, tracks: List<Track>) {
+    private suspend fun updateTopCache(
+        duration: TopItemsDuration,
+        artists: List<TopArtist>,
+        tracks: List<Track>
+    ) {
         val trackUris = tracks.map { it.uri }
         val cache = try {
-            settingsRepository.cachedTops.first()?.let { json.decodeFromString<TopsCacheData>(it) } ?: TopsCacheData()
-        } catch (_: Exception) { TopsCacheData() }
+            settingsRepository.cachedTops.first()?.let { json.decodeFromString<TopsCacheData>(it) }
+                ?: TopsCacheData()
+        } catch (_: Exception) {
+            TopsCacheData()
+        }
 
         val durationCache = DurationTops(artists, trackUris)
         val updated = when (duration) {
@@ -302,7 +316,8 @@ class HomeViewModel @Inject constructor(
     private suspend fun fetchTrackMetadata(raw: String): List<Track> {
         return try {
             val data = json.decodeFromString<TopTracksResponse>(raw)
-            val trackUris = data.items.mapNotNull { it.uri }.filter { it.startsWith("spotify:track:") }
+            val trackUris =
+                data.items.mapNotNull { it.uri }.filter { it.startsWith("spotify:track:") }
 
             if (trackUris.isEmpty()) {
                 return emptyList()

@@ -27,6 +27,7 @@ class NativeMetadata @Inject constructor() {
             when (err) {
                 is cc.tomko.outify.data.metadata.NativeError.RateLimited ->
                     throw RateLimitException(err.message, err.retryAfterSeconds)
+
                 else -> throw NativeOperationException(err.message, err)
             }
         }
@@ -44,9 +45,11 @@ class NativeMetadata @Inject constructor() {
                 val err = obj.getJSONObject("error")
                 val type = err.getString("type")
                 val message = err.getString("message")
-                val retryAfter = if (err.isNull("retry_after_seconds")) null else err.getLong("retry_after_seconds")
+                val retryAfter =
+                    if (err.isNull("retry_after_seconds")) null else err.getLong("retry_after_seconds")
 
-                val nativeError = cc.tomko.outify.data.metadata.NativeError.fromJson(type, message, retryAfter)
+                val nativeError =
+                    cc.tomko.outify.data.metadata.NativeError.fromJson(type, message, retryAfter)
                 return NativeResult(metadata = null, error = nativeError)
             }
         }
@@ -78,7 +81,8 @@ class NativeMetadata @Inject constructor() {
                 attempt++
                 if (attempt >= maxAttempts) throw e
 
-                val backoffMs = e.retryAfterSeconds?.times(1000L) ?: (baseDelayMs * (1L shl (attempt - 1)))
+                val backoffMs =
+                    e.retryAfterSeconds?.times(1000L) ?: (baseDelayMs * (1L shl (attempt - 1)))
                 val jitter = Random.nextLong(0, (backoffMs / 3).coerceAtLeast(1L))
                 val delayMs = backoffMs + jitter
 

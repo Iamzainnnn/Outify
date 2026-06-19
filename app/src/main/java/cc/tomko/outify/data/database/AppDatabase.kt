@@ -42,7 +42,7 @@ import cc.tomko.outify.data.database.track.PlaylistTrackEntity
     version = 16,
     exportSchema = false
 )
-abstract class AppDatabase: RoomDatabase() {
+abstract class AppDatabase : RoomDatabase() {
     abstract fun trackDao(): TrackDao
     abstract fun trackFileDao(): TrackFileDao
     abstract fun artistDao(): ArtistDao
@@ -60,13 +60,15 @@ abstract class AppDatabase: RoomDatabase() {
 
         private val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("""
+                database.execSQL(
+                    """
                     CREATE TABLE IF NOT EXISTS liked_items (
                         uri TEXT NOT NULL PRIMARY KEY,
                         type TEXT NOT NULL,
                         addedAt INTEGER NOT NULL DEFAULT 0
                     )
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
         }
 

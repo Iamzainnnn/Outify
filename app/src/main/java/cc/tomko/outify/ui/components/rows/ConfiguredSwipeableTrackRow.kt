@@ -94,7 +94,7 @@ fun SharedTransitionScope.SwipeableTrackRowConfigured(
 
     val artworkUrl = remember(track.uri) {
         val albumUrl = track.album?.getCover(CoverSize.SMALL)?.uri ?: ""
-        if(albumUrl.startsWith("https://")) {
+        if (albumUrl.startsWith("https://")) {
             albumUrl
         } else {
             ALBUM_COVER_URL + albumUrl
@@ -129,9 +129,9 @@ fun SharedTransitionScope.SwipeableTrackRowConfigured(
 
                 onRowClick = onRowClick,
                 onRowLongClick = {
-                    if(onRowLongClick != null) {
+                    if (onRowLongClick != null) {
                         onRowLongClick.invoke()
-                    } else  {
+                    } else {
                         longPressAction?.invoke()
                     }
                 },
@@ -141,7 +141,7 @@ fun SharedTransitionScope.SwipeableTrackRowConfigured(
 
                 trailingContent = {
                     // Liked indicator
-                    if(isLiked){
+                    if (isLiked) {
                         Icon(
                             Icons.Default.Favorite,
                             contentDescription = "Liked"
@@ -157,7 +157,7 @@ fun SharedTransitionScope.SwipeableTrackRowConfigured(
                 },
 
                 sharedTransitionScope = this@SwipeableTrackRowConfigured,
-                sharedTransitionKey = if(isTransitioning)
+                sharedTransitionKey = if (isTransitioning)
                     track.album?.sharedTransitionKey() else null,
                 modifier = modifier
             )
@@ -166,7 +166,10 @@ fun SharedTransitionScope.SwipeableTrackRowConfigured(
 }
 
 @Composable
-fun rememberTrackGestures(track: Track, isLiked: Boolean = false): Pair<List<SwipeGesture>, List<SwipeGesture>> {
+fun rememberTrackGestures(
+    track: Track,
+    isLiked: Boolean = false
+): Pair<List<SwipeGesture>, List<SwipeGesture>> {
     val settings = LocalSwipeGestureSettings.current
     val handler = LocalSwipeActionHandler.current
 

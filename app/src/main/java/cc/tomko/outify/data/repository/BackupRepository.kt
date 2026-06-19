@@ -138,7 +138,8 @@ class BackupRepository @Inject constructor(
         }
 
         val backup = json.decodeFromString<OutifyBackup>(jsonString)
-        val prefs = backup.preferences ?: throw IllegalStateException("Backup file contains no preferences")
+        val prefs =
+            backup.preferences ?: throw IllegalStateException("Backup file contains no preferences")
 
         settingsRepository.dataStore.edit { data ->
             prefs.shuffle?.let { data[SettingsRepository.Keys.SHUFFLE] = it }
@@ -151,28 +152,50 @@ class BackupRepository @Inject constructor(
             prefs.deviceName?.let { data[SettingsRepository.Keys.DEVICE_NAME] = it }
             prefs.gesturesEnabled?.let { data[SettingsRepository.Keys.Gesture.ENABLED] = it }
             prefs.gesturesJson?.let { data[SettingsRepository.Keys.Gesture.GESTURES] = it }
-            prefs.alwaysShowLyrics?.let { data[SettingsRepository.Keys.Lyrics.SHOW_LYRICS_ALWAYS] = it }
+            prefs.alwaysShowLyrics?.let {
+                data[SettingsRepository.Keys.Lyrics.SHOW_LYRICS_ALWAYS] = it
+            }
             prefs.dynamicTheme?.let { data[SettingsRepository.Keys.Interface.DYNAMIC_THEME] = it }
             prefs.dynamicSystem?.let { data[SettingsRepository.Keys.Interface.DYNAMIC_SYSTEM] = it }
             prefs.accentColor?.let { data[SettingsRepository.Keys.Interface.ACCENT_COLOR] = it }
             prefs.pureBlack?.let { data[SettingsRepository.Keys.Interface.PURE_BLACK] = it }
-            prefs.highContrastCompat?.let { data[SettingsRepository.Keys.Interface.HIGH_CONTRAST_COMPAT] = it }
+            prefs.highContrastCompat?.let {
+                data[SettingsRepository.Keys.Interface.HIGH_CONTRAST_COMPAT] = it
+            }
             prefs.fontScale?.let { data[SettingsRepository.Keys.Interface.FONT_SCALE] = it }
-            prefs.monochromeImages?.let { data[SettingsRepository.Keys.Interface.MONOCHROME_IMAGES] = it }
-            prefs.monochromeAlbums?.let { data[SettingsRepository.Keys.Interface.MONOCHROME_ALBUMS] = it }
-            prefs.monochromeArtists?.let { data[SettingsRepository.Keys.Interface.MONOCHROME_ARTISTS] = it }
-            prefs.monochromePlaylists?.let { data[SettingsRepository.Keys.Interface.MONOCHROME_PLAYLISTS] = it }
-            prefs.monochromeTracks?.let { data[SettingsRepository.Keys.Interface.MONOCHROME_TRACKS] = it }
-            prefs.monochromePlayer?.let { data[SettingsRepository.Keys.Interface.MONOCHROME_PLAYER] = it }
-            prefs.monochromeHeaders?.let { data[SettingsRepository.Keys.Interface.MONOCHROME_HEADERS] = it }
+            prefs.monochromeImages?.let {
+                data[SettingsRepository.Keys.Interface.MONOCHROME_IMAGES] = it
+            }
+            prefs.monochromeAlbums?.let {
+                data[SettingsRepository.Keys.Interface.MONOCHROME_ALBUMS] = it
+            }
+            prefs.monochromeArtists?.let {
+                data[SettingsRepository.Keys.Interface.MONOCHROME_ARTISTS] = it
+            }
+            prefs.monochromePlaylists?.let {
+                data[SettingsRepository.Keys.Interface.MONOCHROME_PLAYLISTS] = it
+            }
+            prefs.monochromeTracks?.let {
+                data[SettingsRepository.Keys.Interface.MONOCHROME_TRACKS] = it
+            }
+            prefs.monochromePlayer?.let {
+                data[SettingsRepository.Keys.Interface.MONOCHROME_PLAYER] = it
+            }
+            prefs.monochromeHeaders?.let {
+                data[SettingsRepository.Keys.Interface.MONOCHROME_HEADERS] = it
+            }
             prefs.userId?.let { data[SettingsRepository.Keys.USER_ID] = it }
             prefs.username?.let { data[SettingsRepository.Keys.USERNAME] = it }
             prefs.userImageUrl?.let { data[SettingsRepository.Keys.USER_IMAGE_URL] = it }
             prefs.savedQueuesJson?.let { data[SettingsRepository.Keys.Queue.QUEUES] = it }
             prefs.activeQueueId?.let { data[SettingsRepository.Keys.Queue.ACTIVE_ID] = it }
             prefs.lastTrackUri?.let { data[SettingsRepository.Keys.Playback.LAST_TRACK_URI] = it }
-            prefs.lastContextUri?.let { data[SettingsRepository.Keys.Playback.LAST_CONTEXT_URI] = it }
-            prefs.lastPositionMs?.let { data[SettingsRepository.Keys.Playback.LAST_POSITION_MS] = it }
+            prefs.lastContextUri?.let {
+                data[SettingsRepository.Keys.Playback.LAST_CONTEXT_URI] = it
+            }
+            prefs.lastPositionMs?.let {
+                data[SettingsRepository.Keys.Playback.LAST_POSITION_MS] = it
+            }
         }
     }
 }

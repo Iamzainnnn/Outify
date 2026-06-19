@@ -56,5 +56,6 @@ fun PlaylistWithItems.toDomain(): Playlist {
         timestamp = System.currentTimeMillis(),
     )
 }
+
 fun PlaylistWithItems.canModify(username: String): Boolean =
     playlist.isCollaborative || playlist.ownerUsername == username

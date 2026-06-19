@@ -25,5 +25,6 @@ fun Artist.getCover(size: CoverSize): Cover? {
 
 fun Artist.toSpotifyUri(): SpotifyUri =
     SpotifyUri.Artist(id)
+
 fun Artist.toOutifyUri(): OutifyUri =
     OutifyUri.fromUriString(uri)

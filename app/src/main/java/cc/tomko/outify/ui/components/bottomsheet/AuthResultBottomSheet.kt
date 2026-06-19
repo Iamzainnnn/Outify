@@ -46,7 +46,7 @@ fun AuthResultBottomSheet(
             verticalArrangement = Arrangement.Center,
         ) {
             Icon(
-                if(isSuccess) Icons.Default.DoneAll else Icons.Default.Error,
+                if (isSuccess) Icons.Default.DoneAll else Icons.Default.Error,
                 contentDescription = null
             )
 

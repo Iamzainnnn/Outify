@@ -8,7 +8,7 @@ import androidx.room.Index
     primaryKeys = ["albumId", "artistId"],
     indices = [Index("artistId")]
 )
-data class AlbumArtistEntity (
+data class AlbumArtistEntity(
     val albumId: String,
     val artistId: String,
     val position: Int

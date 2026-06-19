@@ -38,7 +38,7 @@ fun GlobalPopupHost(
 
     addToPlaylistViewModel: AddToPlaylistViewModel,
     createPlaylistViewModel: CreatePlaylistViewModel,
-    playbackDevicesViewModel:  PlaybackDevicesViewModel,
+    playbackDevicesViewModel: PlaybackDevicesViewModel,
     addToWidgetViewModel: AddToWidgetViewModel,
 ) {
     val popups by GlobalPopupController.popups.collectAsState()
@@ -80,7 +80,11 @@ fun GlobalPopupHost(
                     onScrollToLiked = {
                         scope.launch {
                             popup.action?.invoke()
-                            backStack.add(Route.LikedScreen(scrollToIndex = popup.likedTrackIndex ?: -1))
+                            backStack.add(
+                                Route.LikedScreen(
+                                    scrollToIndex = popup.likedTrackIndex ?: -1
+                                )
+                            )
                             GlobalPopupController.dismiss(popup.id)
                         }
                     },
@@ -110,7 +114,10 @@ fun GlobalPopupHost(
                         GlobalPopupController.dismiss(popup.id)
                     },
                     onOpenCreator = {
-                        backStack.add(Route.ProfileScreen(popup.playlist.uri.substringBefore(":").let { "spotify:user:$it" }))
+                        backStack.add(
+                            Route.ProfileScreen(
+                                popup.playlist.uri.substringBefore(":").let { "spotify:user:$it" })
+                        )
                         GlobalPopupController.dismiss(popup.id)
                     },
 

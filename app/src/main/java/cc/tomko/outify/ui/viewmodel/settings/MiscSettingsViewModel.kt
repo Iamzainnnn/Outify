@@ -160,7 +160,7 @@ class MiscSettingsViewModel @Inject constructor(
         }
     }
 
-    fun resetPreferences(){
+    fun resetPreferences() {
         viewModelScope.launch {
             settingsRepository.resetSettings()
         }

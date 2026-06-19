@@ -126,7 +126,7 @@ class LikedViewModel @Inject constructor(
     }
 
     fun refresh() {
-        if(spirc.isUsable) {
+        if (spirc.isUsable) {
             syncNotificationManager.showIndeterminate()
             viewModelScope.launch {
                 isRefreshing.value = true
@@ -256,6 +256,7 @@ class LikedViewModel @Inject constructor(
             SortBy.ARTIST_NAME -> result.sortedBy { track ->
                 track.artists.firstOrNull()?.name?.lowercase() ?: ""
             }
+
             SortBy.TRACK_NAME -> result.sortedBy { it.name.lowercase() }
             SortBy.DURATION -> result.sortedBy { it.duration }
         }

@@ -20,12 +20,14 @@ interface AlbumTrackDao {
     @Query("DELETE FROM album_tracks WHERE albumId IN (:albumIds)")
     suspend fun deleteByAlbumIds(albumIds: List<String>)
 
-    @Query("""
+    @Query(
+        """
         SELECT t.* FROM tracks t
         INNER JOIN album_tracks at ON t.id = at.trackId
         WHERE at.albumId = :albumId
         ORDER BY at.position
-    """)
+    """
+    )
     suspend fun getTracksForAlbum(albumId: String): List<TrackEntity>
 
     @Query("SELECT trackId FROM album_tracks WHERE albumId = :albumId ORDER BY position ASC")

@@ -18,6 +18,7 @@ fun PreferenceHeader(
         modifier = modifier
     )
 }
+
 @Composable
 fun PreferenceSectionHeader(
     text: String,

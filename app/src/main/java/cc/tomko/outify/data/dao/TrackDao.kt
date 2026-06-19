@@ -33,10 +33,12 @@ interface TrackDao {
     )
     suspend fun getTracksByUris(uris: List<String>): List<TrackEntity>
 
-    @Query("""
+    @Query(
+        """
         SELECT albumId FROM tracks
         WHERE trackUri = :uri
-    """)
+    """
+    )
     suspend fun getAlbumIdForTrack(uri: String): String?
 
     @Transaction
@@ -46,6 +48,7 @@ interface TrackDao {
     @Transaction
     @Query("SELECT * FROM tracks WHERE trackUri IN (:uris)")
     suspend fun getTracksFull(uris: List<String>): List<TrackFull>
+
     @Transaction
     @Query("SELECT * FROM tracks WHERE id = :id")
     fun observeTrackFull(id: String): Flow<TrackFull?>
@@ -81,15 +84,19 @@ interface TrackDao {
     /**
      * Evicts old cached entities
      */
-    @Query("""
+    @Query(
+        """
         DELETE FROM tracks
         WHERE isLibraryItem = 0
         AND lastAccessed < :cutoff
-    """)
+    """
+    )
     suspend fun evictOldCache(cutoff: Long)
 
-    @Query("""
+    @Query(
+        """
         SELECT EXISTS(SELECT trackUri FROM tracks WHERE trackUri = :uri)
-    """)
+    """
+    )
     suspend fun containsTrackByUri(uri: String): Boolean
 }

@@ -121,7 +121,7 @@ class SettingsRepository @Inject constructor(
 
     val interfaceSettings: Flow<InterfaceSettings> = dataStore.data.map { prefs ->
         val enabled = prefs[Keys.Gesture.ENABLED] ?: true
-        
+
         val monochrome = prefs[Keys.Interface.MONOCHROME_IMAGES] ?: false
         val accentColor = prefs[Keys.Interface.ACCENT_COLOR] ?: Color.Cyan.toArgb().toLong()
 
@@ -151,7 +151,7 @@ class SettingsRepository @Inject constructor(
         )
     }
 
-    val playbackSettings: Flow<PlaybackSettings> =  dataStore.data.map { prefs ->
+    val playbackSettings: Flow<PlaybackSettings> = dataStore.data.map { prefs ->
         val default = PlaybackSettings.Default
         val bitrate = prefs[Keys.BITRATE] ?: default.bitrate.name
 

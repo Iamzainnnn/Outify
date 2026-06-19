@@ -25,11 +25,13 @@ class AuthCallbackServer(
                     success = "auth_complete",
                     failure = "auth_failed"
                 )
+
                 "/account/login" -> handleCallback(
                     session,
                     success = "account_auth_complete",
                     failure = "account_auth_failed"
                 )
+
                 else -> newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found")
             }
         } catch (e: SocketException) {
@@ -58,7 +60,10 @@ class AuthCallbackServer(
             try {
                 onCodeReceived(code, state)
             } finally {
-                try { stop() } catch (_: Throwable) {}
+                try {
+                    stop()
+                } catch (_: Throwable) {
+                }
             }
         }
 

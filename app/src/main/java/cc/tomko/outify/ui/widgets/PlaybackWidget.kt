@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
@@ -25,7 +24,6 @@ import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
-import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
@@ -47,7 +45,6 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
-import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -60,7 +57,6 @@ import cc.tomko.outify.core.model.Track
 import cc.tomko.outify.core.model.getCover
 import cc.tomko.outify.playback.PlaybackStateHolder
 import cc.tomko.outify.ui.components.GlanceSmartImage
-import cc.tomko.outify.ui.components.loadBitmap
 import cc.tomko.outify.ui.extractThemeColor
 import cc.tomko.outify.widgetMediaPreference
 import coil3.imageLoader
@@ -71,9 +67,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.flow.collect
 import kotlinx.serialization.json.Json
-import java.io.File
 
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -96,7 +90,8 @@ class PlaybackWidget : GlanceAppWidget() {
 
         provideContent {
             val prefs = currentState<Preferences>()
-            val mediaUris = Json.decodeFromString<List<String>>(prefs[widgetMediaPreference(id)] ?: "[]")
+            val mediaUris =
+                Json.decodeFromString<List<String>>(prefs[widgetMediaPreference(id)] ?: "[]")
 
             val mediaItems = mediaUris.map { mediaUri ->
                 val snapshot = context.imageLoader.diskCache
@@ -145,7 +140,13 @@ class PlaybackWidget : GlanceAppWidget() {
     data class MediaItem(val uri: String, val bitmap: Bitmap?)
 
     @Composable
-    private fun Content(itemsList: List<MediaItem>, currentTrack: Track?, currentTrackBitmap: Bitmap?, isPlaying: Boolean, spirc: SpircWrapper) {
+    private fun Content(
+        itemsList: List<MediaItem>,
+        currentTrack: Track?,
+        currentTrackBitmap: Bitmap?,
+        isPlaying: Boolean,
+        spirc: SpircWrapper
+    ) {
         val size = LocalSize.current
         if (itemsList.isEmpty()) {
             Text("No items to display", modifier = GlanceModifier.fillMaxSize())
@@ -163,7 +164,8 @@ class PlaybackWidget : GlanceAppWidget() {
             .coerceIn(1, maxItemsPerRow)
             .coerceAtMost(itemsList.size)
 
-        val itemSize = ((availableWidth - gap * (itemsPerRow - 1)) / itemsPerRow).coerceAtMost(150.dp)
+        val itemSize =
+            ((availableWidth - gap * (itemsPerRow - 1)) / itemsPerRow).coerceAtMost(150.dp)
         val gridRows = itemsList.chunked(itemsPerRow)
 
         Column(modifier = GlanceModifier.padding(vertical = outerPadding)) {
@@ -248,7 +250,8 @@ class PlaybackWidget : GlanceAppWidget() {
                             provider = ImageProvider(androidx.media3.session.R.drawable.media3_icon_previous),
                             contentDescription = "Previous",
                             colorFilter = ColorFilter.tint(GlanceTheme.colors.onTertiaryContainer),
-                            modifier = GlanceModifier.size(28.dp).clickable { spirc.playerPrevious() }
+                            modifier = GlanceModifier.size(28.dp)
+                                .clickable { spirc.playerPrevious() }
                         )
                         Spacer(GlanceModifier.width(8.dp))
                         val playPauseIcon =
@@ -258,7 +261,8 @@ class PlaybackWidget : GlanceAppWidget() {
                             provider = ImageProvider(playPauseIcon),
                             contentDescription = "Play / Pause",
                             colorFilter = ColorFilter.tint(GlanceTheme.colors.onTertiaryContainer),
-                            modifier = GlanceModifier.size(32.dp).clickable { spirc.playerPlayPause() }
+                            modifier = GlanceModifier.size(32.dp)
+                                .clickable { spirc.playerPlayPause() }
                         )
                         Spacer(GlanceModifier.width(8.dp))
                         Image(

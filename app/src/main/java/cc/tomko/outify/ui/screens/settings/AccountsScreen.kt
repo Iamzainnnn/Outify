@@ -126,7 +126,7 @@ fun AccountsScreen(
                     PreferenceEntry(
                         title = { Text("Playback login") },
                         icon = {
-                            if(isPlaybackLoggedIn) {
+                            if (isPlaybackLoggedIn) {
                                 Icon(
                                     Icons.Default.CheckCircle,
                                     contentDescription = null,
@@ -137,7 +137,7 @@ fun AccountsScreen(
                             }
                         },
                         onClick = {
-                            if(isPlaybackLoggedIn) {
+                            if (isPlaybackLoggedIn) {
                                 showPlaybackSheet = true
                             } else {
                                 viewModel.startSpircAuth(context)
@@ -175,7 +175,7 @@ fun AccountsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                if(isAccountLoggedIn) {
+                                if (isAccountLoggedIn) {
                                     showAccountSheet = true
                                 } else {
                                     viewModel.startAccountAuth(context)
@@ -252,7 +252,12 @@ fun AccountsScreen(
                         } else {
                             PreferenceEntry(
                                 title = { Text("Account login") },
-                                icon = { Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null) },
+                                icon = {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.Login,
+                                        contentDescription = null
+                                    )
+                                },
                                 onClick = { viewModel.startAccountAuth(context) },
                             )
 
@@ -308,16 +313,50 @@ fun AccountsScreen(
 
                         Spacer(Modifier.height(16.dp))
 
-                        FeatureAvailability("Stream tracks from Outify", isPlaybackLoggedIn && isPremium)
-                        FeatureAvailability("Sync your liked tracks and playlists", isPlaybackLoggedIn && isPremium)
-                        FeatureAvailability("View artists, albums, playlists", isPlaybackLoggedIn && isPremium)
+                        FeatureAvailability(
+                            "Stream tracks from Outify",
+                            isPlaybackLoggedIn && isPremium
+                        )
+                        FeatureAvailability(
+                            "Sync your liked tracks and playlists",
+                            isPlaybackLoggedIn && isPremium
+                        )
+                        FeatureAvailability(
+                            "View artists, albums, playlists",
+                            isPlaybackLoggedIn && isPremium
+                        )
 
                         Spacer(Modifier.height(12.dp))
 
                         FeatureAvailability("Search Spotify", isAccountLoggedIn)
-                        FeatureAvailability("Modify playlists", isAccountLoggedIn && scopes.containsAll(listOf("playlist-modify-public", "playlist-modify-private")))
-                        FeatureAvailability("Create playlists", isAccountLoggedIn && scopes.containsAll(listOf("playlist-modify-public", "playlist-modify-private")))
-                        FeatureAvailability("Liking and unliking tracks, playlists, artists, ..", isAccountLoggedIn && scopes.containsAll(listOf("user-library-modify", "user-follow-modify", "playlist-modify-public")))
+                        FeatureAvailability(
+                            "Modify playlists",
+                            isAccountLoggedIn && scopes.containsAll(
+                                listOf(
+                                    "playlist-modify-public",
+                                    "playlist-modify-private"
+                                )
+                            )
+                        )
+                        FeatureAvailability(
+                            "Create playlists",
+                            isAccountLoggedIn && scopes.containsAll(
+                                listOf(
+                                    "playlist-modify-public",
+                                    "playlist-modify-private"
+                                )
+                            )
+                        )
+                        FeatureAvailability(
+                            "Liking and unliking tracks, playlists, artists, ..",
+                            isAccountLoggedIn && scopes.containsAll(
+                                listOf(
+                                    "user-library-modify",
+                                    "user-follow-modify",
+                                    "playlist-modify-public"
+                                )
+                            )
+                        )
                         FeatureAvailability("Viewing user profiles", isPlaybackLoggedIn)
 
                         Spacer(Modifier.height(12.dp))
@@ -430,16 +469,18 @@ private fun FeatureAvailability(text: String, available: Boolean, modifier: Modi
             .padding(vertical = 6.dp)
     ) {
         Icon(
-            imageVector = if(available) Icons.Default.CheckCircle else Icons.Outlined.Cancel,
-            contentDescription = if(available) "Available" else "Unavailable",
-            tint = if(available) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+            imageVector = if (available) Icons.Default.CheckCircle else Icons.Outlined.Cancel,
+            contentDescription = if (available) "Available" else "Unavailable",
+            tint = if (available) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error.copy(
+                alpha = 0.7f
+            ),
             modifier = Modifier.size(22.dp)
         )
 
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,
-            color = if(available) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (available) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
     }

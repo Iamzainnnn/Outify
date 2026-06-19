@@ -52,7 +52,7 @@ class PlaybackDevicesViewModel @Inject constructor(
         spircWrapper.transfer()
     }
 
-    suspend fun loadDevices() = withContext(Dispatchers.IO){
+    suspend fun loadDevices() = withContext(Dispatchers.IO) {
         val raw = spClient.getDevices() ?: return@withContext
         try {
             val parsed = json.decodeFromString<DevicesResponse>(raw)

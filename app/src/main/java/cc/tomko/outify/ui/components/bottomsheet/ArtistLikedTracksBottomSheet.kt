@@ -88,6 +88,7 @@ fun SharedTransitionScope.ArtistLikedTracksBottomSheet(
                     CircularProgressIndicator()
                 }
             }
+
             is ArtistUiState.Error -> {
                 val msg = (uiState as ArtistUiState.Error).message
                 Column(
@@ -100,9 +101,11 @@ fun SharedTransitionScope.ArtistLikedTracksBottomSheet(
                     Text(text = msg, color = MaterialTheme.colorScheme.error)
                 }
             }
+
             is ArtistUiState.Success -> {
                 val artistState = (uiState as ArtistUiState.Success).artist
-                val artworkUrl = ALBUM_COVER_URL + (artistState.getCover(CoverSize.LARGE)?.uri ?: "")
+                val artworkUrl =
+                    ALBUM_COVER_URL + (artistState.getCover(CoverSize.LARGE)?.uri ?: "")
                 val likedTracks by viewModel.likedTracks.collectAsState()
                 val currentTrack by viewModel.currentTrack.collectAsState(initial = null)
                 val isPlaybackPlaying by viewModel.isPlaying.collectAsState(initial = false)

@@ -61,13 +61,15 @@ fun GestureCustomizeBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = {
-            onDismiss(GestureSetting(
-                action = actionValue,
-                side = if (triggerValue == GestureTrigger.LongPress) null else sideValue,
-                trigger = triggerValue,
-                enabled = enabledState,
-                thresholdFraction = if (triggerValue == GestureTrigger.LongPress) null else thresholdValue,
-            ))
+            onDismiss(
+                GestureSetting(
+                    action = actionValue,
+                    side = if (triggerValue == GestureTrigger.LongPress) null else sideValue,
+                    trigger = triggerValue,
+                    enabled = enabledState,
+                    thresholdFraction = if (triggerValue == GestureTrigger.LongPress) null else thresholdValue,
+                )
+            )
         },
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         modifier = modifier
@@ -124,7 +126,11 @@ fun GestureCustomizeBottomSheet(
                 onClick = { actionExpanded = !actionExpanded },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                        alpha = 0.5f
+                    )
+                )
             ) {
                 Row(
                     modifier = Modifier
@@ -178,7 +184,9 @@ fun GestureCustomizeBottomSheet(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(
+                                    alpha = 0.5f
+                                )
                                 else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                             )
                         ) {
@@ -231,7 +239,9 @@ fun GestureCustomizeBottomSheet(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                            containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(
+                                alpha = 0.5f
+                            )
                             else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                         )
                     ) {
@@ -281,7 +291,9 @@ fun GestureCustomizeBottomSheet(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                                containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(
+                                    alpha = 0.5f
+                                )
                                 else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                             )
                         ) {

@@ -38,11 +38,15 @@ class MultiQueueViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val previousUris: List<String> = try {
                 json.decodeFromString(spirc.previousTracks())
-            } catch (_: Exception) { emptyList() }
+            } catch (_: Exception) {
+                emptyList()
+            }
 
             val nextUris: List<String> = try {
                 json.decodeFromString(spirc.nextTracks())
-            } catch (_: Exception) { emptyList() }
+            } catch (_: Exception) {
+                emptyList()
+            }
 
             val allUris = buildList {
                 addAll(previousUris)

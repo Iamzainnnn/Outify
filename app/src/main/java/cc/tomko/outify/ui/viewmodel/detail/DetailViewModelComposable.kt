@@ -49,7 +49,7 @@ inline fun <reified VM : ViewModel> rememberDetailViewModel(
         if (existing != null) {
             return existing
         }
-        
+
         val newViewModel = hiltViewModel<VM>(key = key)
         store.set(key, newViewModel)
         newViewModel

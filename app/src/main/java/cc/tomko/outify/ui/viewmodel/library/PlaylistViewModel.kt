@@ -37,7 +37,7 @@ class PlaylistViewModel @Inject constructor(
     val spirc: SpircWrapper,
     val userProfile: UserProfile,
     val likedDao: LikedDao,
-): ViewModel() {
+) : ViewModel() {
     val json = Json { ignoreUnknownKeys = true }
 
     val currentTrack: StateFlow<Track?> = playbackStateHolder.state

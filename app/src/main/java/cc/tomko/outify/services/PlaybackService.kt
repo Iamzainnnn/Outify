@@ -52,8 +52,7 @@ import javax.inject.Singleton
 @Singleton
 @AndroidEntryPoint
 class PlaybackService : MediaLibraryService(),
-    androidx.media3.common.Player.Listener
-{
+    androidx.media3.common.Player.Listener {
     companion object {
         const val ROOT = "root"
         const val TRACK = "track"
@@ -157,10 +156,12 @@ class PlaybackService : MediaLibraryService(),
                     PendingIntent.FLAG_IMMUTABLE
                 )
             )
-            .setBitmapLoader(CoilBitmapLoader(
-                scope,
-                context = this,
-            ))
+            .setBitmapLoader(
+                CoilBitmapLoader(
+                    scope,
+                    context = this,
+                )
+            )
             .build()
 
         val sessionToken = SessionToken(this, ComponentName(this, PlaybackService::class.java))
@@ -221,21 +222,21 @@ class PlaybackService : MediaLibraryService(),
     fun toggleLike() {
         val item = player.currentMediaItem ?: return
         val id = item.mediaId
-        Log.i(TAG,"Toggling like for $id")
+        Log.i(TAG, "Toggling like for $id")
 
         scope.launch {
-            if(likedDao.containsTrack(id)) {
+            if (likedDao.containsTrack(id)) {
                 spClient.deleteItems(arrayOf("spotify:track:$id"))
-            } else  {
+            } else {
                 spClient.saveItems(arrayOf("spotify:track:$id"))
             }
         }
     }
 
-    fun toggleStartRadio(){
+    fun toggleStartRadio() {
         val item = player.currentMediaItem ?: return
         val id = item.mediaId
-        Log.i(TAG,"Starting radio for $id")
+        Log.i(TAG, "Starting radio for $id")
 
         scope.launch {
             spirc.startRadio(SpotifyUri.Track(id), false)
@@ -248,17 +249,19 @@ class PlaybackService : MediaLibraryService(),
         val hasTrack = track != null
 
         scope.launch {
-            val isLiked = if(hasTrack) likedDao.containsTrack(track.id) else false
+            val isLiked = if (hasTrack) likedDao.containsTrack(track.id) else false
             val buttons = listOf(
-                CommandButton.Builder(when (player.repeatMode) {
-                    REPEAT_MODE_OFF -> CommandButton.ICON_SHUFFLE_OFF
-                    REPEAT_MODE_ONE -> CommandButton.ICON_SHUFFLE_ON
-                    REPEAT_MODE_ALL -> CommandButton.ICON_SHUFFLE_STAR
-                    else -> {
-                        Log.w(TAG, "Unknown repeat mode: ${player.repeatMode}")
-                        CommandButton.ICON_SHUFFLE_OFF
+                CommandButton.Builder(
+                    when (player.repeatMode) {
+                        REPEAT_MODE_OFF -> CommandButton.ICON_SHUFFLE_OFF
+                        REPEAT_MODE_ONE -> CommandButton.ICON_SHUFFLE_ON
+                        REPEAT_MODE_ALL -> CommandButton.ICON_SHUFFLE_STAR
+                        else -> {
+                            Log.w(TAG, "Unknown repeat mode: ${player.repeatMode}")
+                            CommandButton.ICON_SHUFFLE_OFF
+                        }
                     }
-                })
+                )
                     .setDisplayName(
                         getString(
                             when (player.repeatMode) {
@@ -266,7 +269,10 @@ class PlaybackService : MediaLibraryService(),
                                 REPEAT_MODE_ONE -> R.string.repeat_mode_one
                                 REPEAT_MODE_ALL -> R.string.repeat_mode_all
                                 else -> {
-                                    Log.w(TAG, "Unknown repeat mode for display name: ${player.repeatMode}")
+                                    Log.w(
+                                        TAG,
+                                        "Unknown repeat mode for display name: ${player.repeatMode}"
+                                    )
                                     R.string.repeat_mode_off
                                 }
                             }
@@ -274,10 +280,12 @@ class PlaybackService : MediaLibraryService(),
                     )
                     .setSessionCommand(MediaSessionConstants.CommandToggleRepeatMode)
                     .build(),
-                CommandButton.Builder(when (isLiked) {
-                    true -> CommandButton.ICON_HEART_FILLED
-                    false -> CommandButton.ICON_HEART_UNFILLED
-                })
+                CommandButton.Builder(
+                    when (isLiked) {
+                        true -> CommandButton.ICON_HEART_FILLED
+                        false -> CommandButton.ICON_HEART_UNFILLED
+                    }
+                )
                     .setDisplayName(getString(R.string.like))
                     .setSessionCommand(MediaSessionConstants.CommandToggleLike)
                     .setEnabled(hasTrack)
@@ -304,7 +312,7 @@ class PlaybackService : MediaLibraryService(),
     }
 
     override fun onPlaybackStateChanged(@androidx.media3.common.Player.State playbackState: Int) {
-        if(playbackState == STATE_IDLE) {
+        if (playbackState == STATE_IDLE) {
             Log.i(TAG, "Playback idling")
         }
     }
@@ -321,7 +329,7 @@ class PlaybackService : MediaLibraryService(),
     }
 
     override fun onUpdateNotification(session: MediaSession, startInForegroundRequired: Boolean) {
-        if(!keepAlive)
+        if (!keepAlive)
             return
 
         super.onUpdateNotification(session, startInForegroundRequired)

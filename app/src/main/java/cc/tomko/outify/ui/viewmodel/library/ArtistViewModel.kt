@@ -42,7 +42,7 @@ class ArtistViewModel @Inject constructor(
     val spirc: SpircWrapper,
     val likedDao: LikedDao,
     private val savedStateHandle: SavedStateHandle,
-): ViewModel() {
+) : ViewModel() {
     val json = Json { ignoreUnknownKeys = true }
 
     private val _uiState = MutableStateFlow<ArtistUiState>(
@@ -132,7 +132,7 @@ class ArtistViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val albums: StateFlow<List<Album>> = albumUris
         .flatMapLatest { uris ->
-            if(uris.isEmpty()) flowOf(emptyList())
+            if (uris.isEmpty()) flowOf(emptyList())
             else metadata.observeAlbums(uris)
         }
         .stateIn(
@@ -142,7 +142,8 @@ class ArtistViewModel @Inject constructor(
         )
 
     private fun saveState() {
-        savedStateHandle[ARTIST_STATE_KEY] = json.encodeToString(ArtistUiState.serializer(), _uiState.value)
+        savedStateHandle[ARTIST_STATE_KEY] =
+            json.encodeToString(ArtistUiState.serializer(), _uiState.value)
         savedStateHandle[POPULAR_TRACKS_KEY] = popularTrackUris.value
         savedStateHandle[ALBUMS_KEY] = albumUris.value
     }
@@ -176,8 +177,10 @@ class ArtistViewModel @Inject constructor(
 sealed interface ArtistUiState {
     @kotlinx.serialization.Serializable
     object Loading : ArtistUiState
+
     @kotlinx.serialization.Serializable
     data class Success(val artist: Artist) : ArtistUiState
+
     @kotlinx.serialization.Serializable
     data class Error(val message: String) : ArtistUiState
 }

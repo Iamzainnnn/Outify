@@ -43,8 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cc.tomko.outify.BuildConfig
 
-private const val DEVELOPER     = "TomKo"
-private const val GITHUB_URL    = "https://github.com/iTomKo/Outify"
+private const val DEVELOPER = "TomKo"
+private const val GITHUB_URL = "https://github.com/iTomKo/Outify"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,15 +127,15 @@ fun AboutScreen(
                 ) {
                     InfoChip(
                         modifier = Modifier.weight(1f),
-                        label    = "Version",
-                        value    = BuildConfig.VERSION_NAME,
-                        icon     = Icons.Default.Info,
+                        label = "Version",
+                        value = BuildConfig.VERSION_NAME,
+                        icon = Icons.Default.Info,
                     )
                     InfoChip(
                         modifier = Modifier.weight(1f),
-                        label    = "Build",
-                        value    = "#${BuildConfig.VERSION_CODE}",
-                        icon     = Icons.Default.Code,
+                        label = "Build",
+                        value = "#${BuildConfig.VERSION_CODE}",
+                        icon = Icons.Default.Code,
                     )
                 }
             }
@@ -172,13 +172,13 @@ fun AboutScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             Surface(
-                                shape  = CircleShape,
-                                color  = MaterialTheme.colorScheme.primaryContainer,
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primaryContainer,
                                 modifier = Modifier.size(42.dp),
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
-                                        text  = DEVELOPER.first().uppercase(),
+                                        text = DEVELOPER.first().uppercase(),
                                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                                     )
@@ -186,24 +186,24 @@ fun AboutScreen(
                             }
                             Column {
                                 Text(
-                                    text  = "Made by",
+                                    text = "Made by",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 Row(
-                                    verticalAlignment     = Alignment.CenterVertically,
+                                    verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                 ) {
                                     Text(
-                                        text  = DEVELOPER,
+                                        text = DEVELOPER,
                                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                                         color = MaterialTheme.colorScheme.onSurface,
                                     )
                                     Icon(
                                         imageVector = Icons.Default.Favorite,
                                         contentDescription = null,
-                                        tint        = MaterialTheme.colorScheme.error,
-                                        modifier    = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.error,
+                                        modifier = Modifier.size(14.dp),
                                     )
                                 }
                             }
@@ -221,9 +221,9 @@ fun AboutScreen(
                 ) {
                     Column(modifier = Modifier.padding(8.dp)) {
                         LinkRow(
-                            icon  = Icons.Default.Code,
+                            icon = Icons.Default.Code,
                             label = "Source code",
-                            sub   = "github.com/iTomKo/Outify",
+                            sub = "github.com/iTomKo/Outify",
                             onClick = { onOpenUrl(GITHUB_URL) },
                         )
                     }
@@ -235,40 +235,40 @@ fun AboutScreen(
 
 @Composable
 private fun InfoChip(
-    modifier : Modifier = Modifier,
-    label    : String,
-    value    : String,
-    icon     : ImageVector,
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    icon: ImageVector,
 ) {
     Card(
         modifier = modifier,
-        shape    = RoundedCornerShape(16.dp),
-        colors   = CardDefaults.cardColors(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
         ),
     ) {
         Column(
-            modifier  = Modifier.padding(vertical = 14.dp, horizontal = 16.dp),
+            modifier = Modifier.padding(vertical = 14.dp, horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Row(
-                verticalAlignment     = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint        = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier    = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(14.dp),
                 )
                 Text(
-                    text  = label,
+                    text = label,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }
             Text(
-                text  = value,
+                text = value,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
@@ -278,41 +278,41 @@ private fun InfoChip(
 
 @Composable
 private fun LinkRow(
-    icon    : ImageVector,
-    label   : String,
-    sub     : String,
-    onClick : () -> Unit,
+    icon: ImageVector,
+    label: String,
+    sub: String,
+    onClick: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment     = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Surface(
-            shape  = RoundedCornerShape(12.dp),
-            color  = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
             modifier = Modifier.size(42.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint        = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier    = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text  = label,
+                text = label,
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text  = sub,
+                text = sub,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -322,8 +322,8 @@ private fun LinkRow(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                 contentDescription = "Open",
-                tint        = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier    = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
             )
         }
     }

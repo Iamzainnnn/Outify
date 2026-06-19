@@ -104,7 +104,8 @@ class QueueViewModel @Inject constructor(
                 allNextUris = loadNextUris()
 
                 val currentIndex = allPreviousUris.size
-                val total = allPreviousUris.size + (if (currentTrack != null) 1 else 0) + allNextUris.size
+                val total =
+                    allPreviousUris.size + (if (currentTrack != null) 1 else 0) + allNextUris.size
 
                 val half = INITIAL_LOAD_SIZE / 2
                 val startIndex = max(0, currentIndex - half)
@@ -136,7 +137,11 @@ class QueueViewModel @Inject constructor(
         }.join()
     }
 
-    fun onScrollPositionChanged(firstVisibleIndex: Int, lastVisibleIndex: Int, currentTrack: Track?) {
+    fun onScrollPositionChanged(
+        firstVisibleIndex: Int,
+        lastVisibleIndex: Int,
+        currentTrack: Track?
+    ) {
         val state = _queueState.value
         if (state.isLoading || state.tracks.isEmpty()) return
         if (state.isLoadingPrevious || state.isLoadingNext) return
@@ -224,9 +229,11 @@ class QueueViewModel @Inject constructor(
                     positionsToUriIndex += (i to urisToLoad.size)
                     urisToLoad.add(allPreviousUris[i])
                 }
+
                 i == currentTrackIndex && currentTrack != null -> {
                     positionsToUriIndex += (i to -1)
                 }
+
                 i > currentTrackIndex -> {
                     val nextIndex = i - currentTrackIndex - 1
                     if (nextIndex < allNextUris.size) {
@@ -240,7 +247,11 @@ class QueueViewModel @Inject constructor(
         }
 
         val loadedTracks: List<Track> = if (urisToLoad.isNotEmpty()) {
-            try { metadata.getTrackMetadata(urisToLoad) } catch (t: Throwable) { emptyList() }
+            try {
+                metadata.getTrackMetadata(urisToLoad)
+            } catch (t: Throwable) {
+                emptyList()
+            }
         } else {
             emptyList()
         }
@@ -255,6 +266,7 @@ class QueueViewModel @Inject constructor(
                         loadedCursor++
                     }
                 }
+
                 uriLoadIndex == -1 -> currentTrack?.let { entries.add(QueueEntry(nextId(), it)) }
                 // -2 = out-of-range, skip
             }
@@ -266,14 +278,14 @@ class QueueViewModel @Inject constructor(
         val state = _queueState.value
 
         val loadedPreviousUris = state.tracks.take(state.currentIndex).map { it.track.uri }
-        val loadedNextUris     = state.tracks.drop(state.currentIndex + 1).map { it.track.uri }
+        val loadedNextUris = state.tracks.drop(state.currentIndex + 1).map { it.track.uri }
 
         val newPreviousUris = unloadedPreviousHead + loadedPreviousUris
-        val newNextUris     = loadedNextUris + unloadedNextTail
+        val newNextUris = loadedNextUris + unloadedNextTail
 
         // Keep local caches in sync so pagination still works correctly
         allPreviousUris = newPreviousUris
-        allNextUris     = newNextUris
+        allNextUris = newNextUris
 
         try {
             spirc.setQueue(newNextUris.toTypedArray(), currentTrackEntry?.track?.uri)
@@ -282,7 +294,10 @@ class QueueViewModel @Inject constructor(
         }
     }
 
-    fun setQueueEntries(entries: List<QueueEntry>, startIndex: Int = _queueState.value.currentIndex) {
+    fun setQueueEntries(
+        entries: List<QueueEntry>,
+        startIndex: Int = _queueState.value.currentIndex
+    ) {
         if (entries.isEmpty()) {
             _queueState.value = QueueState()
             return
@@ -310,13 +325,19 @@ class QueueViewModel @Inject constructor(
     }
 
     private suspend fun loadPreviousUris(): List<String> = withContext(Dispatchers.IO) {
-        try { json.decodeFromString<List<String>>(spirc.previousTracks()) }
-        catch (e: Exception) { emptyList() }
+        try {
+            json.decodeFromString<List<String>>(spirc.previousTracks())
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     private suspend fun loadNextUris(): List<String> = withContext(Dispatchers.IO) {
-        try { json.decodeFromString<List<String>>(spirc.nextTracks()) }
-        catch (e: Exception) { emptyList() }
+        try {
+            json.decodeFromString<List<String>>(spirc.nextTracks())
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     override fun onCleared() {

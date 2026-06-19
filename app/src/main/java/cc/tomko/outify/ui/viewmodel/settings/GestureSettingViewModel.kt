@@ -39,13 +39,15 @@ class GestureSettingViewModel @Inject constructor(
         }
     }
 
-    fun addGesture(gesture: GestureSetting = GestureSetting(
-        action = GestureAction.NONE,
-        side = Side.End,
-        enabled = true,
-        thresholdFraction = 0.25f,
-        backgroundHex = null
-    )) {
+    fun addGesture(
+        gesture: GestureSetting = GestureSetting(
+            action = GestureAction.NONE,
+            side = Side.End,
+            enabled = true,
+            thresholdFraction = 0.25f,
+            backgroundHex = null
+        )
+    ) {
         viewModelScope.launch {
             val current = gestures.value
             val next = current.toMutableList().apply { add(gesture) }
