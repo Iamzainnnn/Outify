@@ -81,6 +81,8 @@ class SettingsRepository @Inject constructor(
             val MONOCHROME_HEADERS = booleanPreferencesKey("monochrome_headers")
 
             val EXPERIMENTAL_FLOATING_NAV = booleanPreferencesKey("experimental_floating_nav")
+            val SHOW_NAVBAR_HISTORY = booleanPreferencesKey("show_navbar_history")
+            val NAVBAR_HISTORY_ON_END = booleanPreferencesKey("navbar_history_on_end")
         }
 
         object Queue {
@@ -148,6 +150,8 @@ class SettingsRepository @Inject constructor(
             monochromePlayer = monochrome && prefs[Keys.Interface.MONOCHROME_PLAYER] ?: false,
             monochromeHeaders = monochrome && prefs[Keys.Interface.MONOCHROME_HEADERS] ?: false,
             experimentalFloatingNav = prefs[Keys.Interface.EXPERIMENTAL_FLOATING_NAV] ?: true,
+            showNavbarHistory = prefs[Keys.Interface.SHOW_NAVBAR_HISTORY] ?: true,
+            navbarHistoryOnEnd = prefs[Keys.Interface.NAVBAR_HISTORY_ON_END] ?: true,
         )
     }
 
@@ -359,6 +363,14 @@ class SettingsRepository @Inject constructor(
         dataStore.edit { it[Keys.Interface.EXPERIMENTAL_FLOATING_NAV] = enabled }
     }
 
+    suspend fun setShowNavbarHistory(enabled: Boolean) {
+        dataStore.edit { it[Keys.Interface.SHOW_NAVBAR_HISTORY] = enabled }
+    }
+
+    suspend fun setNavbarHistoryOnEnd(enabled: Boolean) {
+        dataStore.edit { it[Keys.Interface.NAVBAR_HISTORY_ON_END] = enabled }
+    }
+
     suspend fun setRomanizeLyrics(enabled: Boolean) {
         dataStore.edit { it[Keys.Lyrics.ROMANIZE_LYRICS] = enabled }
     }
@@ -548,6 +560,9 @@ data class InterfaceSettings(
 
     // Experimental features
     val experimentalFloatingNav: Boolean = true,
+    val showNavbarHistory: Boolean = true,
+    // Should the history icon be on the start/end of the navbar
+    val navbarHistoryOnEnd: Boolean = true,
 )
 
 data class PlaybackSettings(

@@ -31,9 +31,13 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -44,7 +48,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -249,6 +256,39 @@ class MainActivity : ComponentActivity() {
         val themeMode =
             if (interfaceSettings.dynamicTheme) ThemeMode.DYNAMIC_ALBUM else if (interfaceSettings.dynamicSystem) ThemeMode.DYNAMIC_SYSTEM else ThemeMode.STATIC
 
+        var lastDetailRoute by remember { mutableStateOf<Route?>(null) }
+        LaunchedEffect(currentRoute) {
+            when (currentRoute) {
+                is Route.ArtistScreen,
+                is Route.AlbumScreen,
+                is Route.PlaylistScreen,
+                is Route.TrackScreen,
+                is Route.ProfileScreen -> lastDetailRoute = currentRoute
+                else -> {}
+            }
+        }
+
+        val detailDestination = remember(lastDetailRoute) {
+            lastDetailRoute?.let { route ->
+                val (id, label, icon) = when (route) {
+                    is Route.ArtistScreen -> Triple("detail_artist", "Artist", Icons.Default.Person)
+                    is Route.AlbumScreen,
+                    is Route.TrackScreen -> Triple("detail_album", "Album", Icons.Default.Album)
+                    is Route.PlaylistScreen -> Triple("detail_playlist", "Playlist", Icons.AutoMirrored.Filled.QueueMusic)
+                    is Route.ProfileScreen -> Triple("detail_profile", "Profile", Icons.Default.AccountCircle)
+                    else -> return@let null
+                }
+                NavDestination(id, label, route) { Icon(icon, contentDescription = null) }
+            }
+        }
+
+        val allRoutes = remember(detailDestination, interfaceSettings.showNavbarHistory, interfaceSettings.navbarHistoryOnEnd) {
+            if (detailDestination != null && interfaceSettings.showNavbarHistory) {
+                if (interfaceSettings.navbarHistoryOnEnd) routes + detailDestination
+                else listOf(detailDestination) + routes
+            } else routes
+        }
+
         OutifyTheme(
             track = currentTrack,
             themeMode = themeMode,
@@ -385,7 +425,7 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier.align(Alignment.BottomCenter),
                                         ) {
                                             FloatingOutifyBottomNav(
-                                                items = routes,
+                                                items = allRoutes,
                                                 selectedId = selectedId,
                                                 onItemSelected = { item -> backStack.add(item.route) }
                                             )
@@ -393,7 +433,7 @@ class MainActivity : ComponentActivity() {
                                     } else {
                                         Box(modifier = Modifier.align(Alignment.BottomCenter)) {
                                             OutifyBottomNav(
-                                                items = routes,
+                                                items = allRoutes,
                                                 selectedId = selectedId,
                                                 onItemSelected = { item -> backStack.add(item.route) }
                                             )
