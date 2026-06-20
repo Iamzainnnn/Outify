@@ -61,6 +61,7 @@ pub fn init_spirc_container() {
     CURRENT_CONTEXT.get_or_init(|| Mutex::new(None));
     BITRATE.get_or_init(|| Mutex::new(Bitrate::Bitrate320));
     DEVICE_NAME.get_or_init(|| Mutex::new("Outify".to_string()));
+    crate::jni_impl::spirc::init_callbacks();
 }
 
 pub struct SpircRuntime {
@@ -323,9 +324,9 @@ impl SpircRuntime {
 
         let lock = SPIRC_RUNTIME.get_or_init(|| RwLock::new(None));
         let mut guard = lock.write().unwrap();
-        if let Some(spirc) = guard.take() {
-            spirc.shutdown();
-        }
+        // Just clear the slot; the SpircRuntime stored here IS `self`,
+        // so we must NOT call shutdown() on it again — it was already called above.
+        *guard = None;
     }
 }
 
@@ -537,8 +538,16 @@ fn notify_buffer_state(method: String) {
     };
 
     let callback_opt = {
-        let lock = crate::jni_impl::spirc::BUFFER_CALLBACK.lock().unwrap();
-        lock.clone()
+        match crate::jni_impl::spirc::BUFFER_CALLBACK.get() {
+            Some(mutex) => match mutex.lock() {
+                Ok(guard) => guard.clone(),
+                Err(e) => {
+                    error!("lock of buffer_callback failed in notify_buffer_state: {e}");
+                    return;
+                }
+            },
+            None => return,
+        }
     };
 
     if let Some(callback) = callback_opt {
@@ -566,8 +575,16 @@ pub fn notify_device_state(is_active: bool) {
     };
 
     let callback_opt = {
-        let lock = crate::jni_impl::spirc::DEVICE_CALLBACK.lock().unwrap();
-        lock.clone()
+        match crate::jni_impl::spirc::DEVICE_CALLBACK.get() {
+            Some(mutex) => match mutex.lock() {
+                Ok(guard) => guard.clone(),
+                Err(e) => {
+                    error!("lock of device_callback failed in notify_device_state: {e}");
+                    return;
+                }
+            },
+            None => return,
+        }
     };
 
     if let Some(callback) = callback_opt {
@@ -577,7 +594,15 @@ pub fn notify_device_state(is_active: bool) {
             "becameInactive"
         };
 
-        std::thread::spawn(move || {
+        let rt = match crate::TOKIO_RUNTIME.get() {
+            Some(r) => r,
+            None => {
+                error!("tokio runtime not available for notify_device_state");
+                return;
+            }
+        };
+
+        rt.spawn_blocking(move || {
             let mut env = match jvm.attach_current_thread() {
                 Ok(env) => env,
                 Err(e) => {
@@ -603,12 +628,28 @@ pub fn notify_device_volume(volume: u16) {
     };
 
     let callback_opt = {
-        let lock = crate::jni_impl::spirc::DEVICE_CALLBACK.lock().unwrap();
-        lock.clone()
+        match crate::jni_impl::spirc::DEVICE_CALLBACK.get() {
+            Some(mutex) => match mutex.lock() {
+                Ok(guard) => guard.clone(),
+                Err(e) => {
+                    error!("lock of device_callback failed in notify_device_volume: {e}");
+                    return;
+                }
+            },
+            None => return,
+        }
     };
 
     if let Some(callback) = callback_opt {
-        std::thread::spawn(move || {
+        let rt = match crate::TOKIO_RUNTIME.get() {
+            Some(r) => r,
+            None => {
+                error!("tokio runtime not available for notify_device_volume");
+                return;
+            }
+        };
+
+        rt.spawn_blocking(move || {
             let mut env = match jvm.attach_current_thread() {
                 Ok(env) => env,
                 Err(e) => {
