@@ -8,14 +8,20 @@ use jni::{
 use librespot_connect::{LoadContextOptions, LoadRequestOptions, PlayingTrack};
 use librespot_core::SpotifyUri;
 use librespot_playback::config::Bitrate;
+use once_cell::sync::OnceCell;
 
 use crate::{
     outifyuri::OutifyUri,
     spirc::{SpircError, with_spirc},
 };
 
-pub static BUFFER_CALLBACK: Mutex<Option<GlobalRef>> = Mutex::new(None);
-pub static DEVICE_CALLBACK: Mutex<Option<GlobalRef>> = Mutex::new(None);
+pub static BUFFER_CALLBACK: OnceCell<Mutex<Option<GlobalRef>>> = OnceCell::new();
+pub static DEVICE_CALLBACK: OnceCell<Mutex<Option<GlobalRef>>> = OnceCell::new();
+
+pub fn init_callbacks() {
+    BUFFER_CALLBACK.get_or_init(|| Mutex::new(None));
+    DEVICE_CALLBACK.get_or_init(|| Mutex::new(None));
+}
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_cc_tomko_outify_core_spirc_Spirc_initializeSpirc(
@@ -122,8 +128,16 @@ pub extern "system" fn set_buffer_callback(
     };
 
     {
-        let mut lock = BUFFER_CALLBACK.lock().unwrap();
-        *lock = Some(global_callback);
+        let mutex = BUFFER_CALLBACK.get_or_init(|| Mutex::new(None));
+        match mutex.lock() {
+            Ok(mut guard) => {
+                *guard = Some(global_callback);
+            }
+            Err(e) => {
+                error!("lock of buffer_callback mutex failed: {e}");
+                return 0;
+            }
+        }
     }
 
     1
@@ -144,8 +158,16 @@ pub extern "system" fn set_device_callback(
     };
 
     {
-        let mut lock = DEVICE_CALLBACK.lock().unwrap();
-        *lock = Some(global_callback);
+        let mutex = DEVICE_CALLBACK.get_or_init(|| Mutex::new(None));
+        match mutex.lock() {
+            Ok(mut guard) => {
+                *guard = Some(global_callback);
+            }
+            Err(e) => {
+                error!("lock of device_callback mutex failed: {e}");
+                return 0;
+            }
+        }
     }
 
     1
